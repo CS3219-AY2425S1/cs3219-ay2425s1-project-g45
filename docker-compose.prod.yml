@@ -1,0 +1,53 @@
+version: "3"
+
+services:
+  frontend:
+    build:
+      context: ./peerprep_fe
+    volumes:
+      - ./peerprep_fe:/app
+      - /app/node_modules
+    environment:
+      - FRONTEND_PORT=${FRONTEND_PORT}
+      - API_GATEWAY_PORT=${API_GATEWAY_PORT}
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+
+  gateway_service:
+    build:
+      context: ./gateway_service
+    environment:
+      - API_GATEWAY_PORT=${API_GATEWAY_PORT}
+      - USER_SERVICE_PORT=${USER_SERVICE_PORT}
+      - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - ${API_GATEWAY_PORT}:${API_GATEWAY_PORT}
+
+  user-service:
+    build:
+      context: ./users_service
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - USER_SERVICE_PORT=${USER_SERVICE_PORT}
+    ports:
+      - "5001:5001"
+
+  question-service:
+    build:
+      context: ./question_service
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
+    ports:
+      - "5002:5002"
+
+  matching_service:
+    build:
+      context: ./matching_service
+    environment:
+      - MATCHING_SERVICE_PORT=${MATCHING_SERVICE_PORT}
+      - USER_SERVICE_PORT=${USER_SERVICE_PORT}
+      - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
+    ports:
+      - "5004:5004"
