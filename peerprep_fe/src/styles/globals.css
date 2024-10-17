@@ -1,0 +1,76 @@
+@import url("https://fonts.googleapis.com/css2?family=Albert+Sans:ital,wght@0,100..900;1,100..900&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.error {
+  color: red;
+}
+
+.split {
+  display: flex;
+}
+
+.split > div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.workspacecomponent {
+  background-color: #d4d4d4; /* bg-gray-50 */
+  border-bottom: 1px solid #e5e7eb; /* border-b border-gray-200 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06); /* shadow-md */
+  padding: 0.75rem 1.25rem; /* py-3 px-5 */
+  border-top-left-radius: 0.5rem; /* rounded-t-lg */
+  border-top-right-radius: 0.5rem; /* rounded-t-lg */
+}
+
+.difficulty {
+  padding-left: 0.75rem; /* px-3 */
+  padding-right: 0.75rem; /* px-3 */
+  padding-top: 0.25rem; /* py-1 */
+  padding-bottom: 0.25rem; /* py-1 */
+  border-radius: 9999px; /* rounded-full */
+  color: #ffffff; /* text-white */
+  font-weight: 500; /* font-medium */
+  font-size: 0.875rem; /* text-sm */
+}
+
+.topic {
+  @apply ml-2 px-3 py-1 rounded-full text-white font-medium text-sm bg-gray-400;
+}
+
+.questiontitle {
+  @apply text-2xl font-bold text-gray-800
+}
+
+.title {
+  @apply text-lg font-semibold text-gray-800 mb-2
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
