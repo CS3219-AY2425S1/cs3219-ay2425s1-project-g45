@@ -1,0 +1,34 @@
+{
+  "name": "peerprep_fe",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@next/env": "^14.2.12",
+    "dotenv": "^16.4.5",
+    "next": "14.2.11",
+    "next-client-cookies": "^1.1.1",
+    "next-themes": "^0.3.0",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-split-pane": "^2.0.3",
+    "socket.io-client": "^4.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/react-split-pane": "^0.1.67",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.11",
+    "peerprep-shared-types": "^1.0.12",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
