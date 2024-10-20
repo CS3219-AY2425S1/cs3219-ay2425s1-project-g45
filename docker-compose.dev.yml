@@ -64,6 +64,19 @@ services:
       - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
     ports:
       - ${QUESTION_SERVICE_PORT}:${QUESTION_SERVICE_PORT}
+    
+  collab-service:
+    build:
+      context: ./collab_service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./collab_service:/app
+      - /app/node_modules # This prevents the host's node_modules from overwriting the container's
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - COLLLAB_SERVICE_PORT=${COLLLAB_SERVICE_PORT}
+    ports:
+      - ${COLLLAB_SERVICE_PORT}:${COLLLAB_SERVICE_PORT}
 
   matching-service:
     build:
