@@ -33,6 +33,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     socket.emit(ClientSocketEvents.CODE_CHANGE, {
       message: {
         sharedCode: newContent,
+        language: language,
       },
       event: ClientSocketEvents.CODE_CHANGE,
       roomId: params.id,
@@ -40,8 +41,23 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     });
   };
 
-  const [isConnected, setIsConnected] = useState(false);
-  const [userCount, setUserCount] = useState(0);
+  const handleLanguageChange = (language: Language) => {
+    setLanguage(language);
+
+    if (!socket) return;
+    console.log("Emitting code change");
+    console.log(language);
+
+    socket.emit(ClientSocketEvents.CODE_CHANGE, {
+      message: {
+        sharedCode: sharedCode,
+        language: language,
+      },
+      event: ClientSocketEvents.CODE_CHANGE,
+      roomId: params.id,
+      username: username,
+    });
+  };
 
   const [activeUsers, setActiveUsers] = useState<string[]>([]);
   const [sharedCode, setSharedCode] = useState<string>("");
@@ -69,18 +85,20 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     socket.emit(ClientSocketEvents.JOIN_ROOM, {
       roomId: room?._id,
       event: ClientSocketEvents.JOIN_ROOM,
+      username: username,
     });
     socket.on(ClientSocketEvents.EDITOR_STATE, ({ content, activeUsers }) => {
       setSharedCode(content);
       setActiveUsers(activeUsers);
-      setIsConnected(true);
     });
 
     socket.on(
       ClientSocketEvents.CODE_CHANGE,
-      ({ username: remoteUser, content: newContent }) => {
+      ({ username: remoteUser, content: newContent, language }) => {
+        console.log("hi, language is", language, "new content is", newContent);
         if (remoteUser !== username) {
           setSharedCode(newContent);
+          setLanguage(language);
         }
       }
     );
@@ -89,13 +107,15 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       setActiveUsers(activeUsers);
     });
 
+    socket.on("roomUpdated", (room) => {
+      setSharedCode(room.content);
+    });
+
     socket.on(ClientSocketEvents.USER_LEFT, ({ username, activeUsers }) => {
       setActiveUsers(activeUsers);
     });
 
-    socket.on("disconnect", () => {
-      setIsConnected(false);
-    });
+    socket.on("disconnect", () => {});
   }, [socket, room]);
 
   return (
@@ -143,7 +163,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
                 language={language}
                 sharedCode={sharedCode}
                 handleCodeChange={handleCodeChange}
-                setLanguage={setLanguage}
+                setLanguage={handleLanguageChange}
               />
             </div>
             <div className="flex-1 p-4">
