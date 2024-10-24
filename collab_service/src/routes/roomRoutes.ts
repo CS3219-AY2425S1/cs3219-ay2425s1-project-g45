@@ -3,13 +3,14 @@ import { createRoom } from "../services/roomService";
 
 const router = express.Router();
 
-router.post("/create", async (req: Request, res: Response) => {
+router.post("/create", async (req, res) => {
   try {
+    let request = req.body;
     let room = await createRoom(
-      req.topic,
-      req.difficulty,
-      req.users,
-      req.question
+      request.topic,
+      request.difficulty,
+      request.users,
+      request.question
     );
     return room;
   } catch (error) {
