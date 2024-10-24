@@ -84,9 +84,10 @@ export class WebSocketHandler {
             {
               key: data.roomId,
               value: JSON.stringify({
-                type: "JOIN_ROOM",
+                type: ClientSocketEvents.JOIN_ROOM,
                 socketId: socket.id,
-                ...data,
+                username: data.username,
+                roomId: data.roomId,
               }),
             },
           ],
@@ -95,11 +96,13 @@ export class WebSocketHandler {
 
       socket.on(ClientSocketEvents.CODE_CHANGE, async (data) => {
         const { roomId, username, message } = data;
+        console.log("Code change in room:", message);
 
         socket.to(roomId).emit(ClientSocketEvents.CODE_CHANGE, {
           username,
           roomId,
           content: message.sharedCode,
+          language: message.language,
           timestamp: Date.now(),
         });
 
@@ -142,11 +145,19 @@ export class WebSocketHandler {
           userId: event.userId,
           change: event.change,
           roomState: event.roomState, // Include room state
+          language: event.language,
         });
         break;
 
       case "ROOM_UPDATED":
+        console.log("Broadcasting room update:");
+        console.log(event);
         this.io.to(event.roomId).emit("roomUpdated", event.room);
+        break;
+      case "REFRESH_STATE":
+        console.log("Broadcasting room refresh:");
+        console.log(event);
+        this.io.to(event.roomId).emit("roomUpdated", event.state);
         break;
     }
   }

@@ -1,5 +1,5 @@
 export interface EditorState {
-  content: { [username: string]: string };
+  content: string;
   language: string;
   activeUsers: string[];
 }
@@ -11,11 +11,15 @@ export class EditorManager {
     if (!this.roomEditorStates.has(roomId)) {
       console.log("Initializing room", roomId);
       this.roomEditorStates.set(roomId, {
-        content: {},
+        content: "",
         language,
         activeUsers: [],
       });
     }
+    console.log(
+      this.roomEditorStates.get(roomId),
+      "roomEditorStates.get(roomId)"
+    );
     return this.roomEditorStates.get(roomId)!;
   }
 
@@ -40,10 +44,8 @@ export class EditorManager {
   updateCode(roomId: string, username: string, code: string) {
     const state = this.roomEditorStates.get(roomId);
     console.log("Updating code for", username, "in room", roomId);
-    console.log(state, "state");
-    console.log(this.roomEditorStates, "roomEditorStates");
     if (state) {
-      state.content[username] = code;
+      state.content = code;
       return state;
     }
     console.log(state);

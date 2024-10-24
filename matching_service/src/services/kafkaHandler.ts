@@ -21,7 +21,7 @@ export class KafkaHandler {
 
     try {
       switch (type) {
-        case "JOIN_ROOM":
+        case ClientSocketEvents.JOIN_ROOM:
           await this.handleJoinRoom(roomId, username, socketId);
           break;
 
@@ -51,17 +51,18 @@ export class KafkaHandler {
     socketId: string
   ) {
     // Get or initialize room state
-    const editorState = this.editorManager.initializeRoom(roomId);
+    console.log("Joining room:", roomId, username);
+    const editorState = this.editorManager.initializeRoom(roomId, "javascript");
 
     // Add user to room
-    this.editorManager.addUserToRoom(roomId, username);
+    const newState = this.editorManager.addUserToRoom(roomId, username);
 
     // Send editor state back to gateway
     await this.sendGatewayEvent({
-      type: "ROOM_STATE",
+      type: "REFRESH_STATE",
       roomId,
       socketId,
-      state: editorState,
+      state: newState || editorState,
       timestamp: Date.now(),
     });
   }
