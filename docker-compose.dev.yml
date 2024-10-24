@@ -76,6 +76,19 @@ services:
       - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
     ports:
       - ${QUESTION_SERVICE_PORT}:${QUESTION_SERVICE_PORT}
+    
+  collab-service:
+    build:
+      context: ./collab_service
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./collab_service:/app
+      - /app/node_modules # This prevents the host's node_modules from overwriting the container's
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - COLLAB_SERVICE_PORT=${COLLAB_SERVICE_PORT}
+    ports:
+      - ${COLLAB_SERVICE_PORT}:${COLLAB_SERVICE_PORT}
 
   matching-service:
     build:
@@ -145,6 +158,13 @@ services:
           --if-not-exists \
           --bootstrap-server kafka-service:${KAFKA_BROKER_PORT} \
           --topic collaboration-events \
+          --partitions ${KAFKA_NUM_PARTITIONS:-1} \
+          --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh \
+          --create \
+          --if-not-exists \
+          --bootstrap-server kafka-service:${KAFKA_BROKER_PORT} \
+          --topic gateway-events \
           --partitions ${KAFKA_NUM_PARTITIONS:-1} \
           --replication-factor 1
       '
