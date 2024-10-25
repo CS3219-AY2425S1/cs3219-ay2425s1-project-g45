@@ -1,6 +1,6 @@
 {
   "name": "peerprep-shared-types",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "Shared TypeScript types for PeerPrep frontend and backend",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
