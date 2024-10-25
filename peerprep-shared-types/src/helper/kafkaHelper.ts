@@ -27,3 +27,10 @@ export function isCollaborationEvent(
     event.type as CollaborationEvents
   );
 }
+
+// Type guard for collaboration events specifically
+export function isGatewayEvent(
+  event: KafkaEvent<keyof EventPayloads>
+): event is KafkaEvent<Extract<keyof EventPayloads, GatewayEvents>> {
+  return Object.values(GatewayEvents).includes(event.type as GatewayEvents);
+}
