@@ -13,7 +13,7 @@ export interface EventPayloads {
   };
   [GatewayEvents.USER_LEFT]: {
     roomId: string;
-    userId: string;
+    username: string;
   };
   [GatewayEvents.ERROR]: {
     roomId: string;
@@ -22,23 +22,22 @@ export interface EventPayloads {
   [GatewayEvents.CODE_CHANGED]: {
     roomId: string;
     content: string;
-    userId: string;
+    username: string;
   };
 
   // Collaboration Events
   [CollaborationEvents.JOIN_ROOM]: {
     roomId: string;
-    userId: string;
     username: string;
   };
   [CollaborationEvents.LEAVE_ROOM]: {
     roomId: string;
-    userId: string;
+    username: string;
   };
   [CollaborationEvents.UPDATE_CODE]: {
     roomId: string;
     content: string;
-    userId: string;
+    username: string;
   };
 }
 
