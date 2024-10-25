@@ -1,7 +1,15 @@
 import { Kafka, Producer } from "kafkajs";
 import { EditorManager } from "./editor";
 import { RoomModel } from "../models/Room";
-import { ClientSocketEvents, Topics } from "peerprep-shared-types";
+import {
+  ClientSocketEvents,
+  GatewayEvents,
+  Topics,
+  KafkaEvent,
+  EventPayloads,
+  createEvent,
+} from "peerprep-shared-types";
+import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
 
 export class KafkaHandler {
   private producer: Producer;
@@ -16,40 +24,51 @@ export class KafkaHandler {
     await this.producer.connect();
   }
 
-  async handleCollaborationEvent(event: any) {
-    const { type, roomId, username, content, socketId } = event;
-
+  async handleCollaborationEvent(event: KafkaEvent<keyof EventPayloads>) {
+    const { type, payload } = event;
     try {
       switch (type) {
-        case ClientSocketEvents.JOIN_ROOM:
-          await this.handleJoinRoom(roomId, username, socketId);
+        case CollaborationEvents.JOIN_ROOM:
+          const joinPayload =
+            event.payload as EventPayloads[CollaborationEvents.JOIN_ROOM];
+
+          await this.handleJoinRoom(joinPayload.roomId, joinPayload.username);
           break;
 
-        case ClientSocketEvents.CODE_CHANGE:
-          await this.handleCodeChange(roomId, username, content);
+        case CollaborationEvents.UPDATE_CODE:
+          const updatePayload =
+            event.payload as EventPayloads[CollaborationEvents.UPDATE_CODE];
+          await this.handleCodeChange(
+            updatePayload.roomId,
+            updatePayload.username,
+            updatePayload.content
+          );
           break;
 
-        case "LEAVE_ROOM":
-          await this.handleLeaveRoom(roomId, username);
+        case CollaborationEvents.LEAVE_ROOM:
+          const leavePayload =
+            event.payload as EventPayloads[CollaborationEvents.LEAVE_ROOM];
+          await this.handleLeaveRoom(
+            leavePayload.roomId,
+            leavePayload.username
+          );
           break;
       }
     } catch (error) {
       console.error(`Error handling ${type} event:`, error);
       // Send error event back to gateway if needed
-      await this.sendGatewayEvent({
-        type: "ERROR",
-        roomId,
+      const roomId = payload.roomId;
+
+      const event = createEvent(GatewayEvents.ERROR, {
         error: `Failed to handle ${type} event`,
-        timestamp: Date.now(),
+        roomId,
       });
+
+      await this.sendGatewayEvent(event);
     }
   }
 
-  private async handleJoinRoom(
-    roomId: string,
-    username: string,
-    socketId: string
-  ) {
+  private async handleJoinRoom(roomId: string, username: string) {
     // Get or initialize room state
     console.log("Joining room:", roomId, username);
     const editorState = this.editorManager.initializeRoom(roomId, "javascript");
@@ -57,14 +76,10 @@ export class KafkaHandler {
     // Add user to room
     const newState = this.editorManager.addUserToRoom(roomId, username);
 
+    const event = createEvent(GatewayEvents.REFRESH_ROOM_STATE, { roomId });
+
     // Send editor state back to gateway
-    await this.sendGatewayEvent({
-      type: "REFRESH_STATE",
-      roomId,
-      socketId,
-      state: newState || editorState,
-      timestamp: Date.now(),
-    });
+    await this.sendGatewayEvent(event);
   }
 
   private async handleCodeChange(
@@ -78,13 +93,13 @@ export class KafkaHandler {
 
     if (newState) {
       // Send updated state to gateway
-      await this.sendGatewayEvent({
-        type: "CODE_CHANGED",
+
+      const event = createEvent(GatewayEvents.CODE_CHANGED, {
         roomId,
+        content,
         username,
-        state: newState,
-        timestamp: Date.now(),
       });
+      await this.sendGatewayEvent(event);
     }
   }
 
@@ -99,13 +114,12 @@ export class KafkaHandler {
       }
 
       // Send updated state to gateway
-      await this.sendGatewayEvent({
-        type: "USER_LEFT",
+      const event = createEvent(GatewayEvents.USER_LEFT, {
         roomId,
         username,
-        state: newState,
-        timestamp: Date.now(),
       });
+
+      await this.sendGatewayEvent(event);
 
       // Update room in database
       await RoomModel.findByIdAndUpdate(roomId, {
@@ -114,12 +128,14 @@ export class KafkaHandler {
     }
   }
 
-  private async sendGatewayEvent(event: any) {
+  private async sendGatewayEvent<T extends GatewayEvents>(
+    event: KafkaEvent<T>
+  ) {
     await this.producer.send({
       topic: Topics.GATEWAY_EVENTS,
       messages: [
         {
-          key: event.roomId,
+          key: event.payload.roomId,
           value: JSON.stringify(event),
         },
       ],

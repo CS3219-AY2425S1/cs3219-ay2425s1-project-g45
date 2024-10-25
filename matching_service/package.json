@@ -18,7 +18,7 @@
     "kafkajs": "^2.2.4",
     "mongodb": "^6.9.0",
     "mongoose": "^7.5.1",
-    "peerprep-shared-types": "^1.0.22",
+    "peerprep-shared-types": "^1.0.24",
     "socket.io": "^4.8.0",
     "socketio-jwt": "^4.6.2",
     "uuid": "^10.0.0"

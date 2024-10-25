@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import { RoomModel } from "./models/Room";
 import { Groups, Topics } from "peerprep-shared-types";
+import { isCollaborationEvent, isValidKafkaEvent } from "./helper/kafkaHelper";
 
 dotenv.config();
 
@@ -40,7 +41,25 @@ const setupKafkaConsumer = async () => {
     eachMessage: async ({ topic, partition, message }) => {
       try {
         const event = JSON.parse(message.value?.toString() || "");
-        console.log("Received collaboration event:", event.type);
+
+        if (!isValidKafkaEvent(event)) {
+          throw new Error(
+            `Invalid event format received: ${JSON.stringify(event)}`
+          );
+        }
+
+        if (
+          topic === Topics.COLLABORATION_EVENTS &&
+          !isCollaborationEvent(event)
+        ) {
+          throw new Error(
+            `Received non-collaboration event on collaboration topic: ${event.type}`
+          );
+        }
+        console.log(
+          `Processing ${event.type} event for room: ${event.payload.roomId}`
+        );
+
         await kafkaHandler.handleCollaborationEvent(event);
       } catch (error) {
         console.error("Error processing message:", error);
