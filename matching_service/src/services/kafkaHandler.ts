@@ -2,7 +2,6 @@ import { Kafka, Producer } from "kafkajs";
 import { EditorManager } from "./editor";
 import { RoomModel } from "../models/Room";
 import {
-  ClientSocketEvents,
   GatewayEvents,
   Topics,
   KafkaEvent,
@@ -76,7 +75,10 @@ export class KafkaHandler {
     // Add user to room
     const newState = this.editorManager.addUserToRoom(roomId, username);
 
-    const event = createEvent(GatewayEvents.REFRESH_ROOM_STATE, { roomId });
+    const event = createEvent(GatewayEvents.REFRESH_ROOM_STATE, {
+      roomId,
+      editorState: editorState || newState,
+    });
 
     // Send editor state back to gateway
     await this.sendGatewayEvent(event);
@@ -101,14 +103,6 @@ export class KafkaHandler {
       if (newState.activeUsers.length === 0) {
         this.editorManager.cleanupRoom(roomId);
       }
-
-      // Send updated state to gateway
-      const event = createEvent(GatewayEvents.USER_LEFT, {
-        roomId,
-        username,
-      });
-
-      await this.sendGatewayEvent(event);
 
       // Update room in database
       await RoomModel.findByIdAndUpdate(roomId, {

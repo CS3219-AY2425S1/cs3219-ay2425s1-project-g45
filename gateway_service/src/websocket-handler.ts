@@ -1,7 +1,19 @@
 // api-gateway/websocket-handler.ts
 import { Server, Socket } from "socket.io";
 import { Kafka } from "kafkajs";
-import { Groups, Topics, ClientSocketEvents } from "peerprep-shared-types";
+import {
+  Groups,
+  Topics,
+  ClientSocketEvents,
+  GatewayEvents,
+  KafkaEvent,
+  EventPayloads,
+  createEvent,
+  validateKafkaEvent,
+} from "peerprep-shared-types";
+import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
+
+type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
 
 export class WebSocketHandler {
   private io: Server;
@@ -43,16 +55,23 @@ export class WebSocketHandler {
     await this.consumer.connect();
 
     // Subscribe to gateway events from Collaboration Service
-    await this.consumer.subscribe({ topic: Topics.COLLABORATION_EVENTS });
+    await this.consumer.subscribe({
+      topic: Topics.GATEWAY_EVENTS,
+      fromBeginning: false,
+    });
 
     // Handle events from Collaboration Service
     await this.consumer.run({
       eachMessage: async ({ topic, partition, message }: any) => {
         const event = JSON.parse(message.value.toString());
-        console.log("Received event from collaboration service:", event.type);
-        // eg after join room, send back the room details
-        //  eg after code change, broadcast to all in room
-        this.handleCollaborationEvent(event);
+        console.log(
+          "Received gateway event from collaboration service:",
+          event.type
+        );
+
+        validateKafkaEvent(event, topic as Topics);
+
+        await this.handleGatewayEvent(event);
       },
     });
   }
@@ -79,27 +98,28 @@ export class WebSocketHandler {
 
       socket.on(ClientSocketEvents.JOIN_ROOM, async (data) => {
         console.log("Joining room:", data.roomId);
+
         socket.join(data.roomId);
-        await this.producer.send({
-          topic: Topics.COLLABORATION_EVENTS,
-          messages: [
-            {
-              key: data.roomId,
-              value: JSON.stringify({
-                type: ClientSocketEvents.JOIN_ROOM,
-                socketId: socket.id,
-                username: data.username,
-                roomId: data.roomId,
-              }),
-            },
-          ],
+
+        // Purpose: to send the room details back to the user who joined the room
+        //  first sends the join room event to collaboration service
+        // collaboration will send back a refresh room state event which contains the current state of the room
+        // this event will be sent back to the user who joined the room
+        // create event
+        const event = createEvent(CollaborationEvents.JOIN_ROOM, {
+          roomId: data.roomId,
+          username: data.username,
         });
+
+        // send event to collaboration service
+        await this.sendCollaborationEvent(event);
       });
 
       socket.on(ClientSocketEvents.CODE_CHANGE, async (data) => {
         const { roomId, username, message } = data;
         console.log("Code change in room:", message);
 
+        // everyone in the room except the sender will receive the code change on frontend
         socket.to(roomId).emit(ClientSocketEvents.CODE_CHANGE, {
           username,
           roomId,
@@ -108,21 +128,14 @@ export class WebSocketHandler {
           timestamp: Date.now(),
         });
 
-        await this.producer.send({
-          topic: Topics.COLLABORATION_EVENTS,
-          messages: [
-            {
-              key: data.roomId,
-              value: JSON.stringify({
-                type: ClientSocketEvents.CODE_CHANGE,
-                socketId: socket.id,
-                content: data.message.sharedCode,
-                roomId: data.roomId,
-                username: data.username,
-              }),
-            },
-          ],
+        const event = createEvent(CollaborationEvents.UPDATE_CODE, {
+          roomId: data.roomId,
+          username: data.username,
+          content: data.message.sharedCode,
         });
+
+        // send event to collaboration service
+        await this.sendCollaborationEvent(event);
       });
 
       socket.on("disconnect", () => {
@@ -131,36 +144,50 @@ export class WebSocketHandler {
     });
   }
 
-  private handleCollaborationEvent(event: any) {
-    switch (event.type) {
-      case "MATCH_FOUND":
-        console.log("Match found:", event.participants);
-        this.io.to(event.socketId).emit("matchFound", {
-          roomId: event.roomId,
-          participants: event.participants,
-        });
-        break;
+  private async handleGatewayEvent(event: KafkaEvent<keyof EventPayloads>) {
+    const { type, payload } = event;
+    try {
+      switch (type) {
+        case GatewayEvents.REFRESH_ROOM_STATE:
+          const roomPayload =
+            event.payload as EventPayloads[GatewayEvents.REFRESH_ROOM_STATE];
 
-      case "CODE_CHANGED":
-        console.log("Broadcasting code change:");
-        this.io.to(event.roomId).emit("codeChanged", {
-          userId: event.userId,
-          change: event.change,
-          roomState: event.roomState, // Include room state
-          language: event.language,
-        });
-        break;
+          console.log("Room state refresh event received:", roomPayload);
 
-      case "ROOM_UPDATED":
-        console.log("Broadcasting room update:");
-        console.log(event);
-        this.io.to(event.roomId).emit("roomUpdated", event.room);
-        break;
-      case "REFRESH_STATE":
-        console.log("Broadcasting room refresh:");
-        console.log(event);
-        this.io.to(event.roomId).emit("roomUpdated", event.state);
-        break;
+          console.log("Broadcasting code change:");
+          //   socket.emit("roomUpdated", {});
+          this.io.to(roomPayload.roomId).emit("roomUpdated", {
+            room: roomPayload.editorState,
+          });
+
+          break;
+        case GatewayEvents.ERROR:
+          console.log("Error event received:", payload);
+        // todo send the error to the client socket
+      }
+    } catch (error) {
+      console.error("Error handling gateway event:", error);
     }
+  }
+
+  private async sendCollaborationEvent<T extends CollaborationEventKeys>(
+    event: KafkaEvent<T>
+  ) {
+    console.log(
+      "Sending collaboration event:",
+      event.type,
+      "to topic",
+      Topics.COLLABORATION_EVENTS
+    );
+
+    await this.producer.send({
+      topic: Topics.COLLABORATION_EVENTS,
+      messages: [
+        {
+          key: event.payload.roomId,
+          value: JSON.stringify(event),
+        },
+      ],
+    });
   }
 }

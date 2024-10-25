@@ -76,6 +76,9 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       });
     }
   }, [token]);
+  useEffect(() => {
+    console.log("Shared code is", sharedCode);
+  }, [sharedCode]);
 
   useEffect(() => {
     if (!socket || !room?._id) return;
@@ -108,7 +111,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     });
 
     socket.on("roomUpdated", (room) => {
-      setSharedCode(room.content);
+      setSharedCode(room.room.content);
     });
 
     socket.on(ClientSocketEvents.USER_LEFT, ({ username, activeUsers }) => {
