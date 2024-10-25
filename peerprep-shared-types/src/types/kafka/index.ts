@@ -1,3 +1,4 @@
+import { EditorState } from "../editor";
 import { CollaborationEvents } from "./collaboration-events";
 import { GatewayEvents } from "./gateway-events";
 import { Topics } from "./topics";
@@ -10,19 +11,11 @@ export interface EventPayloads {
   // Gateway Events
   [GatewayEvents.REFRESH_ROOM_STATE]: {
     roomId: string;
-  };
-  [GatewayEvents.USER_LEFT]: {
-    roomId: string;
-    username: string;
+    editorState: EditorState;
   };
   [GatewayEvents.ERROR]: {
     roomId: string;
     error: string;
-  };
-  [GatewayEvents.CODE_CHANGED]: {
-    roomId: string;
-    content: string;
-    username: string;
   };
 
   // Collaboration Events
