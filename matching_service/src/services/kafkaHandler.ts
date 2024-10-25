@@ -1,7 +1,7 @@
 import { Kafka, Producer } from "kafkajs";
 import { EditorManager } from "./editor";
 import { RoomModel } from "../models/Room";
-import { ClientSocketEvents } from "peerprep-shared-types";
+import { ClientSocketEvents, Topics } from "peerprep-shared-types";
 
 export class KafkaHandler {
   private producer: Producer;
@@ -116,7 +116,7 @@ export class KafkaHandler {
 
   private async sendGatewayEvent(event: any) {
     await this.producer.send({
-      topic: "gateway-events",
+      topic: Topics.GATEWAY_EVENTS,
       messages: [
         {
           key: event.roomId,

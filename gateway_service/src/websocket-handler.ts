@@ -1,7 +1,7 @@
 // api-gateway/websocket-handler.ts
 import { Server, Socket } from "socket.io";
 import { Kafka } from "kafkajs";
-import { ClientSocketEvents } from "peerprep-shared-types";
+import { Groups, Topics, ClientSocketEvents } from "peerprep-shared-types";
 
 export class WebSocketHandler {
   private io: Server;
@@ -37,13 +37,13 @@ export class WebSocketHandler {
 
   private async setupKafka() {
     this.producer = this.kafka.producer();
-    this.consumer = this.kafka.consumer({ groupId: "api-gateway-group" });
+    this.consumer = this.kafka.consumer({ groupId: Groups.API_GATEWAY_GROUP });
 
     await this.producer.connect();
     await this.consumer.connect();
 
     // Subscribe to gateway events from Collaboration Service
-    await this.consumer.subscribe({ topic: "gateway-events" });
+    await this.consumer.subscribe({ topic: Topics.COLLABORATION_EVENTS });
 
     // Handle events from Collaboration Service
     await this.consumer.run({
@@ -61,7 +61,7 @@ export class WebSocketHandler {
 
       socket.on("requestMatch", async (data) => {
         await this.producer.send({
-          topic: "collaboration-events",
+          topic: Topics.COLLABORATION_EVENTS,
           messages: [
             {
               key: socket.id,
@@ -79,7 +79,7 @@ export class WebSocketHandler {
         console.log("Joining room:", data.roomId);
         socket.join(data.roomId);
         await this.producer.send({
-          topic: "collaboration-events",
+          topic: Topics.COLLABORATION_EVENTS,
           messages: [
             {
               key: data.roomId,
@@ -107,7 +107,7 @@ export class WebSocketHandler {
         });
 
         await this.producer.send({
-          topic: "collaboration-events",
+          topic: Topics.COLLABORATION_EVENTS,
           messages: [
             {
               key: data.roomId,

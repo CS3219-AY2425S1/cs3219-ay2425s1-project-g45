@@ -4,6 +4,7 @@ import { KafkaHandler } from "./services/kafkaHandler";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import { RoomModel } from "./models/Room";
+import { Groups, Topics } from "peerprep-shared-types";
 
 dotenv.config();
 
@@ -27,11 +28,11 @@ const kafkaHandler = new KafkaHandler(kafka);
 
 // Set up Kafka consumer
 const setupKafkaConsumer = async () => {
-  const consumer = kafka.consumer({ groupId: "matching-service-group" });
+  const consumer = kafka.consumer({ groupId: Groups.MATCHING_SERVICE_GROUP });
 
   await consumer.connect();
   await consumer.subscribe({
-    topic: "collaboration-events",
+    topic: Topics.COLLABORATION_EVENTS,
     fromBeginning: false,
   });
 
