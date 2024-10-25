@@ -49,7 +49,9 @@ export class WebSocketHandler {
     await this.consumer.run({
       eachMessage: async ({ topic, partition, message }: any) => {
         const event = JSON.parse(message.value.toString());
-        console.log("Received gateway event:", event.type);
+        console.log("Received event from collaboration service:", event.type);
+        // eg after join room, send back the room details
+        //  eg after code change, broadcast to all in room
         this.handleCollaborationEvent(event);
       },
     });

@@ -88,19 +88,8 @@ export class KafkaHandler {
     content: string
   ) {
     // Update editor state
-    console.log("Updating code:", roomId, username);
-    const newState = this.editorManager.updateCode(roomId, username, content);
-
-    if (newState) {
-      // Send updated state to gateway
-
-      const event = createEvent(GatewayEvents.CODE_CHANGED, {
-        roomId,
-        content,
-        username,
-      });
-      await this.sendGatewayEvent(event);
-    }
+    console.log("Updating room state with new code:", roomId, username);
+    this.editorManager.updateCode(roomId, username, content);
   }
 
   private async handleLeaveRoom(roomId: string, username: string) {

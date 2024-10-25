@@ -1,8 +1,4 @@
-export interface EditorState {
-  content: string;
-  language: string;
-  activeUsers: string[];
-}
+import { EditorState } from "peerprep-shared-types";
 
 export class EditorManager {
   private roomEditorStates = new Map<string, EditorState>();
