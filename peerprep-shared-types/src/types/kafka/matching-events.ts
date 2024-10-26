@@ -1,0 +1,4 @@
+enum MatchingEvents {
+  MATCH_REQUESTED = "MATCH_REQUESTED",
+  MATCH_CANCEL = "MATCH_CANCEL",
+}
