@@ -3,7 +3,7 @@ import { DifficultyLevel, QuestionDto } from "./question";
 export interface RoomDto {
   _id: string;
   users: string[];
-  question: QuestionDto;
+  questionId: string;
   topic: string;
   difficulty: DifficultyLevel;
   //   messages: {
