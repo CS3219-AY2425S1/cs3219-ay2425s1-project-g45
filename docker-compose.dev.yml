@@ -16,6 +16,8 @@ services:
       - GATEWAY_SERVICE_ROUTE=gateway-service
     ports:
       - ${FRONTEND_PORT}:${FRONTEND_PORT}
+    depends_on:
+      - gateway-service
 
   gateway-service:
     build:
