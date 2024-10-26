@@ -1,6 +1,6 @@
 {
   "name": "peerprep-shared-types",
-  "version": "1.0.34",
+  "version": "1.0.35",
   "description": "Shared TypeScript types for PeerPrep frontend and backend",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,5 +22,8 @@
   "devDependencies": {
     "@types/node": "^14.14.31",
     "typescript": "^4.2.2"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4"
   }
 }
