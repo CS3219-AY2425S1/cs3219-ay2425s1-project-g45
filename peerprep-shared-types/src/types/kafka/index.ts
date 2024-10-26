@@ -3,7 +3,6 @@ import { CollaborationEvents } from "./collaboration-events";
 import { GatewayEvents } from "./gateway-events";
 import { Topics } from "./topics";
 
-export * from "./baseKafkaHandler";
 export * from "./gateway-events";
 export * from "./group";
 export * from "./topics";
