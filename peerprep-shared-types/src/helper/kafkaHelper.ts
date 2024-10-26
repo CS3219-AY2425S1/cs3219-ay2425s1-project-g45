@@ -5,6 +5,7 @@ import {
   EventPayloads,
 } from "../types/kafka";
 import { CollaborationEvents } from "../types/kafka/collaboration-events";
+import { MatchingEvents } from "../types/kafka/matching-events";
 
 class KafkaEventValidator {
   // Make validateEvent method explicitly typed
@@ -21,10 +22,6 @@ class KafkaEventValidator {
     this.validatePayload(event);
 
     this.validateEventTopic(event, topic);
-
-    console.log(
-      `Validated ${event.type} event for room: ${event.payload.roomId}`
-    );
   }
 
   private isKafkaEventStructure(
@@ -56,6 +53,12 @@ class KafkaEventValidator {
     return Object.values(GatewayEvents).includes(event.type as GatewayEvents);
   }
 
+  private isMatchingEvent(
+    event: KafkaEvent<keyof EventPayloads>
+  ): event is KafkaEvent<Extract<keyof EventPayloads, MatchingEvents>> {
+    return Object.values(MatchingEvents).includes(event.type as MatchingEvents);
+  }
+
   private validateEventTopic(
     event: KafkaEvent<keyof EventPayloads>,
     topic: Topics
@@ -73,6 +76,14 @@ class KafkaEventValidator {
         if (!this.isGatewayEvent(event)) {
           throw new Error(
             `Invalid event type for gateway topic: ${event.type}`
+          );
+        }
+        break;
+
+      case Topics.MATCHING_EVENTS:
+        if (!this.isMatchingEvent(event)) {
+          throw new Error(
+            `Invalid event type ofr matching topic: ${event.type}`
           );
         }
         break;

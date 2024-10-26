@@ -1,6 +1,7 @@
 import { EditorState } from "../editor";
 import { CollaborationEvents } from "./collaboration-events";
 import { GatewayEvents } from "./gateway-events";
+import { MatchingEvents } from "./matching-events";
 import { Topics } from "./topics";
 
 export * from "./gateway-events";
@@ -17,6 +18,11 @@ export interface EventPayloads {
     roomId: string;
     error: string;
   };
+  [GatewayEvents.MATCH_FOUND]: {
+    usernames: string[];
+    topic: string;
+    difficulty: string;
+  };
 
   // Collaboration Events
   [CollaborationEvents.JOIN_ROOM]: {
@@ -32,6 +38,16 @@ export interface EventPayloads {
     content: string;
     username: string;
   };
+
+  // Matching Events
+  [MatchingEvents.MATCH_CANCEL]: {
+    username: string;
+  };
+  [MatchingEvents.MATCH_REQUESTED]: {
+    username: string;
+    difficulty: string;
+    topic: string;
+  };
 }
 
 // Type helper for creating events
@@ -45,6 +61,7 @@ export type KafkaEvent<T extends keyof EventPayloads> = {
 export type TopicEvents = {
   [Topics.GATEWAY_EVENTS]: GatewayEvents;
   [Topics.COLLABORATION_EVENTS]: CollaborationEvents;
+  [Topics.MATCHING_EVENTS]: MatchingEvents;
 };
 
 // Helper function to create typed events
