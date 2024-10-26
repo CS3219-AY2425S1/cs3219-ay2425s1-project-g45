@@ -8,7 +8,6 @@ import Button from "@/components/common/button";
 import Chat from "@/components/workspace/chat";
 import Problem from "@/components/workspace/problem";
 import CodeEditor, { Language } from "@/components/workspace/code-editor";
-import { getQuestion } from "@/app/actions/questions";
 import { getRoomById } from "@/app/actions/room";
 import { ClientSocketEvents, RoomDto } from "peerprep-shared-types";
 import { useSocket } from "@/app/actions/socket";
@@ -79,6 +78,9 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   useEffect(() => {
     console.log("Shared code is", sharedCode);
   }, [sharedCode]);
+  useEffect(() => {
+    console.log("ROOM IS", room);
+  }, [room]);
 
   useEffect(() => {
     if (!socket || !room?._id) return;
@@ -121,6 +123,10 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     socket.on("disconnect", () => {});
   }, [socket, room]);
 
+  if (!room) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="h-screen w-[80%] flex flex-col  mx-auto py-10 overscroll-contain">
       <Header>
@@ -156,7 +162,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       <div className="flex h-full">
         {/* Left Pane */}
         <div className="flex-1 min-w-[50px] border-r border-gray-300 h-[80%]">
-          <Problem question={room?.question} />
+          <Problem questionId={room.question} />
         </div>
         {/* Right Pane */}
         <div className="flex-1 min-w-[50px]">

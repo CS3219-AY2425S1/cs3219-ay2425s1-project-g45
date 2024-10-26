@@ -4,11 +4,20 @@ import { useAuth } from "@/contexts/auth-context";
 import React, { useEffect, useState } from "react";
 
 type ProblemProps = {
-  question?: QuestionDto;
+  questionId: string;
 };
 
-const Problem: React.FC<ProblemProps> = ({ question }) => {
+const Problem: React.FC<ProblemProps> = ({ questionId }) => {
   const { token } = useAuth();
+  const [question, setQuestion] = useState<QuestionDto>();
+
+  useEffect(() => {
+    if (token) {
+      getQuestion(questionId, token).then((data) => {
+        setQuestion(data?.message);
+      });
+    }
+  }, [token]);
 
   return (
     <div className="flex flex-col h-full p-4">

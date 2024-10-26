@@ -10,6 +10,7 @@ import {
   EventPayloads,
   createEvent,
   validateKafkaEvent,
+  ServiceNames,
 } from "peerprep-shared-types";
 import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
 
@@ -39,8 +40,10 @@ export class WebSocketHandler {
     //   },
     // });
     this.kafka = new Kafka({
-      clientId: "api-gateway",
-      brokers: [`kafka-service:${process.env.KAFKA_BROKER_PORT}`],
+      clientId: ServiceNames.API_GATEWAY,
+      brokers: [
+        `${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`,
+      ],
     });
 
     this.setupKafka();

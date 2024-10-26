@@ -26,19 +26,21 @@ services:
       - /app/node_modules
     environment:
       - MONGODB_URI=${MONGODB_URI}
-      - MATCHING_SERVICE_PORT=${MATCHING_SERVICE_PORT}
-      - API_GATEWAY_PORT=${API_GATEWAY_PORT}
-      - USER_SERVICE_PORT=${USER_SERVICE_PORT}
-      - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
       - KAFKA_BROKER_PORT=${KAFKA_BROKER_PORT}
       - KAFKA_CONTROLLER_PORT=${KAFKA_CONTROLLER_PORT}
       - JWT_SECRET=${JWT_SECRET}
       - GATEWAY_SERVICE_ROUTE=gateway-service
-      - USER_SERVICE_ROUTE=user-service
-      - QUESTION_SERVICE_ROUTE=question-service
+      - API_GATEWAY_PORT=${API_GATEWAY_PORT}
       - KAFKA_BROKER_ROUTE=kafka-service
       - KAFKA_CONTROLLER_ROUTE=kafka-service
       - MATCHING_SERVICE_ROUTE=matching-service
+      - MATCHING_SERVICE_PORT=${MATCHING_SERVICE_PORT}
+      - COLLAB_SERVICE_ROUTE=collab-service
+      - COLLAB_SERVICE_PORT=${COLLAB_SERVICE_PORT}
+      - USER_SERVICE_ROUTE=user-service
+      - USER_SERVICE_PORT=${USER_SERVICE_PORT}
+      - QUESTION_SERVICE_ROUTE=question-service
+      - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
     ports:
       - ${API_GATEWAY_PORT}:${API_GATEWAY_PORT}
 
@@ -76,7 +78,7 @@ services:
       - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
     ports:
       - ${QUESTION_SERVICE_PORT}:${QUESTION_SERVICE_PORT}
-    
+
   collab-service:
     build:
       context: ./collab_service
@@ -85,10 +87,27 @@ services:
       - ./collab_service:/app
       - /app/node_modules # This prevents the host's node_modules from overwriting the container's
     environment:
-      - MONGODB_URI=${MONGODB_URI}
       - COLLAB_SERVICE_PORT=${COLLAB_SERVICE_PORT}
+      - MONGODB_URI=${MONGODB_URI}
+      - MATCHING_SERVICE_PORT=${MATCHING_SERVICE_PORT}
+      - API_GATEWAY_PORT=${API_GATEWAY_PORT}
+      - USER_SERVICE_PORT=${USER_SERVICE_PORT}
+      - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
+      - KAFKA_BROKER_PORT=${KAFKA_BROKER_PORT}
+      - KAFKA_CONTROLLER_PORT=${KAFKA_CONTROLLER_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - GATEWAY_SERVICE_ROUTE=gateway-service
+      - USER_SERVICE_ROUTE=user-service
+      - QUESTION_SERVICE_ROUTE=question-service
+      - KAFKA_BROKER_ROUTE=kafka-service
+      - KAFKA_CONTROLLER_ROUTE=kafka-service
     ports:
       - ${COLLAB_SERVICE_PORT}:${COLLAB_SERVICE_PORT}
+    depends_on:
+      kafka-init:
+        condition: service_completed_successfully
+      kafka-service:
+        condition: service_healthy
 
   matching-service:
     build:
@@ -114,10 +133,10 @@ services:
     ports:
       - ${MATCHING_SERVICE_PORT}:${MATCHING_SERVICE_PORT}
     depends_on:
+      kafka-init:
+        condition: service_completed_successfully
       kafka-service:
         condition: service_healthy
-      # kafka-init:
-      #   condition: service_completed_successfully
 
   kafka-service:
     image: apache/kafka:latest
