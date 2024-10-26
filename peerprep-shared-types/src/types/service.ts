@@ -4,4 +4,5 @@ export enum ServiceNames {
   COLLABORATION_SERVICE = "collaboration-service",
   USER_SERVICE = "user-service",
   API_GATEWAY = "api-gateway",
+  QUESTION_SERVICE = "question-service",
 }
