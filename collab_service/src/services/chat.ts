@@ -19,7 +19,7 @@ export class ChatManager {
     const state = this.roomChatStates.get(roomId);
     if (state) {
       state.messages.push({
-        userId: username,
+        username: username,
         message: message,
         timestamp: new Date(),
       });
@@ -33,8 +33,9 @@ export class ChatManager {
   }
 
   cleanupChat(roomId: string) {
-    if (this.roomChatStates.has(roomId)) {
-      updateMessages(roomId, this.roomChatStates.get(roomId).messages);
+    const messages = this.roomChatStates.get(roomId)?.messages || [];
+    if (messages.length > 0) {
+      updateMessages(roomId, messages);
     }
     return this.roomChatStates.delete(roomId);
   }

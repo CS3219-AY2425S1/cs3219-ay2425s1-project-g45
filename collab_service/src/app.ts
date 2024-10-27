@@ -12,6 +12,7 @@ import {
 import { KafkaHandler } from "./services/kafkaHandler";
 import { RoomModel } from "./models/Room";
 import { CollaborationEventKeys } from "./services/kafkaHandler";
+import { getRoom } from "./services/roomService";
 
 // Load environment variables
 dotenv.config();
@@ -87,11 +88,10 @@ const initialize = async () => {
 };
 
 // Routes
-
 app.get("/room/:id", async (req, res) => {
   try {
     console.log("Fetching room");
-    const room = await RoomModel.findById(req.params.id);
+    const room = await getRoom(req.params.id);
     if (!room) {
       return res.status(404).json({ message: "Room not found" });
     }

@@ -10,6 +10,7 @@ import {
   TopicEvents,
 } from "peerprep-shared-types";
 import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
+import { ChatManager } from "./chat";
 
 export type CollaborationEventKeys = keyof Pick<
   EventPayloads,
@@ -19,10 +20,12 @@ export type CollaborationEventKeys = keyof Pick<
 export class KafkaHandler {
   private producer: Producer;
   private editorManager: EditorManager;
+  private chatManager: ChatManager;
 
   constructor(kafka: Kafka) {
     this.producer = kafka.producer();
     this.editorManager = new EditorManager();
+    this.chatManager = new ChatManager();
   }
 
   async initialize() {
@@ -58,6 +61,15 @@ export class KafkaHandler {
             leavePayload.username
           );
           break;
+
+        case CollaborationEvents.SEND_MESSAGE:
+          const messagePayload =
+            event.payload as EventPayloads[CollaborationEvents.SEND_MESSAGE];
+          await this.handleSendMessage(
+            messagePayload.roomId,
+            messagePayload.username,
+            messagePayload.message
+          );
       }
     } catch (error) {
       console.error(`Error handling ${type} event:`, error);
@@ -115,6 +127,21 @@ export class KafkaHandler {
         $pull: { activeUsers: username },
       });
     }
+  }
+
+  private async handleSendMessage(
+    roomId: string,
+    username: string,
+    message: string
+  ) {
+    console.log("Sending message:", roomId, username, message);
+    const updatedChat = this.chatManager.addMessage(roomId, message, username);
+
+    this.sendGatewayEvent(
+      createEvent(GatewayEvents.SIGNAL_NEW_CHAT, {
+        roomId,
+      })
+    );
   }
 
   private async sendGatewayEvent<T extends GatewayEvents>(

@@ -15,6 +15,7 @@ import {
 import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
 
 type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
+type GatewayEventKeys = Pick<EventPayloads, GatewayEvents>;
 
 export class WebSocketHandler {
   private io: Server;
@@ -73,8 +74,10 @@ export class WebSocketHandler {
         );
 
         validateKafkaEvent(event, topic as Topics);
-
-        await this.handleGatewayEvent(event);
+        if (topic === Topics.GATEWAY_EVENTS) {
+          const typedEvent = event as KafkaEvent<keyof GatewayEventKeys>;
+          await this.handleGatewayEvent(typedEvent);
+        }
       },
     });
   }
@@ -141,13 +144,27 @@ export class WebSocketHandler {
         await this.sendCollaborationEvent(event);
       });
 
+      socket.on(ClientSocketEvents.SEND_MESSAGE, async (data) => {
+        const { roomId, username, message } = data;
+        console.log("Sending message in room:", data);
+
+        const event = createEvent(CollaborationEvents.SEND_MESSAGE, {
+          roomId: roomId,
+          username: username,
+          message: message,
+        });
+
+        // send event to collaboration service
+        await this.sendCollaborationEvent(event);
+      });
+
       socket.on("disconnect", () => {
         console.log("Client disconnected:", socket.id);
       });
     });
   }
 
-  private async handleGatewayEvent(event: KafkaEvent<keyof EventPayloads>) {
+  private async handleGatewayEvent(event: KafkaEvent<keyof GatewayEventKeys>) {
     const { type, payload } = event;
     try {
       switch (type) {
@@ -166,7 +183,22 @@ export class WebSocketHandler {
           break;
         case GatewayEvents.ERROR:
           console.log("Error event received:", payload);
+          break;
         // todo send the error to the client socket
+        case GatewayEvents.SIGNAL_NEW_CHAT:
+          this.io
+            .to(payload.roomId)
+            .emit(ClientSocketEvents.SIGNAL_NEW_CHAT, {});
+          break;
+        case GatewayEvents.GET_NEW_CHATS:
+          const newChatsPayload =
+            event.payload as EventPayloads[GatewayEvents.GET_NEW_CHATS];
+          this.io
+            .to(payload.roomId)
+            .emit(ClientSocketEvents.REQUEST_NEW_CHATS, {
+              newMessages: newChatsPayload.newMessages,
+            });
+          break;
       }
     } catch (error) {
       console.error("Error handling gateway event:", error);
