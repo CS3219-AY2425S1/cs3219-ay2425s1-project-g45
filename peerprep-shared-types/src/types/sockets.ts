@@ -10,6 +10,9 @@ export enum ClientSocketEvents {
   USER_JOINED = "user_joined",
   USER_LEFT = "user_left",
   LANGUAGE_CHANGE = "language_change",
+  SEND_MESSAGE = "send_message",
+  SIGNAL_NEW_CHAT = "signal_new_chat",
+  REQUEST_NEW_CHATS = "request_new_chats",
 }
 
 export enum ServerSocketEvents {
