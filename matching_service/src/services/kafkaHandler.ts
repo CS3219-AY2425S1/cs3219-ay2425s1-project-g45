@@ -1,127 +1,69 @@
-// import { Kafka, Producer } from "kafkajs";
-// import { EditorManager } from "./editor";
-// import { RoomModel } from "../models/Room";
-// import {
-//   GatewayEvents,
-//   Topics,
-//   KafkaEvent,
-//   EventPayloads,
-//   createEvent,
-// } from "peerprep-shared-types";
-// import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
+// src/services/kafkaHandler.ts
 
-// export class KafkaHandler {
-//   private producer: Producer;
-//   private editorManager: EditorManager;
+import { Kafka, Producer, Consumer } from "kafkajs";
+import { EventEmitter } from "events";
+import {
+  Topics,
+  KafkaEvent,
+  EventPayloads,
+  validateKafkaEvent,
+  GatewayEvents,
+  createEvent,
+} from "peerprep-shared-types";
 
-//   constructor(kafka: Kafka) {
-//     this.producer = kafka.producer();
-//     this.editorManager = new EditorManager();
-//   }
+import { MatchingEvents } from "peerprep-shared-types/dist/types/kafka/matching-events";
 
-//   async initialize() {
-//     await this.producer.connect();
-//   }
+export class KafkaHandler extends EventEmitter {
+  private producer: Producer;
+  private consumer: Consumer;
 
-//   async handleCollaborationEvent(event: KafkaEvent<keyof EventPayloads>) {
-//     const { type, payload } = event;
-//     try {
-//       switch (type) {
-//         case CollaborationEvents.JOIN_ROOM:
-//           const joinPayload =
-//             event.payload as EventPayloads[CollaborationEvents.JOIN_ROOM];
+  constructor(private kafka: Kafka) {
+    super();
+    this.producer = kafka.producer();
+    this.consumer = kafka.consumer({ groupId: "matching-service-group" });
+  }
 
-//           await this.handleJoinRoom(joinPayload.roomId, joinPayload.username);
-//           break;
+  async initialize() {
+    await this.producer.connect();
+    await this.consumer.connect();
 
-//         case CollaborationEvents.UPDATE_CODE:
-//           const updatePayload =
-//             event.payload as EventPayloads[CollaborationEvents.UPDATE_CODE];
-//           await this.handleCodeChange(
-//             updatePayload.roomId,
-//             updatePayload.username,
-//             updatePayload.content
-//           );
-//           break;
+    await this.consumer.subscribe({
+      topic: Topics.MATCHING_EVENTS,
+      fromBeginning: false,
+    });
 
-//         case CollaborationEvents.LEAVE_ROOM:
-//           const leavePayload =
-//             event.payload as EventPayloads[CollaborationEvents.LEAVE_ROOM];
-//           await this.handleLeaveRoom(
-//             leavePayload.roomId,
-//             leavePayload.username
-//           );
-//           break;
-//       }
-//     } catch (error) {
-//       console.error(`Error handling ${type} event:`, error);
-//       // Send error event back to gateway if needed
-//       const roomId = payload.roomId;
+    await this.consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        try {
+          const event: KafkaEvent<keyof EventPayloads> = JSON.parse(
+            message.value?.toString() || ""
+          );
 
-//       const event = createEvent(GatewayEvents.ERROR, {
-//         error: `Failed to handle ${type} event`,
-//         roomId,
-//       });
+          validateKafkaEvent(event, topic as Topics);
 
-//       await this.sendGatewayEvent(event);
-//     }
-//   }
+          this.emit(event.type, event.payload);
+        } catch (error) {
+          console.error("Error processing message:", error);
+        }
+      },
+    });
+  }
 
-//   private async handleJoinRoom(roomId: string, username: string) {
-//     // Get or initialize room state
-//     console.log("Joining room:", roomId, username);
-//     const editorState = this.editorManager.initializeRoom(roomId, "javascript");
+  async sendGatewayEvent<T extends GatewayEvents>(
+    eventType: T,
+    payload: EventPayloads[T],
+    key: string
+  ) {
+    const event = createEvent(eventType, payload);
 
-//     // Add user to room
-//     const newState = this.editorManager.addUserToRoom(roomId, username);
-
-//     const event = createEvent(GatewayEvents.REFRESH_ROOM_STATE, {
-//       roomId,
-//       editorState: editorState || newState,
-//     });
-
-//     // Send editor state back to gateway
-//     await this.sendGatewayEvent(event);
-//   }
-
-//   private async handleCodeChange(
-//     roomId: string,
-//     username: string,
-//     content: string
-//   ) {
-//     // Update editor state
-//     console.log("Updating room state with new code:", roomId, username);
-//     this.editorManager.updateCode(roomId, username, content);
-//   }
-
-//   private async handleLeaveRoom(roomId: string, username: string) {
-//     // Remove user from room
-//     const newState = this.editorManager.removeUserFromRoom(roomId, username);
-
-//     if (newState) {
-//       // If room is empty, consider cleanup
-//       if (newState.activeUsers.length === 0) {
-//         this.editorManager.cleanupRoom(roomId);
-//       }
-
-//       // Update room in database
-//       await RoomModel.findByIdAndUpdate(roomId, {
-//         $pull: { activeUsers: username },
-//       });
-//     }
-//   }
-
-//   private async sendGatewayEvent<T extends GatewayEvents>(
-//     event: KafkaEvent<T>
-//   ) {
-//     await this.producer.send({
-//       topic: Topics.GATEWAY_EVENTS,
-//       messages: [
-//         {
-//           key: event.payload.roomId,
-//           value: JSON.stringify(event),
-//         },
-//       ],
-//     });
-//   }
-// }
+    await this.producer.send({
+      topic: Topics.GATEWAY_EVENTS,
+      messages: [
+        {
+          key: key,
+          value: JSON.stringify(event),
+        },
+      ],
+    });
+  }
+}
