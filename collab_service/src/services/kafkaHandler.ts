@@ -7,8 +7,14 @@ import {
   KafkaEvent,
   EventPayloads,
   createEvent,
+  TopicEvents,
 } from "peerprep-shared-types";
 import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
+
+export type CollaborationEventKeys = keyof Pick<
+  EventPayloads,
+  TopicEvents[Topics.COLLABORATION_EVENTS]
+>;
 
 export class KafkaHandler {
   private producer: Producer;
@@ -23,7 +29,7 @@ export class KafkaHandler {
     await this.producer.connect();
   }
 
-  async handleCollaborationEvent(event: KafkaEvent<keyof EventPayloads>) {
+  async handleCollaborationEvent(event: KafkaEvent<CollaborationEventKeys>) {
     const { type, payload } = event;
     try {
       switch (type) {
