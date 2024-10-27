@@ -7,9 +7,11 @@ import {
   ServiceNames,
   Topics,
   validateKafkaEvent,
+  KafkaEvent,
 } from "peerprep-shared-types";
 import { KafkaHandler } from "./services/kafkaHandler";
 import { RoomModel } from "./models/Room";
+import { CollaborationEventKeys } from "./services/kafkaHandler";
 
 // Load environment variables
 dotenv.config();
@@ -65,8 +67,12 @@ const setupKafkaConsumer = async () => {
         const event = JSON.parse(message.value?.toString() || "");
 
         validateKafkaEvent(event, topic as Topics);
-
-        await kafkaHandler.handleCollaborationEvent(event);
+        if (topic == Topics.COLLABORATION_EVENTS) {
+          const typedEvent = event as KafkaEvent<CollaborationEventKeys>;
+          await kafkaHandler.handleCollaborationEvent(typedEvent);
+        } else {
+          throw new Error("Invalid topic");
+        }
       } catch (error) {
         console.error("Error processing message:", error);
       }
