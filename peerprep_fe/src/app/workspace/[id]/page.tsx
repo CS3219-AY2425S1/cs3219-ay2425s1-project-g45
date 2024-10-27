@@ -128,15 +128,26 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   }
 
   return (
-    <div className="h-screen w-[80%] flex flex-col  mx-auto py-10 overscroll-contain">
+    <div>
       <Header>
-        {/* <Button
-          text="Match"
-          onClick={() => {
-            router.push("/match");
-          }}
-        /> */}
-
+        <div className="w-full flex items-start justify-start bg-gray-800 py-2 px-4 rounded-lg shadow-lg ">
+          <div className="w-max flex items-center justify-start mr-5">
+            <h3 className="text-base font-semibold text-gray-300 mr-4">
+              User 1
+            </h3>
+            <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 text-center text-sm">
+              {(room?.users?.length && room.users[0]) || "Waiting..."}
+            </div>
+          </div>
+          <div className="w-max flex items-center justify-start">
+            <h3 className="text-base font-semibold text-gray-300 mr-4">
+              User 2
+            </h3>
+            <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 text-center text-sm">
+              {(room?.users?.length && room.users[1]) || "Waiting..."}
+            </div>
+          </div>
+        </div>
         <Button
           text="Logout"
           onClick={() => {
@@ -145,39 +156,26 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
           }}
         />
       </Header>
-      <div className="w-full flex items-start justify-start bg-gray-800 py-2 px-4 rounded-lg shadow-lg ">
-        <div className="w-max flex items-center justify-start mr-5">
-          <h3 className="text-xl font-semibold text-gray-300 mr-4">User 1</h3>
-          <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 min-w-[50px] text-center">
-            {(room?.users?.length && room.users[0]) || "Waiting..."}
-          </div>
-        </div>
-        <div className="w-max flex items-center justify-start">
-          <h3 className="text-xl font-semibold text-gray-300 mr-4">User 2</h3>
-          <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 min-w-[50px] text-center">
-            {(room?.users?.length && room.users[1]) || "Waiting..."}
-          </div>
-        </div>
-      </div>
-      <div className="flex h-full">
+      <div className="h-screen flex h-full">
         {/* Left Pane */}
-        <div className="flex-1 min-w-[50px] border-r border-gray-300 h-[80%]">
-          <Problem questionId={room.question} />
+        <div className="flex-1 w-2/5 border-r border-gray-300 h-full">
+          <div className="h-1/2">
+            <Problem questionId={room.question} />
+          </div>
+          <div className="flex-1 p-4 h-1/2">
+            <Chat messages={room.messages} />
+          </div>
         </div>
+
         {/* Right Pane */}
-        <div className="flex-1 min-w-[50px]">
+        <div className="flex-1 w-3/5">
           <div className="flex flex-col h-screen">
-            <div className="flex-1 border-b border-gray-300 p-4">
-              <CodeEditor
-                language={language}
-                sharedCode={sharedCode}
-                handleCodeChange={handleCodeChange}
-                setLanguage={handleLanguageChange}
-              />
-            </div>
-            <div className="flex-1 p-4">
-              <Chat />
-            </div>
+            <CodeEditor
+              language={language}
+              sharedCode={sharedCode}
+              handleCodeChange={handleCodeChange}
+              setLanguage={handleLanguageChange}
+            />
           </div>
         </div>
       </div>
