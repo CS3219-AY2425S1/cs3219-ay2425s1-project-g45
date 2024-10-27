@@ -158,6 +158,19 @@ export class WebSocketHandler {
         await this.sendCollaborationEvent(event);
       });
 
+      socket.on(ClientSocketEvents.REQUEST_NEW_CHATS, async (data) => {
+        const { roomId, lastMessageTimestamp } = data;
+        console.log("Requesting new chats in room:", roomId);
+
+        const event = createEvent(CollaborationEvents.REQUEST_NEW_CHATS, {
+          roomId: roomId,
+          lastMessageTimestamp: lastMessageTimestamp,
+        });
+
+        // send event to collaboration service
+        await this.sendCollaborationEvent(event);
+      });
+
       socket.on("disconnect", () => {
         console.log("Client disconnected:", socket.id);
       });

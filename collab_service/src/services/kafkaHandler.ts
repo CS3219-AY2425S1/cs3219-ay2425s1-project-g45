@@ -70,6 +70,15 @@ export class KafkaHandler {
             messagePayload.username,
             messagePayload.message
           );
+          break;
+        case CollaborationEvents.REQUEST_NEW_CHATS:
+          const chatPayload =
+            event.payload as EventPayloads[CollaborationEvents.REQUEST_NEW_CHATS];
+          await this.handleRequestNewChats(
+            chatPayload.roomId,
+            chatPayload.lastMessageTimestamp
+          );
+          break;
       }
     } catch (error) {
       console.error(`Error handling ${type} event:`, error);
@@ -135,11 +144,26 @@ export class KafkaHandler {
     message: string
   ) {
     console.log("Sending message:", roomId, username, message);
-    const updatedChat = this.chatManager.addMessage(roomId, message, username);
+    this.chatManager.addMessage(roomId, message, username);
 
     this.sendGatewayEvent(
       createEvent(GatewayEvents.SIGNAL_NEW_CHAT, {
         roomId,
+      })
+    );
+  }
+
+  private async handleRequestNewChats(
+    roomId: string,
+    lastMessageTimestamp: Date
+  ) {
+    console.log("Requesting new chats");
+    const chats = this.chatManager.getNewMessages(roomId, lastMessageTimestamp);
+
+    this.sendGatewayEvent(
+      createEvent(GatewayEvents.GET_NEW_CHATS, {
+        roomId,
+        newMessages: chats || [],
       })
     );
   }

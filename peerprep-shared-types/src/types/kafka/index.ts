@@ -52,6 +52,10 @@ export interface EventPayloads {
     username: string;
     message: string;
   };
+  [CollaborationEvents.REQUEST_NEW_CHATS]: {
+    roomId: string;
+    lastMessageTimestamp: Date;
+  };
 
   // Matching Events
   [MatchingEvents.MATCH_CANCEL]: {

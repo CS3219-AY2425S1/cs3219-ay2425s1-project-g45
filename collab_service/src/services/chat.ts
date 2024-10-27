@@ -1,4 +1,4 @@
-import { ChatState } from "peerprep-shared-types";
+import { ChatState, ChatMessage } from "peerprep-shared-types";
 import { getRoomMessages, updateMessages } from "./roomService";
 
 export class ChatManager {
@@ -44,6 +44,16 @@ export class ChatManager {
     const state = this.roomChatStates.get(roomId);
     if (state) {
       return state.messages;
+    }
+    return null;
+  }
+
+  getNewMessages(roomId: string, lastMessageTimestamp: Date) {
+    const state = this.roomChatStates.get(roomId);
+    if (state) {
+      return state.messages.filter(
+        (message: ChatMessage) => message.timestamp > lastMessageTimestamp
+      );
     }
     return null;
   }
