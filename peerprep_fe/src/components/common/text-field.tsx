@@ -27,11 +27,11 @@ export default function Textfield({
         dark:text-white dark:border-white dark:focus:border-blue-500
         focus:outline-none focus:ring-0 focus:border-blue-600 peer"
         placeholder=""
-        defaultValue={text}
         required={required}
         minLength={minLength}
         maxLength={maxLength}
         onChange={onChange}
+        value={text}
       />
       <label
         className="absolute text-sm text-gray-500 dark:text-gray-400
