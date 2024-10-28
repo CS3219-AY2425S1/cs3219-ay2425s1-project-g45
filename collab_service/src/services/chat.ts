@@ -39,6 +39,7 @@ export class ChatManager {
   }
 
   cleanupChat(roomId: string) {
+    // Save chat state before cleanup
     const messages = this.roomChatStates.get(roomId)?.messages || [];
     if (messages.length > 0) {
       updateMessages(roomId, messages);
@@ -50,5 +51,10 @@ export class ChatManager {
     return {
       messages: this.roomChatStates.get(roomId)?.messages || [],
     };
+  }
+
+  saveChatState(roomId: string) {
+    const messages = this.roomChatStates.get(roomId)?.messages || [];
+    updateMessages(roomId, messages);
   }
 }

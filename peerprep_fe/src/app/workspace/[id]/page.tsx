@@ -83,6 +83,17 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     });
   }
 
+  function handleLeaveRoom() {
+    if (!socket || !room) return;
+    console.log("Leaving room", room._id);
+    socket.emit(ClientSocketEvents.LEAVE_ROOM, {
+      event: ClientSocketEvents.LEAVE_ROOM,
+      roomId: room._id,
+      username: username,
+    });
+    router.push("/home");
+  }
+
   useEffect(() => {
     console.log(params.id);
   }, []);
@@ -189,10 +200,9 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
           </div>
         </div>
         <Button
-          text="Logout"
+          text="Leave Room"
           onClick={() => {
-            deleteToken();
-            router.push("/");
+            handleLeaveRoom();
           }}
         />
       </Header>

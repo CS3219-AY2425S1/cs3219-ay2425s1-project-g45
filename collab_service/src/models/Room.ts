@@ -9,8 +9,8 @@ const RoomSchema: Schema = new Schema({
   question: { type: mongoose.Types.ObjectId, required: true },
   messages: [
     {
-      userId: { type: String, required: true },
-      content: { type: String, required: true },
+      username: { type: String, required: true },
+      message: { type: String, required: true },
       timestamp: { type: Date, default: Date.now },
     },
   ],

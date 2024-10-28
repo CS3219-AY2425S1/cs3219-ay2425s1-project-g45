@@ -72,11 +72,13 @@ export async function updateQuestion(roomId: string, questionId: string) {
 }
 
 export async function updateMessages(roomId: string, messages: ChatMessage[]) {
-  let room = await getRoom(roomId);
-  if (!room) {
-    return false;
-  }
-  room.messages = messages;
-  await room.save();
-  return true;
+  const newRoom = await RoomModel.findByIdAndUpdate(
+    roomId,
+    {
+      messages: messages,
+    },
+    { new: true, runValidators: true }
+  );
+  console.log("New room:", newRoom);
+  return newRoom !== null;
 }

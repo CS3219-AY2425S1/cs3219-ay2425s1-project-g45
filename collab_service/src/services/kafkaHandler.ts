@@ -120,6 +120,7 @@ export class KafkaHandler {
   }
 
   private async handleLeaveRoom(roomId: string, username: string) {
+    console.log("Leaving room:", roomId, username);
     // Remove user from room
     const newState = this.editorManager.removeUserFromRoom(roomId, username);
 
@@ -127,6 +128,7 @@ export class KafkaHandler {
       // If room is empty, consider cleanup
       if (newState.activeUsers.length === 0) {
         this.editorManager.cleanupRoom(roomId);
+        this.chatManager.cleanupChat(roomId);
       }
 
       // Update room in database

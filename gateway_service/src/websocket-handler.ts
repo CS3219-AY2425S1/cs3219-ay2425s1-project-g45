@@ -124,6 +124,20 @@ export class WebSocketHandler {
         await this.sendCollaborationEvent(event, data.roomId);
       });
 
+      socket.on(ClientSocketEvents.LEAVE_ROOM, async (data) => {
+        console.log("Leaving room:", data.roomId);
+
+        socket.leave(data.roomId);
+
+        const event = createEvent(CollaborationEvents.LEAVE_ROOM, {
+          roomId: data.roomId,
+          username: data.username,
+        });
+
+        // send event to collaboration service
+        await this.sendCollaborationEvent(event, data.roomId);
+      });
+
       socket.on(ClientSocketEvents.CODE_CHANGE, async (data) => {
         const { roomId, username, message } = data;
         console.log("Code change in room:", message);
@@ -218,7 +232,9 @@ export class WebSocketHandler {
           );
           this.io
             .to(chatStatePayload.roomId)
-            .emit(ClientSocketEvents.CHAT_STATE, chatStatePayload.chatState);
+            .emit(ClientSocketEvents.CHAT_STATE, {
+              messages: chatStatePayload.chatState.messages,
+            });
           break;
       }
     } catch (error) {
