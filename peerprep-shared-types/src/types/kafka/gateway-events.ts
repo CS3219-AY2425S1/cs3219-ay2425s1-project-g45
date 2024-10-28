@@ -4,4 +4,5 @@ export enum GatewayEvents {
   GET_NEW_CHATS = "get_new_chat",
   ERROR = "error",
   MATCH_FOUND = "match_found",
+  MATCH_TIMEOUT = "match_timeout",
 }

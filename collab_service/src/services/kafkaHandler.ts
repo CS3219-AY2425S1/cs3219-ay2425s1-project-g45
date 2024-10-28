@@ -90,7 +90,7 @@ export class KafkaHandler {
         roomId,
       });
 
-      await this.sendGatewayEvent(event);
+      await this.sendGatewayEvent(event, roomId);
     }
   }
 
@@ -108,7 +108,7 @@ export class KafkaHandler {
     });
 
     // Send editor state back to gateway
-    await this.sendGatewayEvent(event);
+    await this.sendGatewayEvent(event, roomId);
   }
 
   private async handleCodeChange(
@@ -169,13 +169,14 @@ export class KafkaHandler {
   }
 
   private async sendGatewayEvent<T extends GatewayEvents>(
-    event: KafkaEvent<T>
+    event: KafkaEvent<T>,
+    key: string
   ) {
     await this.producer.send({
       topic: Topics.GATEWAY_EVENTS,
       messages: [
         {
-          key: event.payload.roomId,
+          key: key,
           value: JSON.stringify(event),
         },
       ],

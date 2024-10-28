@@ -32,6 +32,9 @@ export interface EventPayloads {
     roomId: string;
     newMessages: ChatMessage[];
   };
+  [GatewayEvents.MATCH_TIMEOUT]: {
+    username: string;
+  };
 
   // Collaboration Events
   [CollaborationEvents.JOIN_ROOM]: {
