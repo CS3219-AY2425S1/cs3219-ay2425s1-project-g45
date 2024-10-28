@@ -9,6 +9,7 @@ import {
   validateKafkaEvent,
   GatewayEvents,
   createEvent,
+  Groups,
 } from "peerprep-shared-types";
 
 export class KafkaHandler extends EventEmitter {
@@ -19,7 +20,7 @@ export class KafkaHandler extends EventEmitter {
   private constructor(private kafka: Kafka) {
     super();
     this.producer = kafka.producer();
-    this.consumer = kafka.consumer({ groupId: "matching-service-group" });
+    this.consumer = kafka.consumer({ groupId: Groups.MATCHING_SERVICE_GROUP });
   }
 
   public static getInstance(kafka: Kafka): KafkaHandler {
@@ -55,7 +56,7 @@ export class KafkaHandler extends EventEmitter {
     });
   }
 
-  async sendGatewayEvent<T extends GatewayEvents>(
+  async sendGatewayEvent<T extends keyof EventPayloads>(
     eventType: T,
     payload: EventPayloads[T]
   ) {

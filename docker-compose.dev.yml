@@ -132,6 +132,8 @@ services:
       - QUESTION_SERVICE_ROUTE=question-service
       - KAFKA_BROKER_ROUTE=kafka-service
       - KAFKA_CONTROLLER_ROUTE=kafka-service
+      - REDIS_ROUTE=redis://redis
+      - REDIS_PORT=${REDIS_PORT}
     ports:
       - ${MATCHING_SERVICE_PORT}:${MATCHING_SERVICE_PORT}
     depends_on:
@@ -187,8 +189,32 @@ services:
           --bootstrap-server kafka-service:${KAFKA_BROKER_PORT} \
           --topic gateway-events \
           --partitions ${KAFKA_NUM_PARTITIONS:-1} \
+          --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh \
+          --create \
+          --if-not-exists \
+          --bootstrap-server kafka-service:${KAFKA_BROKER_PORT} \
+          --topic gateway-events \
+          --partitions ${KAFKA_NUM_PARTITIONS:-1} \
+          --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh \
+          --create \
+          --if-not-exists \
+          --bootstrap-server kafka-service:${KAFKA_BROKER_PORT} \
+          --topic matching-events \
+          --partitions ${KAFKA_NUM_PARTITIONS:-1} \
           --replication-factor 1
       '
     environment:
       KAFKA_BROKER_PORT: ${KAFKA_BROKER_PORT}
       KAFKA_NUM_PARTITIONS: ${KAFKA_NUM_PARTITIONS:-1}
+
+  redis:
+    image: redis:latest
+    ports:
+       - ${REDIS_PORT}:${REDIS_PORT}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

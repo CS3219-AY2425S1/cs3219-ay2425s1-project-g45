@@ -43,7 +43,9 @@ export class Queue {
 
     // Initialize Redis client
     this.redisClient = createClient({
-      url: process.env.REDIS_URL || "redis://localhost:6379",
+      url:
+        `${process.env.REDIS_ROUTE}:${process.env.REDIS_PORT}` ||
+        "redis://localhost:6379",
     });
 
     this.userMap = new Map();
@@ -169,8 +171,8 @@ export class Queue {
     const user2Data = results ? results[1] : null;
 
     if (user1Data && user2Data) {
-      const user1: MatchRequest = JSON.parse(user1Data);
-      const user2: MatchRequest = JSON.parse(user2Data);
+      const user1: MatchRequest = JSON.parse(user1Data as string);
+      const user2: MatchRequest = JSON.parse(user2Data as string);
 
       // Remove users from userMap
       this.userMap.delete(user1.username);
