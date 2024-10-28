@@ -19,10 +19,12 @@ export interface EventPayloads {
     error: string;
   };
   [GatewayEvents.MATCH_FOUND]: {
-    roomId: string;
     usernames: string[];
     topic: string;
     difficulty: string;
+  };
+  [GatewayEvents.MATCH_TIMEOUT]: {
+    username: string;
   };
 
   // Collaboration Events
