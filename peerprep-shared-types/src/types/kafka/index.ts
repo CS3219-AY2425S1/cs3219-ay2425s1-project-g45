@@ -24,12 +24,13 @@ export interface EventPayloads {
     topic: string;
     difficulty: string;
   };
-  [GatewayEvents.SIGNAL_NEW_CHAT]: {
+  [GatewayEvents.NEW_CHAT]: {
     roomId: string;
+    message: ChatMessage;
   };
-  [GatewayEvents.GET_NEW_CHATS]: {
+  [GatewayEvents.REFRESH_CHAT_STATE]: {
     roomId: string;
-    newMessages: ChatMessage[];
+    chatState: ChatState;
   };
   [GatewayEvents.MATCH_TIMEOUT]: {
     username: string;
@@ -54,9 +55,8 @@ export interface EventPayloads {
     username: string;
     message: string;
   };
-  [CollaborationEvents.REQUEST_NEW_CHATS]: {
+  [CollaborationEvents.REQUEST_CHAT_STATE]: {
     roomId: string;
-    lastMessageTimestamp: Date;
   };
 
   // Matching Events
