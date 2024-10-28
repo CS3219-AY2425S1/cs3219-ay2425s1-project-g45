@@ -13,6 +13,7 @@ import {
   ServiceNames,
 } from "peerprep-shared-types";
 import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
+import { MatchingEvents } from "peerprep-shared-types/dist/types/kafka/matching-events";
 
 type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
 
@@ -83,20 +84,23 @@ export class WebSocketHandler {
     this.io.on("connection", (socket: Socket) => {
       console.log("Client connected:", socket.id);
 
-      socket.on("requestMatch", async (data) => {
+      socket.on(ClientSocketEvents.REQUEST_MATCH, async (data) => {
+        console.log("Match Requested");
+        const event = createEvent(MatchingEvents.MATCH_REQUESTED, {
+          username: data.username,
+          difficulty: data.selectedDifficulty,
+          topic: data.selectedTopic,
+        });
         await this.producer.send({
-          topic: Topics.COLLABORATION_EVENTS,
+          topic: Topics.MATCHING_EVENTS,
           messages: [
             {
               key: socket.id,
-              value: JSON.stringify({
-                type: "MATCH_REQUEST",
-                socketId: socket.id,
-                ...data,
-              }),
+              value: JSON.stringify(event),
             },
           ],
         });
+        console.log(`Sent event: ${JSON.stringify(event)}`);
       });
 
       socket.on(ClientSocketEvents.JOIN_ROOM, async (data) => {
@@ -115,7 +119,7 @@ export class WebSocketHandler {
         });
 
         // send event to collaboration service
-        await this.sendCollaborationEvent(event);
+        await this.sendCollaborationEvent(event, data.roomId);
       });
 
       socket.on(ClientSocketEvents.CODE_CHANGE, async (data) => {
@@ -138,7 +142,7 @@ export class WebSocketHandler {
         });
 
         // send event to collaboration service
-        await this.sendCollaborationEvent(event);
+        await this.sendCollaborationEvent(event, roomId);
       });
 
       socket.on("disconnect", () => {
@@ -174,7 +178,8 @@ export class WebSocketHandler {
   }
 
   private async sendCollaborationEvent<T extends CollaborationEventKeys>(
-    event: KafkaEvent<T>
+    event: KafkaEvent<T>,
+    key: string
   ) {
     console.log(
       "Sending collaboration event:",
@@ -187,7 +192,7 @@ export class WebSocketHandler {
       topic: Topics.COLLABORATION_EVENTS,
       messages: [
         {
-          key: event.payload.roomId,
+          key: key,
           value: JSON.stringify(event),
         },
       ],

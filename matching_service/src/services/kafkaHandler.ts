@@ -46,8 +46,9 @@ export class KafkaHandler extends EventEmitter {
             message.value?.toString() || ""
           );
 
-          validateKafkaEvent(event, topic as Topics);
+          console.log("Received Matching Event:", event.type);
 
+          validateKafkaEvent(event, topic as Topics);
           this.emit(event.type, event.payload);
         } catch (error) {
           console.error("Error processing message:", error);

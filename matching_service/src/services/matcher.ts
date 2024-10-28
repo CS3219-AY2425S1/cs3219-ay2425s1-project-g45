@@ -3,6 +3,7 @@
 import { Queue, MatchRequest, Match } from "./queue";
 import { KafkaHandler } from "./kafkaHandler";
 import { GatewayEvents } from "peerprep-shared-types";
+import { MatchingEvents } from "peerprep-shared-types/dist/types/kafka/matching-events";
 // Define necessary types within this file
 
 export class Matcher {
@@ -17,16 +18,19 @@ export class Matcher {
     this.kafkaHandler = kafkaHandler;
 
     // Listen to match request events
-    this.kafkaHandler.on("MATCH_REQUESTED", async (payload: any) => {
-      await this.handleMatchRequest(
-        payload.username,
-        payload.difficulty,
-        payload.topic
-      );
-    });
+    this.kafkaHandler.on(
+      MatchingEvents.MATCH_REQUESTED,
+      async (payload: any) => {
+        await this.handleMatchRequest(
+          payload.username,
+          payload.difficulty,
+          payload.topic
+        );
+      }
+    );
 
     // Listen to match cancel events
-    this.kafkaHandler.on("MATCH_CANCEL", async (payload: any) => {
+    this.kafkaHandler.on(MatchingEvents.MATCH_CANCEL, async (payload: any) => {
       await this.handleMatchCancel(payload.username);
     });
   }
