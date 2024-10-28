@@ -97,10 +97,6 @@ class KafkaEventValidator {
     if (!event.payload || typeof event.payload !== "object") {
       throw new Error("Invalid payload structure");
     }
-
-    if (!("roomId" in event.payload)) {
-      throw new Error("Payload must contain roomId");
-    }
   }
 }
 
