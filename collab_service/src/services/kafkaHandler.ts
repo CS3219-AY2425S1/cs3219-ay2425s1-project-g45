@@ -145,12 +145,11 @@ export class KafkaHandler {
   ) {
     console.log("Sending message:", roomId, username, message);
     this.chatManager.addMessage(roomId, message, username);
+    const event = createEvent(GatewayEvents.SIGNAL_NEW_CHAT, {
+      roomId,
+    });
 
-    this.sendGatewayEvent(
-      createEvent(GatewayEvents.SIGNAL_NEW_CHAT, {
-        roomId,
-      })
-    );
+    this.sendGatewayEvent(event, roomId);
   }
 
   private async handleRequestNewChats(
@@ -159,13 +158,12 @@ export class KafkaHandler {
   ) {
     console.log("Requesting new chats");
     const chats = this.chatManager.getNewMessages(roomId, lastMessageTimestamp);
+    const event = createEvent(GatewayEvents.GET_NEW_CHATS, {
+      roomId,
+      newMessages: chats || [],
+    });
 
-    this.sendGatewayEvent(
-      createEvent(GatewayEvents.GET_NEW_CHATS, {
-        roomId,
-        newMessages: chats || [],
-      })
-    );
+    this.sendGatewayEvent(event, roomId);
   }
 
   private async sendGatewayEvent<T extends GatewayEvents>(

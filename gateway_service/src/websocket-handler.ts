@@ -15,7 +15,6 @@ import {
 import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
 
 type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
-type GatewayEventKeys = Pick<EventPayloads, GatewayEvents>;
 
 export class WebSocketHandler {
   private io: Server;
@@ -75,7 +74,7 @@ export class WebSocketHandler {
 
         validateKafkaEvent(event, topic as Topics);
         if (topic === Topics.GATEWAY_EVENTS) {
-          const typedEvent = event as KafkaEvent<keyof GatewayEventKeys>;
+          const typedEvent = event as KafkaEvent<GatewayEvents>;
           await this.handleGatewayEvent(typedEvent);
         }
       },
@@ -177,7 +176,7 @@ export class WebSocketHandler {
     });
   }
 
-  private async handleGatewayEvent(event: KafkaEvent<keyof GatewayEventKeys>) {
+  private async handleGatewayEvent(event: KafkaEvent<GatewayEvents>) {
     const { type, payload } = event;
     try {
       switch (type) {
@@ -199,15 +198,17 @@ export class WebSocketHandler {
           break;
         // todo send the error to the client socket
         case GatewayEvents.SIGNAL_NEW_CHAT:
+          const newChatPayload =
+            event.payload as EventPayloads[GatewayEvents.SIGNAL_NEW_CHAT];
           this.io
-            .to(payload.roomId)
+            .to(newChatPayload.roomId)
             .emit(ClientSocketEvents.SIGNAL_NEW_CHAT, {});
           break;
         case GatewayEvents.GET_NEW_CHATS:
           const newChatsPayload =
             event.payload as EventPayloads[GatewayEvents.GET_NEW_CHATS];
           this.io
-            .to(payload.roomId)
+            .to(newChatsPayload.roomId)
             .emit(ClientSocketEvents.REQUEST_NEW_CHATS, {
               newMessages: newChatsPayload.newMessages,
             });
