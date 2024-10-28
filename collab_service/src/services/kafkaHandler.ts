@@ -71,6 +71,7 @@ export class KafkaHandler {
             messagePayload.message
           );
           break;
+
         case CollaborationEvents.REQUEST_NEW_CHATS:
           const chatPayload =
             event.payload as EventPayloads[CollaborationEvents.REQUEST_NEW_CHATS];
@@ -98,6 +99,7 @@ export class KafkaHandler {
     // Get or initialize room state
     console.log("Joining room:", roomId, username);
     const editorState = this.editorManager.initializeRoom(roomId, "javascript");
+    this.chatManager.initialiseChat(roomId);
 
     // Add user to room
     const newState = this.editorManager.addUserToRoom(roomId, username);
@@ -158,6 +160,7 @@ export class KafkaHandler {
   ) {
     console.log("Requesting new chats");
     const chats = this.chatManager.getNewMessages(roomId, lastMessageTimestamp);
+    console.log("New chats:", chats);
     const event = createEvent(GatewayEvents.GET_NEW_CHATS, {
       roomId,
       newMessages: chats || [],

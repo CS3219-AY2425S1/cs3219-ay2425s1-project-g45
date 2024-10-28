@@ -18,14 +18,17 @@ export class ChatManager {
   addMessage(roomId: string, message: string, username: string) {
     const state = this.roomChatStates.get(roomId);
     if (state) {
+      console.log("Adding message to room", roomId);
+      console.log("message", message);
       state.messages.push({
-        username: username,
         message: message,
+        username: username,
         timestamp: new Date(),
       });
-      return state;
+      return true;
     }
-    return null;
+    console.error("Room chat state not found");
+    return false;
   }
 
   getChatState(roomId: string) {
@@ -51,9 +54,9 @@ export class ChatManager {
   getNewMessages(roomId: string, lastMessageTimestamp: Date) {
     const state = this.roomChatStates.get(roomId);
     if (state) {
-      return state.messages.filter(
-        (message: ChatMessage) => message.timestamp > lastMessageTimestamp
-      );
+      return state.messages.filter((message: ChatMessage) => {
+        return new Date(message.timestamp) > new Date(lastMessageTimestamp);
+      });
     }
     return null;
   }

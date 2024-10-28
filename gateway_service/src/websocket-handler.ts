@@ -158,7 +158,7 @@ export class WebSocketHandler {
         });
 
         // send event to collaboration service
-        await this.sendCollaborationEvent(event);
+        await this.sendCollaborationEvent(event, roomId);
       });
 
       socket.on(ClientSocketEvents.REQUEST_NEW_CHATS, async (data) => {
@@ -171,7 +171,7 @@ export class WebSocketHandler {
         });
 
         // send event to collaboration service
-        await this.sendCollaborationEvent(event);
+        await this.sendCollaborationEvent(event, roomId);
       });
 
       socket.on("disconnect", () => {
@@ -204,6 +204,7 @@ export class WebSocketHandler {
         case GatewayEvents.SIGNAL_NEW_CHAT:
           const newChatPayload =
             event.payload as EventPayloads[GatewayEvents.SIGNAL_NEW_CHAT];
+          console.log("Signaling new chat to room:", newChatPayload.roomId);
           this.io
             .to(newChatPayload.roomId)
             .emit(ClientSocketEvents.SIGNAL_NEW_CHAT, {});
@@ -211,6 +212,7 @@ export class WebSocketHandler {
         case GatewayEvents.GET_NEW_CHATS:
           const newChatsPayload =
             event.payload as EventPayloads[GatewayEvents.GET_NEW_CHATS];
+          console.log("Sending new chats to room:", newChatsPayload.roomId);
           this.io
             .to(newChatsPayload.roomId)
             .emit(ClientSocketEvents.REQUEST_NEW_CHATS, {

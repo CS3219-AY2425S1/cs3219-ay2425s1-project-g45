@@ -20,7 +20,7 @@ const Problem: React.FC<ProblemProps> = ({ questionId }) => {
   }, [token]);
 
   return (
-    <div className="flex flex-col h-full mx-4 mb-4">
+    <div className="h-full flex flex-col">
       {/* Title bar for the problem */}
       <div className="workspacecomponent p-4 bg-gray-100 border-b border-gray-200 shadow-sm">
         <h2 className="questiontitle">{question?.title}</h2>

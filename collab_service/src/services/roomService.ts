@@ -40,10 +40,18 @@ export async function getRoom(roomId: string) {
 
 export async function getRoomMessages(roomId: string) {
   let room = await getRoom(roomId);
+  let messages: ChatMessage[] = [];
   if (!room) {
-    return null;
+    return messages;
   }
-  return room.messages;
+  room.messages.forEach((message) => {
+    messages.push({
+      message: message.message,
+      username: message.username,
+      timestamp: message.timestamp,
+    });
+  });
+  return messages;
 }
 
 export async function deleteRoom(roomId: string) {

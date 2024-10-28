@@ -9,7 +9,11 @@ import Chat from "@/components/workspace/chat";
 import Problem from "@/components/workspace/problem";
 import CodeEditor, { Language } from "@/components/workspace/code-editor";
 import { getRoomById } from "@/app/actions/room";
-import { ClientSocketEvents, RoomDto } from "peerprep-shared-types";
+import {
+  ClientSocketEvents,
+  RoomDto,
+  ChatMessage,
+} from "peerprep-shared-types";
 import { useSocket } from "@/app/actions/socket";
 
 type WorkspaceProps = {
@@ -61,6 +65,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   const [activeUsers, setActiveUsers] = useState<string[]>([]);
   const [sharedCode, setSharedCode] = useState<string>("");
   const [language, setLanguage] = useState<Language>(Language.javascript);
+  const [timestamp, setTimestamp] = useState<Date | null>(null);
 
   useEffect(() => {
     console.log(params.id);
@@ -72,6 +77,9 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     if (token) {
       getRoomById(params.id, token).then((data) => {
         setRoom(data?.message);
+        setTimestamp(
+          data?.message?.messages[data?.message?.messages.length - 1].timestamp
+        );
       });
     }
   }, [token]);
@@ -119,7 +127,16 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     socket.on(ClientSocketEvents.USER_LEFT, ({ username, activeUsers }) => {
       setActiveUsers(activeUsers);
     });
-
+    socket.on(ClientSocketEvents.SIGNAL_NEW_CHAT, () => {
+      console.log("New chat signal received");
+      console.log("Fetching new chats with timestamp later than", timestamp);
+      socket.emit(ClientSocketEvents.REQUEST_NEW_CHATS, {
+        roomId: room._id,
+        lastMessageTimestamp: timestamp,
+        event: ClientSocketEvents.REQUEST_NEW_CHATS,
+      });
+      registerListenerForChat();
+    });
     socket.on("disconnect", () => {});
   }, [socket, room]);
 
@@ -127,8 +144,43 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     return <div>Loading...</div>;
   }
 
+  function registerListenerForChat() {
+    socket.on(ClientSocketEvents.REQUEST_NEW_CHATS, ({ newMessages }) => {
+      handleNewMessages(newMessages);
+      socket.removeAllListeners(ClientSocketEvents.REQUEST_NEW_CHATS);
+    });
+  }
+
+  function handleNewMessages(newMessages: ChatMessage[]) {
+    console.log("New messages received", newMessages);
+    if (!newMessages || newMessages.length === 0) {
+      console.log("No new chats");
+      return;
+    }
+
+    console.log("New chats received");
+    console.log("new timestamp", newMessages[newMessages.length - 1].timestamp);
+    setTimestamp(newMessages[newMessages.length - 1].timestamp);
+    setRoom((prevRoom) => {
+      prevRoom.messages.push(...newMessages);
+      return prevRoom;
+    });
+    socket.off(ClientSocketEvents.REQUEST_NEW_CHATS);
+  }
+
+  function sendMessage(message: string) {
+    if (!socket || message.length < 1) return;
+    console.log("Sending message from", username, ":", message);
+    socket.emit(ClientSocketEvents.SEND_MESSAGE, {
+      message: message,
+      event: ClientSocketEvents.SEND_MESSAGE,
+      roomId: room._id,
+      username: username,
+    });
+  }
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col max-h-screen">
       <Header>
         <div className="w-full flex items-start justify-start bg-gray-800 py-2 px-4 rounded-lg shadow-lg ">
           <div className="w-max flex items-center justify-start mr-5">
@@ -156,19 +208,21 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
           }}
         />
       </Header>
-      <div className="flex">
+      <div className="flex h-full overflow-auto">
         {/* Left Pane */}
-        <div className="w-2/5 border-r border-gray-300">
-          <div className="h-1/2">
+        <div className="flex flex-col w-2/5 space-y-4 px-4 pb-4">
+          <div className="flex-grow h-1/2">
             <Problem questionId={room.question} />
           </div>
-          <div className="flex-1 p-4 h-1/2">
-            <Chat messages={room.messages} />
+          <div className="flex-grow h-1/2">
+            <Chat messages={room.messages} sendMessage={sendMessage} />
           </div>
         </div>
 
+        <div className="border border-gray-300" />
+
         {/* Right Pane */}
-        <div className="w-3/5">
+        <div className="w-3/5 px-4">
           <CodeEditor
             language={language}
             sharedCode={sharedCode}

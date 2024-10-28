@@ -41,7 +41,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   };
 
   return (
-    <div className="flex flex-col p-2 bg-slate-800 mx-4 rounded-lg shadow-sm h-[85%]">
+    <div className="inline-flex flex-col p-2 bg-slate-800 rounded-lg shadow-sm h-full w-full">
       <select
         name="difficultyLevel"
         className="bg-slate-200 dark:bg-slate-700 rounded-lg w-full py-2 px-4 mb-2 focus:outline-none"
