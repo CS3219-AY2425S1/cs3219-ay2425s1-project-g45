@@ -128,7 +128,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   }
 
   return (
-    <div>
+    <div className="flex flex-col">
       <Header>
         <div className="w-full flex items-start justify-start bg-gray-800 py-2 px-4 rounded-lg shadow-lg ">
           <div className="w-max flex items-center justify-start mr-5">
@@ -156,9 +156,9 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
           }}
         />
       </Header>
-      <div className="h-screen flex h-full">
+      <div className="flex">
         {/* Left Pane */}
-        <div className="flex-1 w-2/5 border-r border-gray-300 h-full">
+        <div className="w-2/5 border-r border-gray-300">
           <div className="h-1/2">
             <Problem questionId={room.question} />
           </div>
@@ -168,15 +168,13 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
         </div>
 
         {/* Right Pane */}
-        <div className="flex-1 w-3/5">
-          <div className="flex flex-col h-screen">
-            <CodeEditor
-              language={language}
-              sharedCode={sharedCode}
-              handleCodeChange={handleCodeChange}
-              setLanguage={handleLanguageChange}
-            />
-          </div>
+        <div className="w-3/5">
+          <CodeEditor
+            language={language}
+            sharedCode={sharedCode}
+            handleCodeChange={handleCodeChange}
+            setLanguage={handleLanguageChange}
+          />
         </div>
       </div>
     </div>
