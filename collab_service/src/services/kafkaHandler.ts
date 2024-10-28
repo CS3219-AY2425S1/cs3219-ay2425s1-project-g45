@@ -10,6 +10,7 @@ import {
   TopicEvents,
 } from "peerprep-shared-types";
 import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
+import { ChatManager } from "./chat";
 
 export type CollaborationEventKeys = keyof Pick<
   EventPayloads,
@@ -19,10 +20,12 @@ export type CollaborationEventKeys = keyof Pick<
 export class KafkaHandler {
   private producer: Producer;
   private editorManager: EditorManager;
+  private chatManager: ChatManager;
 
   constructor(kafka: Kafka) {
     this.producer = kafka.producer();
     this.editorManager = new EditorManager();
+    this.chatManager = new ChatManager();
   }
 
   async initialize() {
@@ -57,6 +60,22 @@ export class KafkaHandler {
             leavePayload.roomId,
             leavePayload.username
           );
+          break;
+
+        case CollaborationEvents.SEND_MESSAGE:
+          const messagePayload =
+            event.payload as EventPayloads[CollaborationEvents.SEND_MESSAGE];
+          await this.handleSendMessage(
+            messagePayload.roomId,
+            messagePayload.username,
+            messagePayload.message
+          );
+          break;
+
+        case CollaborationEvents.REQUEST_CHAT_STATE:
+          const chatStatePayload =
+            event.payload as EventPayloads[CollaborationEvents.REQUEST_CHAT_STATE];
+          await this.handleChatStateRequest(chatStatePayload.roomId);
           break;
       }
     } catch (error) {
@@ -101,6 +120,7 @@ export class KafkaHandler {
   }
 
   private async handleLeaveRoom(roomId: string, username: string) {
+    console.log("Leaving room:", roomId, username);
     // Remove user from room
     const newState = this.editorManager.removeUserFromRoom(roomId, username);
 
@@ -108,6 +128,7 @@ export class KafkaHandler {
       // If room is empty, consider cleanup
       if (newState.activeUsers.length === 0) {
         this.editorManager.cleanupRoom(roomId);
+        this.chatManager.cleanupChat(roomId);
       }
 
       // Update room in database
@@ -115,6 +136,43 @@ export class KafkaHandler {
         $pull: { activeUsers: username },
       });
     }
+  }
+
+  private async handleSendMessage(
+    roomId: string,
+    username: string,
+    message: string
+  ) {
+    console.log("Sending message:", roomId, username, message);
+    const newMessage = this.chatManager.addMessage(roomId, message, username);
+
+    let event: KafkaEvent<GatewayEvents.ERROR | GatewayEvents.NEW_CHAT>;
+
+    if (newMessage) {
+      event = createEvent(GatewayEvents.NEW_CHAT, {
+        roomId,
+        message: newMessage,
+      });
+    } else {
+      event = createEvent(GatewayEvents.ERROR, {
+        error: "Failed to send message",
+        roomId,
+      });
+    }
+
+    this.sendGatewayEvent(event, roomId);
+  }
+
+  private async handleChatStateRequest(roomId: string) {
+    const chatState = this.chatManager.initialiseChat(roomId);
+    const newChatState = this.chatManager.getChatHistory(roomId);
+
+    const event = createEvent(GatewayEvents.REFRESH_CHAT_STATE, {
+      roomId,
+      chatState: newChatState.messages.length > 0 ? newChatState : chatState,
+    });
+
+    await this.sendGatewayEvent(event, roomId);
   }
 
   private async sendGatewayEvent<T extends GatewayEvents>(

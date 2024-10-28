@@ -41,44 +41,36 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   };
 
   return (
-    <div>
-      {/* Title bar for the problem */}
-      <div className="workspacecomponent">
-        <h2 className="text-xl font-semibold text-gray-800">Code Editor</h2>
-      </div>
-      {/* Problem content */}
-      <div className=" p-6 bg-slate-800 rounded-b-lg shadow-sm">
-        <select
-          name="difficultyLevel"
-          className="bg-slate-200 dark:bg-slate-700 rounded-lg w-full h-16 p-4 my-3 focus:outline-none"
-          value={language}
-          onChange={(e) => onSelect(e.target.value as Language)}
-        >
-          {Object.values(Language).map((level) => (
-            <option key={level} value={level}>
-              {level}
-            </option>
-          ))}
-        </select>
-        <Editor
-          options={{
-            minimap: {
-              enabled: false,
-            },
-          }}
-          height="50vh"
-          theme="vs-dark"
-          language={language}
-          defaultValue={CODE_SNIPPETS[language]}
-          onMount={onMount}
-          value={sharedCode}
-          onChange={(sharedCode) => {
-            if (sharedCode) {
-              handleCodeChange(sharedCode);
-            }
-          }}
-        />
-      </div>
+    <div className="inline-flex flex-col p-2 bg-slate-800 rounded-lg shadow-sm h-full w-full">
+      <select
+        name="difficultyLevel"
+        className="bg-slate-200 dark:bg-slate-700 rounded-lg w-full py-2 px-4 mb-2 focus:outline-none"
+        value={language}
+        onChange={(e) => onSelect(e.target.value as Language)}
+      >
+        {Object.values(Language).map((level) => (
+          <option key={level} value={level}>
+            {level}
+          </option>
+        ))}
+      </select>
+      <Editor
+        options={{
+          minimap: {
+            enabled: false,
+          },
+        }}
+        theme="vs-dark"
+        language={language}
+        defaultValue={CODE_SNIPPETS[language]}
+        onMount={onMount}
+        value={sharedCode}
+        onChange={(sharedCode) => {
+          if (sharedCode) {
+            handleCodeChange(sharedCode);
+          }
+        }}
+      />
     </div>
   );
 };

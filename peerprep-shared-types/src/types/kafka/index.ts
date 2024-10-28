@@ -1,3 +1,4 @@
+import { ChatMessage, ChatState } from "../chat";
 import { EditorState } from "../editor";
 import { CollaborationEvents } from "./collaboration-events";
 import { GatewayEvents } from "./gateway-events";
@@ -23,6 +24,14 @@ export interface EventPayloads {
     topic: string;
     difficulty: string;
   };
+  [GatewayEvents.NEW_CHAT]: {
+    roomId: string;
+    message: ChatMessage;
+  };
+  [GatewayEvents.REFRESH_CHAT_STATE]: {
+    roomId: string;
+    chatState: ChatState;
+  };
   [GatewayEvents.MATCH_TIMEOUT]: {
     username: string;
   };
@@ -40,6 +49,14 @@ export interface EventPayloads {
     roomId: string;
     content: string;
     username: string;
+  };
+  [CollaborationEvents.SEND_MESSAGE]: {
+    roomId: string;
+    username: string;
+    message: string;
+  };
+  [CollaborationEvents.REQUEST_CHAT_STATE]: {
+    roomId: string;
   };
 
   // Matching Events

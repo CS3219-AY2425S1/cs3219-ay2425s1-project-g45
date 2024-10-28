@@ -1,4 +1,5 @@
-import { DifficultyLevel, QuestionDto } from "./question";
+import { ChatMessage } from "./chat";
+import { DifficultyLevel } from "./question";
 
 export interface RoomDto {
   _id: string;
@@ -6,12 +7,7 @@ export interface RoomDto {
   question: string;
   topic: string;
   difficulty: DifficultyLevel;
-  //   messages: {
-  //     userId: string;
-  //     content: string;
-  //     timestamp: Date;
-  //   }[];
-
+  messages: ChatMessage[];
   createdAt: Date;
   updatedAt: Date;
 }
