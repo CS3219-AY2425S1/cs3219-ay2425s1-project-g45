@@ -4,19 +4,19 @@ import { useAuth } from "@/contexts/auth-context";
 import Textfield from "../common/text-field";
 import Button from "../common/button";
 
-type CodeEditorProps = {
+type ChatProps = {
   messages: ChatMessage[];
   sendMessage: (message: string) => void;
 };
 
-const CodeEditor: React.FC<CodeEditorProps> = ({
+const Chat: React.FC<ChatProps> = ({
   messages = [],
   sendMessage = () => {},
 }) => {
   const { username } = useAuth();
   const [messageToSend, setMessageToSend] = useState("");
   return (
-    <div className="max-h-full pt-4 px-4 bg-white rounded-lg flex flex-col">
+    <div className="max-h-full pt-4 px-4 bg-white dark:bg-slate-800 rounded-lg flex flex-col">
       <div className="flex flex-col-reverse overflow-y-scroll">
         {messages &&
           messages.toReversed().map((message, index) => {
@@ -25,25 +25,30 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                 key={index}
                 className={`w-full mb-4 ${username === message.username ? "justify-items-end" : ""}`}
               >
-                <div className="ml-3">
-                  <div
-                    className={`text-sm font-medium text-gray-900 ${username === message.username ? "justify-self-end" : ""}`}
-                  >
-                    {message.username}
-                  </div>
-                  <div className="text-sm text-gray-500">{message.message}</div>
+                <div
+                  className={`text-sm font-medium text-gray-900 dark:text-slate-300 ${username === message.username ? "justify-self-end" : ""}`}
+                >
+                  {message.username}
+                </div>
+                <div className="text-sm text-gray-500 dark:text-zinc-400 text-wrap">
+                  {message.message}
                 </div>
               </div>
             );
           })}
       </div>
       <div className="flex justify-between space-x-5 items-center">
-        <Textfield
-          placeholder_text="Type a message"
-          maxLength={200}
-          text={messageToSend}
-          onChange={(e) => setMessageToSend(e.target.value.trim())}
-        />
+        <div className="grow">
+          <Textfield
+            placeholder_text="Message"
+            maxLength={200}
+            text={messageToSend}
+            onChange={(e) => {
+              e.preventDefault();
+              setMessageToSend(e.target.value.trim());
+            }}
+          />
+        </div>
         <div>
           <Button
             text="Send"
@@ -59,4 +64,4 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   );
 };
 
-export default CodeEditor;
+export default Chat;

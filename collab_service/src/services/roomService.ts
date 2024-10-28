@@ -45,11 +45,7 @@ export async function getRoomMessages(roomId: string) {
     return messages;
   }
   room.messages.forEach((message) => {
-    messages.push({
-      message: message.message,
-      username: message.username,
-      timestamp: message.timestamp,
-    });
+    messages.push(message);
   });
   return messages;
 }

@@ -27,6 +27,11 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   const router = useRouter();
   const { token, deleteToken, username } = useAuth();
   const { socket } = useSocket();
+  const [activeUsers, setActiveUsers] = useState<string[]>([]);
+  const [sharedCode, setSharedCode] = useState<string>("");
+  const [language, setLanguage] = useState<Language>(Language.javascript);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [room, setRoom] = useState<RoomDto>();
 
   const handleCodeChange = (newContent: string) => {
     setSharedCode(newContent);
@@ -62,30 +67,38 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     });
   };
 
-  const [activeUsers, setActiveUsers] = useState<string[]>([]);
-  const [sharedCode, setSharedCode] = useState<string>("");
-  const [language, setLanguage] = useState<Language>(Language.javascript);
-  const [timestamp, setTimestamp] = useState<Date | null>(null);
+  function handleNewMessage(newMessage: ChatMessage) {
+    console.log("New message received", newMessage);
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+  }
+
+  function sendMessage(message: string) {
+    if (!socket || !room || message.length < 1) return;
+    console.log("Sending message from", username, ":", message);
+    socket.emit(ClientSocketEvents.SEND_MESSAGE, {
+      message: message,
+      event: ClientSocketEvents.SEND_MESSAGE,
+      roomId: room._id,
+      username: username,
+    });
+  }
 
   useEffect(() => {
     console.log(params.id);
   }, []);
 
-  const [room, setRoom] = useState<RoomDto>();
-
   useEffect(() => {
     if (token) {
       getRoomById(params.id, token).then((data) => {
         setRoom(data?.message);
-        setTimestamp(
-          data?.message?.messages[data?.message?.messages.length - 1].timestamp
-        );
       });
     }
   }, [token]);
+
   useEffect(() => {
     console.log("Shared code is", sharedCode);
   }, [sharedCode]);
+
   useEffect(() => {
     console.log("ROOM IS", room);
   }, [room]);
@@ -127,56 +140,31 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     socket.on(ClientSocketEvents.USER_LEFT, ({ username, activeUsers }) => {
       setActiveUsers(activeUsers);
     });
-    socket.on(ClientSocketEvents.SIGNAL_NEW_CHAT, () => {
-      console.log("New chat signal received");
-      console.log("Fetching new chats with timestamp later than", timestamp);
-      socket.emit(ClientSocketEvents.REQUEST_NEW_CHATS, {
-        roomId: room._id,
-        lastMessageTimestamp: timestamp,
-        event: ClientSocketEvents.REQUEST_NEW_CHATS,
+
+    if (!socket.hasListeners(ClientSocketEvents.NEW_CHAT)) {
+      console.log("Adding new chat listener");
+      socket.on(ClientSocketEvents.NEW_CHAT, (newMessage) => {
+        handleNewMessage(newMessage);
       });
-      registerListenerForChat();
-    });
+    }
+
+    if (messages.length === 0) {
+      console.log("Requesting chat state");
+      socket.emit(ClientSocketEvents.CHAT_STATE, {
+        event: ClientSocketEvents.CHAT_STATE,
+        roomId: room._id,
+      });
+      socket.once(ClientSocketEvents.CHAT_STATE, ({ messages }) => {
+        console.log("Chat state received", messages);
+        setMessages(messages);
+      });
+    }
+
     socket.on("disconnect", () => {});
   }, [socket, room]);
 
   if (!room) {
     return <div>Loading...</div>;
-  }
-
-  function registerListenerForChat() {
-    socket.on(ClientSocketEvents.REQUEST_NEW_CHATS, ({ newMessages }) => {
-      handleNewMessages(newMessages);
-      socket.removeAllListeners(ClientSocketEvents.REQUEST_NEW_CHATS);
-    });
-  }
-
-  function handleNewMessages(newMessages: ChatMessage[]) {
-    console.log("New messages received", newMessages);
-    if (!newMessages || newMessages.length === 0) {
-      console.log("No new chats");
-      return;
-    }
-
-    console.log("New chats received");
-    console.log("new timestamp", newMessages[newMessages.length - 1].timestamp);
-    setTimestamp(newMessages[newMessages.length - 1].timestamp);
-    setRoom((prevRoom) => {
-      prevRoom.messages.push(...newMessages);
-      return prevRoom;
-    });
-    socket.off(ClientSocketEvents.REQUEST_NEW_CHATS);
-  }
-
-  function sendMessage(message: string) {
-    if (!socket || message.length < 1) return;
-    console.log("Sending message from", username, ":", message);
-    socket.emit(ClientSocketEvents.SEND_MESSAGE, {
-      message: message,
-      event: ClientSocketEvents.SEND_MESSAGE,
-      roomId: room._id,
-      username: username,
-    });
   }
 
   return (
@@ -215,7 +203,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
             <Problem questionId={room.question} />
           </div>
           <div className="flex-grow h-1/2">
-            <Chat messages={room.messages} sendMessage={sendMessage} />
+            <Chat messages={messages} sendMessage={sendMessage} />
           </div>
         </div>
 

@@ -161,21 +161,16 @@ export class WebSocketHandler {
         await this.sendCollaborationEvent(event, roomId);
       });
 
-      socket.on(ClientSocketEvents.REQUEST_NEW_CHATS, async (data) => {
-        const { roomId, lastMessageTimestamp } = data;
-        console.log("Requesting new chats in room:", roomId);
+      socket.on(ClientSocketEvents.CHAT_STATE, async (data) => {
+        const { roomId } = data;
+        console.log("Requesting chat state for room:", roomId);
 
-        const event = createEvent(CollaborationEvents.REQUEST_NEW_CHATS, {
+        const event = createEvent(CollaborationEvents.REQUEST_CHAT_STATE, {
           roomId: roomId,
-          lastMessageTimestamp: lastMessageTimestamp,
         });
 
         // send event to collaboration service
         await this.sendCollaborationEvent(event, roomId);
-      });
-
-      socket.on("disconnect", () => {
-        console.log("Client disconnected:", socket.id);
       });
     });
   }
@@ -201,23 +196,29 @@ export class WebSocketHandler {
           console.log("Error event received:", payload);
           break;
         // todo send the error to the client socket
-        case GatewayEvents.SIGNAL_NEW_CHAT:
+        case GatewayEvents.NEW_CHAT:
           const newChatPayload =
-            event.payload as EventPayloads[GatewayEvents.SIGNAL_NEW_CHAT];
-          console.log("Signaling new chat to room:", newChatPayload.roomId);
+            event.payload as EventPayloads[GatewayEvents.NEW_CHAT];
+          console.log(
+            "Sending new chat to room:",
+            newChatPayload.roomId,
+            newChatPayload.message
+          );
           this.io
             .to(newChatPayload.roomId)
-            .emit(ClientSocketEvents.SIGNAL_NEW_CHAT, {});
+            .emit(ClientSocketEvents.NEW_CHAT, newChatPayload.message);
           break;
-        case GatewayEvents.GET_NEW_CHATS:
-          const newChatsPayload =
-            event.payload as EventPayloads[GatewayEvents.GET_NEW_CHATS];
-          console.log("Sending new chats to room:", newChatsPayload.roomId);
+        case GatewayEvents.REFRESH_CHAT_STATE:
+          const chatStatePayload =
+            event.payload as EventPayloads[GatewayEvents.REFRESH_CHAT_STATE];
+          console.log(
+            "Sending chat state to room:",
+            chatStatePayload.roomId,
+            chatStatePayload.chatState
+          );
           this.io
-            .to(newChatsPayload.roomId)
-            .emit(ClientSocketEvents.REQUEST_NEW_CHATS, {
-              newMessages: newChatsPayload.newMessages,
-            });
+            .to(chatStatePayload.roomId)
+            .emit(ClientSocketEvents.CHAT_STATE, chatStatePayload.chatState);
           break;
       }
     } catch (error) {

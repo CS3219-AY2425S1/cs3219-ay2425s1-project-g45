@@ -1,4 +1,4 @@
-import { ChatState, ChatMessage } from "peerprep-shared-types";
+import { ChatState } from "peerprep-shared-types";
 import { getRoomMessages, updateMessages } from "./roomService";
 
 export class ChatManager {
@@ -8,7 +8,9 @@ export class ChatManager {
     if (!this.roomChatStates.has(roomId)) {
       console.log("Initializing chat for room", roomId);
       getRoomMessages(roomId).then((messages) => {
-        this.roomChatStates.set(roomId, { messages: messages || [] });
+        this.roomChatStates.set(roomId, {
+          messages: messages,
+        });
       });
     }
     console.log("roomChatStates.get(roomId)", this.roomChatStates.get(roomId));
@@ -20,15 +22,16 @@ export class ChatManager {
     if (state) {
       console.log("Adding message to room", roomId);
       console.log("message", message);
-      state.messages.push({
+      const newMessage = {
         message: message,
         username: username,
         timestamp: new Date(),
-      });
-      return true;
+      };
+      state.messages.push(newMessage);
+      return newMessage;
     }
     console.error("Room chat state not found");
-    return false;
+    return null;
   }
 
   getChatState(roomId: string) {
@@ -44,20 +47,8 @@ export class ChatManager {
   }
 
   getChatHistory(roomId: string) {
-    const state = this.roomChatStates.get(roomId);
-    if (state) {
-      return state.messages;
-    }
-    return null;
-  }
-
-  getNewMessages(roomId: string, lastMessageTimestamp: Date) {
-    const state = this.roomChatStates.get(roomId);
-    if (state) {
-      return state.messages.filter((message: ChatMessage) => {
-        return new Date(message.timestamp) > new Date(lastMessageTimestamp);
-      });
-    }
-    return null;
+    return {
+      messages: this.roomChatStates.get(roomId)?.messages || [],
+    };
   }
 }

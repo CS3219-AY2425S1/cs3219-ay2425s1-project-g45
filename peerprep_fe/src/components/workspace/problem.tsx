@@ -22,11 +22,11 @@ const Problem: React.FC<ProblemProps> = ({ questionId }) => {
   return (
     <div className="h-full flex flex-col">
       {/* Title bar for the problem */}
-      <div className="workspacecomponent p-4 bg-gray-100 border-b border-gray-200 shadow-sm">
+      <div className="workspacecomponent p-4 bg-gray-100 dark:bg-zinc-900 border-b border-gray-200 shadow-sm">
         <h2 className="questiontitle">{question?.title}</h2>
       </div>
 
-      <div className="bg-white overflow-y-scroll rounded-b-lg">
+      <div className="bg-white dark:bg-slate-800 overflow-y-scroll rounded-b-lg">
         {/* Problem content */}
         <div className="flex-grow p-6 shadow-sm">
           {/* Difficulty*/}
@@ -40,8 +40,10 @@ const Problem: React.FC<ProblemProps> = ({ questionId }) => {
 
           {/* Description */}
           <div className="mb-4">
-            <h3 className="title">Description</h3>
-            <p className="text-sm text-gray-700">{question?.description}</p>
+            <h3 className="title dark:text-white">Description</h3>
+            <p className="text-sm text-gray-700 dark:text-gray-400">
+              {question?.description}
+            </p>
           </div>
 
           {/* Examples */}
@@ -51,7 +53,7 @@ const Problem: React.FC<ProblemProps> = ({ questionId }) => {
               {question.examples.map((example, index) => (
                 <div
                   key={index}
-                  className="mb-4 bg-gray-50 p-4 border rounded-lg"
+                  className="mb-4 bg-gray-50 dark:bg-gray-700 p-4 border rounded-lg"
                 >
                   <pre className="points">
                     <strong>Input:</strong> {example.input}

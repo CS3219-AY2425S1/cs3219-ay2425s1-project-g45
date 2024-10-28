@@ -72,13 +72,10 @@ export class KafkaHandler {
           );
           break;
 
-        case CollaborationEvents.REQUEST_NEW_CHATS:
-          const chatPayload =
-            event.payload as EventPayloads[CollaborationEvents.REQUEST_NEW_CHATS];
-          await this.handleRequestNewChats(
-            chatPayload.roomId,
-            chatPayload.lastMessageTimestamp
-          );
+        case CollaborationEvents.REQUEST_CHAT_STATE:
+          const chatStatePayload =
+            event.payload as EventPayloads[CollaborationEvents.REQUEST_CHAT_STATE];
+          await this.handleChatStateRequest(chatStatePayload.roomId);
           break;
       }
     } catch (error) {
@@ -99,7 +96,6 @@ export class KafkaHandler {
     // Get or initialize room state
     console.log("Joining room:", roomId, username);
     const editorState = this.editorManager.initializeRoom(roomId, "javascript");
-    this.chatManager.initialiseChat(roomId);
 
     // Add user to room
     const newState = this.editorManager.addUserToRoom(roomId, username);
@@ -146,27 +142,35 @@ export class KafkaHandler {
     message: string
   ) {
     console.log("Sending message:", roomId, username, message);
-    this.chatManager.addMessage(roomId, message, username);
-    const event = createEvent(GatewayEvents.SIGNAL_NEW_CHAT, {
-      roomId,
-    });
+    const newMessage = this.chatManager.addMessage(roomId, message, username);
+
+    let event: KafkaEvent<GatewayEvents.ERROR | GatewayEvents.NEW_CHAT>;
+
+    if (newMessage) {
+      event = createEvent(GatewayEvents.NEW_CHAT, {
+        roomId,
+        message: newMessage,
+      });
+    } else {
+      event = createEvent(GatewayEvents.ERROR, {
+        error: "Failed to send message",
+        roomId,
+      });
+    }
 
     this.sendGatewayEvent(event, roomId);
   }
 
-  private async handleRequestNewChats(
-    roomId: string,
-    lastMessageTimestamp: Date
-  ) {
-    console.log("Requesting new chats");
-    const chats = this.chatManager.getNewMessages(roomId, lastMessageTimestamp);
-    console.log("New chats:", chats);
-    const event = createEvent(GatewayEvents.GET_NEW_CHATS, {
+  private async handleChatStateRequest(roomId: string) {
+    const chatState = this.chatManager.initialiseChat(roomId);
+    const newChatState = this.chatManager.getChatHistory(roomId);
+
+    const event = createEvent(GatewayEvents.REFRESH_CHAT_STATE, {
       roomId,
-      newMessages: chats || [],
+      chatState: newChatState.messages.length > 0 ? newChatState : chatState,
     });
 
-    this.sendGatewayEvent(event, roomId);
+    await this.sendGatewayEvent(event, roomId);
   }
 
   private async sendGatewayEvent<T extends GatewayEvents>(
