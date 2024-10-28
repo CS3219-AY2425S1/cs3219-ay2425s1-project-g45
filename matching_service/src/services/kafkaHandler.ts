@@ -11,16 +11,22 @@ import {
   createEvent,
 } from "peerprep-shared-types";
 
-import { MatchingEvents } from "peerprep-shared-types/dist/types/kafka/matching-events";
-
 export class KafkaHandler extends EventEmitter {
+  private static instance: KafkaHandler;
   private producer: Producer;
   private consumer: Consumer;
 
-  constructor(private kafka: Kafka) {
+  private constructor(private kafka: Kafka) {
     super();
     this.producer = kafka.producer();
     this.consumer = kafka.consumer({ groupId: "matching-service-group" });
+  }
+
+  public static getInstance(kafka: Kafka): KafkaHandler {
+    if (!KafkaHandler.instance) {
+      KafkaHandler.instance = new KafkaHandler(kafka);
+    }
+    return KafkaHandler.instance;
   }
 
   async initialize() {
@@ -51,8 +57,7 @@ export class KafkaHandler extends EventEmitter {
 
   async sendGatewayEvent<T extends GatewayEvents>(
     eventType: T,
-    payload: EventPayloads[T],
-    key: string
+    payload: EventPayloads[T]
   ) {
     const event = createEvent(eventType, payload);
 
@@ -60,7 +65,7 @@ export class KafkaHandler extends EventEmitter {
       topic: Topics.GATEWAY_EVENTS,
       messages: [
         {
-          key: key,
+          key: "key",
           value: JSON.stringify(event),
         },
       ],

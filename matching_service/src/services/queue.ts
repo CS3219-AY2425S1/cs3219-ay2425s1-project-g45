@@ -1,172 +1,229 @@
-import dotenv from "dotenv";
-import { KafkaMessage, RecordMetadata } from "kafkajs";
-import {
-  KafkaRequest,
-  ProducerFactory,
-  ConsumerFactory,
-  KafkaFactory,
-} from "./kafka";
-import { DifficultyLevel } from "../models/Room";
+// src/services/queue.ts
 
-dotenv.config();
+import { createClient, RedisClientType } from "redis";
+import { KafkaHandler } from "./kafkaHandler";
+import { GatewayEvents } from "peerprep-shared-types";
 
-export interface IMatchRequest extends KafkaRequest {
+// Define necessary types within this file
+
+export interface MatchRequest {
   username: string;
   topic: string;
-  difficulty: DifficultyLevel;
+  difficulty: string;
+  timestamp?: number;
 }
 
-export interface IMatchCancelRequest {
+export interface MatchCancelRequest {
   username: string;
 }
 
-export interface IMatchResponse {
+export interface MatchResponse {
   success: boolean;
 }
 
-export interface IMatchCancelResponse {
+export interface MatchCancelResponse {
   success: boolean;
 }
 
-export interface IMatch {
-  roomId: string;
+export interface Match {
   usernames: string[];
   topic: string;
-  difficulty: DifficultyLevel;
+  difficulty: string;
 }
 
-export interface IQueue {
-  add(request: IMatchRequest): Promise<IMatchResponse>;
-  cancel(request: IMatchCancelRequest): Promise<IMatchCancelResponse>;
-  getRequests(): Map<string, IMatchRequest[]>;
-  getLength(): number;
-}
+export class Queue {
+  private static instance: Queue;
+  private redisClient: RedisClientType;
+  private userMap: Map<string, string>; // Map username to topicKey
+  private TIMEOUT_THRESHOLD = 30 * 1000; // 30 seconds
+  private kafkaHandler: KafkaHandler;
 
-interface KafkaMessageLocation {
-  topic: string;
-}
+  private constructor(kafkaHandler: KafkaHandler) {
+    this.kafkaHandler = kafkaHandler;
 
-export class Queue implements IQueue {
-  private producer: ProducerFactory;
-  private consumer: ConsumerFactory;
-  private userMap: Map<string, KafkaMessageLocation>; // to store the user's partition
-  private topicMap: Map<string, IMatchRequest[]>;
-  private isConsumerRunning = false;
+    // Initialize Redis client
+    this.redisClient = createClient({
+      url: process.env.REDIS_URL || "redis://localhost:6379",
+    });
 
-  constructor() {
-    // Setup connection to Kafka if using Kafka
-    const kafka = new KafkaFactory(
-      "match-queue",
-      [`${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`],
-      ["match-queue"]
+    this.userMap = new Map();
+
+    this.redisClient.on("error", (err) =>
+      console.error("Redis Client Error", err)
     );
 
-    // Setup producer and consumer
-    this.producer = new ProducerFactory(kafka, "match-queue");
-    this.consumer = new ConsumerFactory(kafka, "match-group", "match-queue");
-    this.userMap = new Map();
-    this.topicMap = new Map();
-    kafka.createTopicIfNotPresent(() => {
-      this.producer.start();
+    this.redisClient.connect().catch((err) => {
+      console.error("Error connecting to Redis:", err);
     });
   }
 
-  public async add(request: IMatchRequest): Promise<IMatchResponse> {
-    if (!this.isConsumerRunning) {
-      this.consumer.start(this.processMessage.bind(this));
-      this.isConsumerRunning = true;
+  public static getInstance(kafkaHandler: KafkaHandler): Queue {
+    if (!Queue.instance) {
+      Queue.instance = new Queue(kafkaHandler);
     }
+    return Queue.instance;
+  }
 
-    // check if user already exists in queue
+  public async add(request: MatchRequest): Promise<MatchResponse> {
+    // Check if user already exists in queue
     if (this.checkIfUserExists(request.username)) {
       console.error("User already exists in the queue");
-      return {
-        success: false,
-      };
+      return { success: false };
     }
 
-    // add to queue, then return success message
-    let success = false;
-    await this.producer.sendMessage(
-      request,
-      () => {
-        success = true;
-        this.onAddRequestSuccess(request);
-        console.log(`User: ${request.username} has been added to the queue.`);
-      },
-      (error) => {
-        console.error("Error sending message: ", error);
-      }
-    );
+    // Generate topic key
+    const topicKey = this.getTopicKey(request);
 
-    return {
-      success: success,
-    };
+    // Add timestamp to request
+    const requestData = { ...request, timestamp: Date.now() };
+
+    // Add the request to the Redis list
+    await this.redisClient.rPush(topicKey, JSON.stringify(requestData));
+
+    // Map username to topicKey
+    this.userMap.set(request.username, topicKey);
+
+    console.log(`User: ${request.username} has been added to the queue.`);
+
+    return { success: true };
   }
 
   public async cancel(
-    request: IMatchCancelRequest
-  ): Promise<IMatchCancelResponse> {
-    // remove from queue, then return success message
-    console.log("Cancelling request for user: ", request.username);
-    const msgLocation = this.userMap.get(request.username);
-    var success = false;
+    request: MatchCancelRequest
+  ): Promise<MatchCancelResponse> {
+    console.log("Cancelling request for user:", request.username);
 
-    console.log("msgLocation:", msgLocation);
+    const topicKey = this.userMap.get(request.username);
 
-    if (msgLocation != undefined) {
-      const { topic } = msgLocation;
-      const requests = this.topicMap.get(topic) ?? [];
-      for (let i = requests.length - 1; i >= 0; i--) {
-        if (requests[i].username == request.username) {
-          requests.splice(i, 1);
+    if (topicKey) {
+      // Get all requests from the list
+      const requestsData = await this.redisClient.lRange(topicKey, 0, -1);
+
+      for (const requestData of requestsData) {
+        const matchRequest: MatchRequest = JSON.parse(requestData);
+        if (matchRequest.username === request.username) {
+          // Remove the request from the list
+          await this.redisClient.lRem(topicKey, 1, requestData);
+          break;
         }
       }
+
+      // Remove user from userMap
       this.userMap.delete(request.username);
-      success = true;
+
+      console.log(`Request for user ${request.username} has been cancelled.`);
+
+      return { success: true };
+    } else {
+      console.error(`User ${request.username} not found in queue.`);
+      return { success: false };
+    }
+  }
+
+  public async getRequests(): Promise<Map<string, MatchRequest[]>> {
+    const topicMap = new Map<string, MatchRequest[]>();
+
+    // Get all keys matching the pattern
+    const keys = await this.redisClient.keys("*"); // Adjust pattern if needed
+
+    for (const key of keys) {
+      const requestsData = await this.redisClient.lRange(key, 0, -1);
+      const requests = requestsData.map(
+        (data) => JSON.parse(data) as MatchRequest
+      );
+      topicMap.set(key, requests);
     }
 
-    return {
-      success: success,
-    };
+    return topicMap;
   }
 
-  public getRequests(): Map<string, IMatchRequest[]> {
-    // return all requests in the queue
-    return this.topicMap;
-  }
+  public async getLength(): Promise<number> {
+    let numRequests = 0;
 
-  public getLength(): number {
-    var numRequests = 0;
-    this.topicMap.forEach((value) => (numRequests += value.length));
+    // Get all keys
+    const keys = await this.redisClient.keys("*");
+
+    for (const key of keys) {
+      const length = await this.redisClient.lLen(key);
+      numRequests += length;
+    }
+
     return numRequests;
+  }
+
+  public async getQueueLength(key: string): Promise<number> {
+    return await this.redisClient.lLen(key);
+  }
+
+  public async getNextTwoRequests(
+    key: string
+  ): Promise<[MatchRequest, MatchRequest] | null> {
+    const transaction = this.redisClient.multi();
+
+    transaction.lPop(key);
+    transaction.lPop(key);
+
+    const results = await transaction.exec();
+
+    const user1Data = results ? results[0] : null;
+    const user2Data = results ? results[1] : null;
+
+    if (user1Data && user2Data) {
+      const user1: MatchRequest = JSON.parse(user1Data);
+      const user2: MatchRequest = JSON.parse(user2Data);
+
+      // Remove users from userMap
+      this.userMap.delete(user1.username);
+      this.userMap.delete(user2.username);
+
+      return [user1, user2];
+    }
+
+    return null;
   }
 
   private checkIfUserExists(username: string): boolean {
     return this.userMap.has(username);
   }
 
-  private onAddRequestSuccess(request: IMatchRequest) {
-    // Validate the record metadata
-    this.userMap.set(request.username, {
-      topic: this.getTopic(request),
-    });
-    console.log("Successfully added request to queue");
-  }
-
-  private processMessage(message: KafkaMessage) {
-    const request: IMatchRequest = JSON.parse(message.value?.toString() ?? "");
-
-    const topic = this.getTopic(request);
-
-    if (!this.topicMap.get(topic)) {
-      this.topicMap.set(topic, []);
-    }
-
-    this.topicMap.get(topic)?.push(request);
-  }
-
-  private getTopic(request: IMatchRequest) {
+  private getTopicKey(request: MatchRequest): string {
     return `${request.topic}-${request.difficulty}`;
+  }
+
+  public async removeExpiredRequests(): Promise<void> {
+    const now = Date.now();
+
+    // Get all topic keys
+    const keys = await this.redisClient.keys("*");
+
+    for (const key of keys) {
+      const requestsData = await this.redisClient.lRange(key, 0, -1);
+
+      for (const requestData of requestsData) {
+        const matchRequest: MatchRequest = JSON.parse(requestData);
+        if (now - (matchRequest.timestamp || 0) >= this.TIMEOUT_THRESHOLD) {
+          // Remove the request from the list
+          await this.redisClient.lRem(key, 1, requestData);
+
+          // Remove user from userMap
+          this.userMap.delete(matchRequest.username);
+
+          console.log(
+            `Request for user ${matchRequest.username} has expired and been removed.`
+          );
+
+          // Notify the user about the timeout via Kafka
+          await this.kafkaHandler.sendGatewayEvent(
+            GatewayEvents.MATCH_TIMEOUT,
+            {
+              username: matchRequest.username,
+            }
+          );
+        } else {
+          // Since the list is ordered by insertion, we can break early
+          break;
+        }
+      }
+    }
   }
 }

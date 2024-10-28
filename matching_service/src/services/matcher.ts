@@ -1,145 +1,166 @@
-import { ServerSocketEvents } from "peerprep-shared-types";
-import { IMatch, IMatchRequest, IQueue } from "./queue";
-import { createRoom } from "./room";
+// src/services/matcher.ts
 
-export interface INotifier {
-  (
-    success:
-      | ServerSocketEvents.MATCH_FOUND
-      | ServerSocketEvents.MATCH_REQUESTED
-      | ServerSocketEvents.MATCH_CANCELED
-      | ServerSocketEvents.MATCH_TIMEOUT,
-    username: string,
-    message?: any
-  ): void;
-}
+import { Queue, MatchRequest, Match } from "./queue";
+import { KafkaHandler } from "./kafkaHandler";
+import { GatewayEvents } from "peerprep-shared-types";
+// Define necessary types within this file
 
 export class Matcher {
+  private static instance: Matcher;
   private readonly interval: number = 1000; // In milliseconds
-  private queue: IQueue;
-  private notifer: INotifier;
   private timeoutId: NodeJS.Timeout | null = null;
+  private queue: Queue;
+  private kafkaHandler: KafkaHandler;
 
-  constructor(queue: IQueue, notifier: INotifier) {
+  private constructor(queue: Queue, kafkaHandler: KafkaHandler) {
     this.queue = queue;
-    this.notifer = notifier;
+    this.kafkaHandler = kafkaHandler;
+
+    // Listen to match request events
+    this.kafkaHandler.on("MATCH_REQUESTED", async (payload: any) => {
+      await this.handleMatchRequest(
+        payload.username,
+        payload.difficulty,
+        payload.topic
+      );
+    });
+
+    // Listen to match cancel events
+    this.kafkaHandler.on("MATCH_CANCEL", async (payload: any) => {
+      await this.handleMatchCancel(payload.username);
+    });
   }
 
-  public async match() {
-    const map = this.queue.getRequests();
-    const { expired } = this.removeExpiredRequests(map);
-    this.notifyExpired(expired);
-    const rooms = await this.matchUsers(map);
-    this.notifyMatches(rooms);
-    const queueLength = this.queue.getLength();
+  public static getInstance(queue: Queue, kafkaHandler: KafkaHandler): Matcher {
+    if (!Matcher.instance) {
+      Matcher.instance = new Matcher(queue, kafkaHandler);
+    }
+    return Matcher.instance;
+  }
+
+  private async handleMatchRequest(
+    username: string,
+    difficulty: string,
+    topic: string
+  ) {
+    const request: MatchRequest = {
+      username,
+      difficulty,
+      topic,
+    };
+
+    const response = await this.queue.add(request);
+
+    if (response.success) {
+      console.log(`Match request added for user: ${username}`);
+      // Start the matcher if not already running
+      this.start();
+    } else {
+      console.error(`Failed to add match request for user: ${username}`);
+      // Optionally notify the user of the failure
+    }
+  }
+
+  private async handleMatchCancel(username: string) {
+    const response = await this.queue.cancel({ username });
+
+    if (response.success) {
+      console.log(`Match request cancelled for user: ${username}`);
+      // Optionally notify the user of the cancellation
+    } else {
+      console.error(`Failed to cancel match request for user: ${username}`);
+      // Optionally notify the user of the failure
+    }
+  }
+
+  public async match(): Promise<void> {
+    // Remove expired requests and notify users (handled within the queue)
+    await this.queue.removeExpiredRequests();
+
+    // Retrieve the updated requests map after removing expired requests
+    const requestMap = await this.queue.getRequests();
+
+    // Attempt to match users
+    const matches = await this.matchUsers(requestMap);
+
+    // Notify matched users
+    await this.notifyMatches(matches);
+
+    // Check the queue length to decide whether to continue matching
+    const queueLength = await this.queue.getLength();
     console.log(`Current Queue Length is: ${queueLength}`);
-    if (!queueLength) {
+
+    if (queueLength === 0) {
       console.log("Queue is empty, stopping matcher...");
       this.stop();
       return;
     }
-    this.timeoutId = setTimeout(() => this.match(), this.interval);
 
-    //TODO: Create rooms in database
-  }
-
-  private removeExpiredRequests(requestMap: Map<string, IMatchRequest[]>): {
-    expired: IMatchRequest[];
-  } {
-    const expired: IMatchRequest[] = [];
-    const now = Date.now();
-
-    requestMap.forEach((requests, key, map) => {
-      // Remove requests older than 30 seconds
-      for (let i = requests.length - 1; i >= 0; i--) {
-        if (requests[i].timestamp < now - 30 * 1000) {
-          expired.push(requests[i]);
-          requests.splice(i, 1);
-        }
-      }
-    });
-
-    return { expired };
+    // Schedule the next match attempt
+    this.timeoutId = setTimeout(() => {
+      this.match().catch((err) => console.error("Error in match:", err));
+    }, this.interval);
   }
 
   private async matchUsers(
-    requestMap: Map<string, IMatchRequest[]>
-  ): Promise<IMatch[]> {
-    let rooms: IMatch[] = [];
-    for (let key of Array.from(requestMap.keys())) {
-      const requests = requestMap.get(key);
-      if (!requests || requests.length < 2) {
-        continue;
-      }
+    requestMap: Map<string, MatchRequest[]>
+  ): Promise<Match[]> {
+    const matches: Match[] = [];
+    const keys = Array.from(requestMap.keys());
 
-      while (requests.length >= 2) {
-        const users = requests.splice(0, 2);
+    for (const key of keys) {
+      let length = await this.queue.getQueueLength(key);
 
-        if (users.length != 2) {
-          continue;
+      while (length >= 2) {
+        const users = await this.queue.getNextTwoRequests(key);
+        if (users) {
+          const [user1, user2] = users;
+          const match = await this.createMatch(user1, user2);
+          matches.push(match);
         }
-
-        // Create Room and place users inside
-        const user1 = users[0];
-        const user2 = users[1];
-        const room = await this.createRoom(user1, user2);
-        rooms.push(room);
-
-        // Remove users from queue
-        this.queue.cancel({ username: user1.username });
-        this.queue.cancel({ username: user2.username });
+        length = await this.queue.getQueueLength(key);
       }
     }
 
-    return rooms;
+    return matches;
   }
 
-  private async createRoom(
-    user1: IMatchRequest,
-    user2: IMatchRequest
-  ): Promise<IMatch> {
-    // Match user1 and user2
-    let users = [user1.username, user2.username];
-    let room = await createRoom(user1.topic, user1.difficulty, users);
-    if (room) {
-      console.log(`Match Found, Forwarding to room${room._id.toString()}`);
-      return {
-        roomId: room._id.toString(),
-        usernames: room.users,
-        topic: room.topic,
-        difficulty: room.difficulty,
-      };
-    }
-    throw Error("Invalid Room");
+  private async createMatch(
+    user1: MatchRequest,
+    user2: MatchRequest
+  ): Promise<Match> {
+    const match: Match = {
+      usernames: [user1.username, user2.username],
+      topic: user1.topic,
+      difficulty: user1.difficulty,
+    };
+
+    console.log(`Match found between ${user1.username} and ${user2.username}`);
+
+    return match;
   }
 
-  private async notifyExpired(expired: IMatchRequest[]) {
-    for (let request of expired) {
-      this.notifer(ServerSocketEvents.MATCH_TIMEOUT, request.username);
-    }
-  }
-
-  private async notifyMatches(matches: IMatch[]) {
-    matches.forEach((room) => {
-      this.notifer(ServerSocketEvents.MATCH_FOUND, room.usernames[0], {
-        roomId: room.roomId,
-        opponentUsername: room.usernames[1],
+  private async notifyMatches(matches: Match[]): Promise<void> {
+    for (const match of matches) {
+      // Use KafkaHandler to send MATCH_FOUND event
+      await this.kafkaHandler.sendGatewayEvent(GatewayEvents.MATCH_FOUND, {
+        usernames: match.usernames,
+        topic: match.topic,
+        difficulty: match.difficulty,
       });
-      this.notifer(ServerSocketEvents.MATCH_FOUND, room.usernames[1], {
-        roomId: room.roomId,
-        opponentUsername: room.usernames[0],
-      });
-    });
+    }
   }
 
-  public start() {
+  public start(): void {
     if (this.timeoutId === null) {
-      this.match();
+      this.match().catch((err) => console.error("Error starting match:", err));
     }
   }
 
-  public stop() {
-    clearTimeout(this.timeoutId as NodeJS.Timeout);
-    this.timeoutId = null;
+  public stop(): void {
+    if (this.timeoutId !== null) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
+    }
   }
 }
