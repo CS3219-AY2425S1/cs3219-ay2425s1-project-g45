@@ -208,11 +208,11 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       </Header>
       <div className="flex h-full overflow-auto">
         {/* Left Pane */}
-        <div className="flex flex-col w-2/5 space-y-4 px-4 pb-4">
+        <div className="flex flex-col w-2/5 px-4">
           <div className="flex-grow h-1/2">
             <Problem questionId={room.question} />
           </div>
-          <div className="flex-grow h-1/2">
+          <div className="flex-grow pt-4 h-1/2">
             <Chat messages={messages} sendMessage={sendMessage} />
           </div>
         </div>
