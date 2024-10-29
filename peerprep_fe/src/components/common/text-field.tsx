@@ -31,7 +31,7 @@ export default function Textfield({
         minLength={minLength}
         maxLength={maxLength}
         onChange={onChange}
-        value={text}
+        value={text ? text : undefined}
       />
       <label
         className="absolute text-sm text-gray-500 dark:text-gray-400
