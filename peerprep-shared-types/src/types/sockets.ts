@@ -14,6 +14,7 @@ export enum ClientSocketEvents {
   NEW_CHAT = "new_chat",
   CHAT_STATE = "chat_state",
   NEXT_QUESTION = "next_question",
+  REPLY_NEXT_QUESTION = "reply_next_question",
   QUESTION_CHANGE = "question_change",
 }
 
