@@ -67,14 +67,26 @@ export class Queue {
   }
 
   public async add(request: MatchRequest): Promise<MatchResponse> {
-    // Check if user already exists in queue
-    if (this.checkIfUserExists(request.username)) {
-      console.error("User already exists in the queue");
-      return { success: false };
-    }
-
-    // Generate topic key
     const topicKey = this.getTopicKey(request);
+
+    // Check if user already exists in the queue
+    if (this.userMap.has(request.username)) {
+      console.log(
+        `User ${request.username} already exists in the queue. Removing old instance.`
+      );
+
+      // Retrieve all requests in the queue
+      const queueData = await this.redisClient.lRange(topicKey, 0, -1);
+
+      // Remove the old instance of the user from the Redis list
+      for (const data of queueData) {
+        const existingRequest = JSON.parse(data) as MatchRequest;
+        if (existingRequest.username === request.username) {
+          await this.redisClient.lRem(topicKey, 1, data);
+          break;
+        }
+      }
+    }
 
     // Add timestamp to request
     const requestData = { ...request, timestamp: Date.now() };
@@ -82,7 +94,7 @@ export class Queue {
     // Add the request to the Redis list
     await this.redisClient.rPush(topicKey, JSON.stringify(requestData));
 
-    // Map username to topicKey
+    // Update the userMap with the new topicKey
     this.userMap.set(request.username, topicKey);
 
     console.log(`User: ${request.username} has been added to the queue.`);
@@ -126,7 +138,7 @@ export class Queue {
     const topicMap = new Map<string, MatchRequest[]>();
 
     // Get all keys matching the pattern
-    const keys = await this.redisClient.keys("*"); // Adjust pattern if needed
+    const keys = await this.redisClient.keys("matchRequest:*"); // Adjust pattern if needed
 
     for (const key of keys) {
       const requestsData = await this.redisClient.lRange(key, 0, -1);
@@ -143,7 +155,7 @@ export class Queue {
     let numRequests = 0;
 
     // Get all keys
-    const keys = await this.redisClient.keys("*");
+    const keys = await this.redisClient.keys("matchRequest:*");
 
     for (const key of keys) {
       const length = await this.redisClient.lLen(key);
@@ -189,14 +201,14 @@ export class Queue {
   }
 
   private getTopicKey(request: MatchRequest): string {
-    return `${request.topic}-${request.difficulty}`;
+    return `matchRequest:${request.topic}-${request.difficulty}`;
   }
 
   public async removeExpiredRequests(): Promise<void> {
     const now = Date.now();
 
     // Get all topic keys
-    const keys = await this.redisClient.keys("*");
+    const keys = await this.redisClient.keys("matchRequest:*");
 
     for (const key of keys) {
       const requestsData = await this.redisClient.lRange(key, 0, -1);

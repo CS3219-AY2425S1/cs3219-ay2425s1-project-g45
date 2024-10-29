@@ -8,8 +8,8 @@ import questionRoutes from "./api/routes/questionRoutes";
 import matchingRoutes from "./api/routes/matchingRoutes";
 import { authenticateToken } from "./utility/jwtHelper";
 import { WebSocketHandler } from "./websocket-handler";
+import RedisService from "./services/redisService";
 
-// Load environment variables
 dotenv.config();
 
 class ApiGateway {
@@ -17,21 +17,32 @@ class ApiGateway {
   private server: http.Server;
   private wsHandler: WebSocketHandler;
   private port: string;
+  private redisService: RedisService;
 
   constructor() {
-    // Initialize Express app
     this.app = express();
     this.port = this.validatePort();
-
-    // Create HTTP server
     this.server = http.createServer(this.app);
-
-    // Setup middleware and routes
     this.setupMiddleware();
     this.setupRoutes();
 
+    // Initialize Redis Service
+    this.redisService = RedisService.getInstance();
+
     // Initialize WebSocket handler
     this.wsHandler = new WebSocketHandler(this.server);
+  }
+
+  // Initialize Redis and other async resources
+  public async initialize(): Promise<void> {
+    try {
+      // Connect to Redis
+      await this.redisService.connect();
+      console.log("🚀 Connected to Redis");
+    } catch (error) {
+      console.error("Failed to connect to Redis:", error);
+      throw error; // Re-throw error to handle it in the start method
+    }
   }
 
   private validatePort(): string {
@@ -45,7 +56,6 @@ class ApiGateway {
   }
 
   private setupMiddleware(): void {
-    // CORS configuration
     this.app.use(
       cors({
         origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -54,26 +64,17 @@ class ApiGateway {
       })
     );
 
-    // Body parser
     this.app.use(express.json());
-
-    // Logging middleware
     this.app.use(this.logRequestTimestamp);
-
-    // Error handling middleware
     this.app.use(this.errorHandler);
   }
 
   private setupRoutes(): void {
-    // Public routes
     this.app.use("/auth", userRoutes);
-
-    // Protected routes
     this.app.use(authenticateToken);
     this.app.use("/api/questions", questionRoutes);
     this.app.use("/", matchingRoutes);
 
-    // Health check route
     this.app.get("/health", (req: Request, res: Response) => {
       res.json({
         status: "healthy",
@@ -105,32 +106,40 @@ class ApiGateway {
     });
   }
 
-  public start(): void {
-    this.server.listen(this.port, () => {
-      console.log(`
-        🚀 API Gateway running at http://localhost:${this.port}
-        📝 Environment: ${process.env.NODE_ENV || "development"}
-        🔑 Auth enabled: ${Boolean(process.env.JWT_SECRET)}
-        🌐 WebSocket server running
-      `);
-    });
+  public async start(): Promise<void> {
+    try {
+      // Initialize async services (e.g., Redis)
+      await this.initialize();
 
-    // Graceful shutdown
-    process.on("SIGTERM", () => {
-      console.log("SIGTERM signal received: closing HTTP server");
-      this.server.close(() => {
-        console.log("HTTP server closed");
-        process.exit(0);
+      this.server.listen(this.port, () => {
+        console.log(`
+          🚀 API Gateway running at http://localhost:${this.port}
+          📝 Environment: ${process.env.NODE_ENV || "development"}
+          🔑 Auth enabled: ${Boolean(process.env.JWT_SECRET)}
+          🌐 WebSocket server running
+        `);
       });
-    });
+
+      // Graceful shutdown
+      process.on("SIGTERM", () => {
+        console.log("SIGTERM signal received: closing HTTP server");
+        this.server.close(async () => {
+          console.log("HTTP server closed");
+
+          // Disconnect from Redis
+          await this.redisService.disconnect();
+          console.log("Disconnected from Redis");
+
+          process.exit(0);
+        });
+      });
+    } catch (error) {
+      console.error("Failed to start API Gateway:", error);
+      process.exit(1);
+    }
   }
 }
 
 // Create and start the gateway
-try {
-  const gateway = new ApiGateway();
-  gateway.start();
-} catch (error) {
-  console.error("Failed to start API Gateway:", error);
-  process.exit(1);
-}
+const gateway = new ApiGateway();
+gateway.start();

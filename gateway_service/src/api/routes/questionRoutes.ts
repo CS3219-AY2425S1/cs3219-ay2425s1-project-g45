@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import * as requestHelper from "../../utility/requestHelper";
 dotenv.config();
-const QUESTION_SERVICE = `http://${process.env.QUESTION_SERVICE_ROUTE}:${process.env.QUESTION_SERVICE_PORT}/api`;
+export const QUESTION_SERVICE = `http://${process.env.QUESTION_SERVICE_ROUTE}:${process.env.QUESTION_SERVICE_PORT}/api`;
 
 const router = express.Router();
 

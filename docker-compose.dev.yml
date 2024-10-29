@@ -43,6 +43,8 @@ services:
       - USER_SERVICE_PORT=${USER_SERVICE_PORT}
       - QUESTION_SERVICE_ROUTE=question-service
       - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
+      - REDIS_ROUTE=redis://redis
+      - REDIS_PORT=${REDIS_PORT}
     ports:
       - ${API_GATEWAY_PORT}:${API_GATEWAY_PORT}
 

@@ -11,9 +11,12 @@ import {
   createEvent,
   validateKafkaEvent,
   ServiceNames,
+  ServerSocketEvents,
 } from "peerprep-shared-types";
 import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
 import { MatchingEvents } from "peerprep-shared-types/dist/types/kafka/matching-events";
+import { handleMatchFound } from "./services/matchingHandler";
+import RedisService from "./services/redisService";
 
 type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
 
@@ -22,6 +25,7 @@ export class WebSocketHandler {
   private kafka: Kafka;
   private producer: any;
   private consumer: any;
+  private redis: RedisService;
 
   constructor(server: any) {
     this.io = new Server(server, {
@@ -49,6 +53,18 @@ export class WebSocketHandler {
 
     this.setupKafka();
     this.setupSocketHandlers();
+    this.redis = RedisService.getInstance();
+  }
+
+  private async setUsernameSocketId(username: string, socketId: string) {
+    let key = `${username}-socket`;
+    await this.redis.set(key, socketId);
+  }
+
+  private async getUsernameSocketId(username: string) {
+    let key = `${username}-socket`;
+    let result = await this.redis.get(key);
+    return result;
   }
 
   private async setupKafka() {
@@ -91,6 +107,7 @@ export class WebSocketHandler {
           difficulty: data.selectedDifficulty,
           topic: data.selectedTopic,
         });
+        await this.setUsernameSocketId(data.username, socket.id);
         await this.producer.send({
           topic: Topics.MATCHING_EVENTS,
           messages: [
@@ -170,7 +187,25 @@ export class WebSocketHandler {
           break;
         case GatewayEvents.ERROR:
           console.log("Error event received:", payload);
+          break;
         // todo send the error to the client socket
+        case GatewayEvents.MATCH_FOUND:
+          const matchFoundPayload =
+            event.payload as EventPayloads[GatewayEvents.MATCH_FOUND];
+          for (const username of matchFoundPayload.usernames) {
+            console.log(username);
+            const socketId = await this.getUsernameSocketId(username);
+            if (socketId) {
+              this.io.to(socketId).emit(ServerSocketEvents.MATCH_FOUND);
+            } else {
+              throw Error("No socket found for user");
+            }
+          }
+          handleMatchFound(
+            matchFoundPayload.usernames,
+            matchFoundPayload.topic,
+            matchFoundPayload.difficulty
+          );
       }
     } catch (error) {
       console.error("Error handling gateway event:", error);
