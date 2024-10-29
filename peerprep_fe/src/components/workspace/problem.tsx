@@ -17,7 +17,7 @@ const Problem: React.FC<ProblemProps> = ({ questionId }) => {
         setQuestion(data?.message);
       });
     }
-  }, [token]);
+  }, [token, questionId]);
 
   return (
     <div className="h-full flex flex-col">

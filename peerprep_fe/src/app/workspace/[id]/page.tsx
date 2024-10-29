@@ -15,6 +15,8 @@ import {
   ChatMessage,
 } from "peerprep-shared-types";
 import { useSocket } from "@/app/actions/socket";
+import Modal from "@/components/common/modal";
+import { set } from "mongoose";
 
 type WorkspaceProps = {
   params: {
@@ -25,13 +27,14 @@ type WorkspaceProps = {
 
 const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   const router = useRouter();
-  const { token, deleteToken, username } = useAuth();
+  const { token, username } = useAuth();
   const { socket } = useSocket();
   const [activeUsers, setActiveUsers] = useState<string[]>([]);
   const [sharedCode, setSharedCode] = useState<string>("");
   const [language, setLanguage] = useState<Language>(Language.javascript);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [room, setRoom] = useState<RoomDto>();
+  const [isNextQnsModalOpen, setIsNextQnsModalOpen] = useState<boolean>(false);
 
   const handleCodeChange = (newContent: string) => {
     setSharedCode(newContent);
@@ -94,6 +97,55 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     router.push("/home");
   }
 
+  function handleReplyNextQuestion(accept: boolean) {
+    if (!socket || !room) return;
+    console.log("Replying to next question request");
+    socket.emit(ClientSocketEvents.REPLY_NEXT_QUESTION, {
+      event: ClientSocketEvents.REPLY_NEXT_QUESTION,
+      roomId: room._id,
+      username: username,
+      accept: accept,
+    });
+    setIsNextQnsModalOpen(false);
+  }
+
+  function handleNextQuestion() {
+    if (!socket || !room || activeUsers.length < 2) return;
+    console.log("Requesting next question");
+    socket.emit(ClientSocketEvents.NEXT_QUESTION, {
+      event: ClientSocketEvents.NEXT_QUESTION,
+      roomId: room._id,
+      username: username,
+    });
+  }
+
+  const NextQuestionRequestModal = () => {
+    // Show modal
+    return (
+      <Modal isOpen={isNextQnsModalOpen} isCloseable={false} width="lg">
+        <div className="flex flex-col">
+          <h1>Proceed to next question?</h1>
+          <div className="w-1/2 flex space-x-5 self-end">
+            <Button
+              text="Reject"
+              type="reset"
+              onClick={() => {
+                handleReplyNextQuestion(false);
+              }}
+            />
+            <Button
+              text="Accept"
+              type="button"
+              onClick={() => {
+                handleReplyNextQuestion(true);
+              }}
+            />
+          </div>
+        </div>
+      </Modal>
+    );
+  };
+
   useEffect(() => {
     console.log(params.id);
   }, []);
@@ -153,6 +205,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       setActiveUsers(activeUsers);
     });
 
+    // Chat listeners
     if (!socket.hasListeners(ClientSocketEvents.NEW_CHAT)) {
       console.log("Adding new chat listener");
       socket.on(ClientSocketEvents.NEW_CHAT, (newMessage) => {
@@ -169,6 +222,43 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       socket.once(ClientSocketEvents.CHAT_STATE, ({ messages }) => {
         console.log("Chat state received", messages);
         setMessages(messages);
+      });
+    }
+
+    // Next question listeners
+    if (!socket.hasListeners(ClientSocketEvents.NEXT_QUESTION)) {
+      socket.on(ClientSocketEvents.NEXT_QUESTION, () => {
+        console.log("Next question request received");
+        // Show modal
+        setIsNextQnsModalOpen(true);
+      });
+    }
+
+    if (!socket.hasListeners(ClientSocketEvents.REPLY_NEXT_QUESTION)) {
+      socket.on(
+        ClientSocketEvents.REPLY_NEXT_QUESTION,
+        ({ username, accept }) => {
+          console.log("Reply to next question request received");
+          if (accept) {
+            // Proceed to next question
+            console.log("Request accepted by user", username);
+          } else {
+            console.log("Request rejected by user", username);
+          }
+        }
+      );
+    }
+
+    if (!socket.hasListeners(ClientSocketEvents.QUESTION_CHANGE)) {
+      socket.on(ClientSocketEvents.QUESTION_CHANGE, ({ questionId }) => {
+        console.log("Question changed to", questionId);
+        setRoom((prevRoom) => {
+          if (!prevRoom) return prevRoom;
+          return {
+            ...prevRoom,
+            question: questionId,
+          };
+        });
       });
     }
 
@@ -221,15 +311,17 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
         <div className="border border-gray-300" />
 
         {/* Right Pane */}
-        <div className="w-3/5 px-4">
+        <div className="w-3/5 px-4 inline-flex flex-col">
           <CodeEditor
             language={language}
             sharedCode={sharedCode}
             handleCodeChange={handleCodeChange}
             setLanguage={handleLanguageChange}
           />
+          <Button text="Next Question" onClick={handleNextQuestion} />
         </div>
       </div>
+      <NextQuestionRequestModal />
     </div>
   );
 };

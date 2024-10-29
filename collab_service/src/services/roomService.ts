@@ -1,5 +1,8 @@
 import { RoomModel } from "../models/Room";
 import { DifficultyLevel, ChatMessage } from "peerprep-shared-types";
+import axios from "axios";
+
+export const QUESTION_SERVICE = `http://${process.env.QUESTION_SERVICE_ROUTE}:${process.env.QUESTION_SERVICE_PORT}/api`;
 
 // Create a new room
 export async function createRoom(
@@ -71,6 +74,24 @@ export async function updateQuestion(roomId: string, questionId: string) {
   return true;
 }
 
+export async function setRandomQuestion(roomId: string) {
+  let room = await getRoom(roomId);
+  if (!room) {
+    return null;
+  }
+
+  let question = await getRandomQuestion(room.topic, room.difficulty);
+  if (!question) {
+    return null;
+  }
+
+  room.question = question;
+
+  await room.save();
+
+  return question._id;
+}
+
 export async function updateMessages(roomId: string, messages: ChatMessage[]) {
   const newRoom = await RoomModel.findByIdAndUpdate(
     roomId,
@@ -81,4 +102,15 @@ export async function updateMessages(roomId: string, messages: ChatMessage[]) {
   );
   console.log("New room:", newRoom);
   return newRoom !== null;
+}
+
+async function getRandomQuestion(topic: string, difficulty: DifficultyLevel) {
+  let url = `${QUESTION_SERVICE}/questions/random/?topic=${topic}&difficulty=${difficulty}`;
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting random question:", error);
+    return null;
+  }
 }

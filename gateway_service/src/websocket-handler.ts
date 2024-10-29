@@ -203,6 +203,54 @@ export class WebSocketHandler {
         // send event to collaboration service
         await this.sendCollaborationEvent(event, roomId);
       });
+
+      // Handle next question that has just been initiated by a user
+      socket.on(ClientSocketEvents.NEXT_QUESTION, async (data) => {
+        const { roomId, username } = data;
+
+        // everyone in the room except the sender will receive request for next question on frontend
+        socket.to(roomId).emit(ClientSocketEvents.NEXT_QUESTION, {
+          username: username,
+          roomId: roomId,
+        });
+
+        const event = createEvent(CollaborationEvents.NEXT_QUESTION, {
+          roomId: roomId,
+          username: username,
+          accept: true,
+        });
+
+        // send event to collaboration service
+        await this.sendCollaborationEvent(event, roomId);
+      });
+
+      // Handle reply to next question request
+      socket.on(ClientSocketEvents.REPLY_NEXT_QUESTION, async (data) => {
+        const { roomId, username, accept } = data;
+
+        console.log(
+          "Next question",
+          "for room:",
+          roomId,
+          accept ? "accepted" : "rejected",
+          "by",
+          username
+        );
+
+        socket.to(roomId).emit(ClientSocketEvents.REPLY_NEXT_QUESTION, {
+          username: username,
+          roomId: roomId,
+          accept: accept,
+        });
+
+        const event = createEvent(CollaborationEvents.NEXT_QUESTION, {
+          roomId: roomId,
+          username: username,
+          accept: accept,
+        });
+
+        await this.sendCollaborationEvent(event, roomId);
+      });
     });
   }
 
@@ -265,16 +313,29 @@ export class WebSocketHandler {
             console.log(username);
             const socketId = await this.getUsernameSocketId(username);
             if (socketId) {
-              this.io
-                .to(socketId)
-                .emit(ServerSocketEvents.MATCH_FOUND, {
-                  roomId: room._id,
-                  questionId: room.question,
-                });
+              this.io.to(socketId).emit(ServerSocketEvents.MATCH_FOUND, {
+                roomId: room._id,
+                questionId: room.question,
+              });
             } else {
               throw Error("No socket found for user");
             }
           }
+          break;
+        case GatewayEvents.CHANGE_QUESTION:
+          const changeQuestionPayload =
+            event.payload as EventPayloads[GatewayEvents.CHANGE_QUESTION];
+          console.log(
+            "Sending question change to room:",
+            changeQuestionPayload.roomId,
+            changeQuestionPayload.questionId
+          );
+          this.io
+            .to(changeQuestionPayload.roomId)
+            .emit(ClientSocketEvents.QUESTION_CHANGE, {
+              questionId: changeQuestionPayload.questionId,
+            });
+          break;
       }
     } catch (error) {
       console.error("Error handling gateway event:", error);
