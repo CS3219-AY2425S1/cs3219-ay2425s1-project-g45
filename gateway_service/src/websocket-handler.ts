@@ -256,20 +256,25 @@ export class WebSocketHandler {
         case GatewayEvents.MATCH_FOUND:
           const matchFoundPayload =
             event.payload as EventPayloads[GatewayEvents.MATCH_FOUND];
-          for (const username of matchFoundPayload.usernames) {
-            console.log(username);
-            const socketId = await this.getUsernameSocketId(username);
-            if (socketId) {
-              this.io.to(socketId).emit(ServerSocketEvents.MATCH_FOUND);
-            } else {
-              throw Error("No socket found for user");
-            }
-          }
-          handleMatchFound(
+          let room = await handleMatchFound(
             matchFoundPayload.usernames,
             matchFoundPayload.topic,
             matchFoundPayload.difficulty
           );
+          for (const username of matchFoundPayload.usernames) {
+            console.log(username);
+            const socketId = await this.getUsernameSocketId(username);
+            if (socketId) {
+              this.io
+                .to(socketId)
+                .emit(ServerSocketEvents.MATCH_FOUND, {
+                  roomId: room._id,
+                  questionId: room.question,
+                });
+            } else {
+              throw Error("No socket found for user");
+            }
+          }
       }
     } catch (error) {
       console.error("Error handling gateway event:", error);

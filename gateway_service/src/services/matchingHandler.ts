@@ -8,8 +8,8 @@ export async function handleMatchFound(
   topic: string,
   difficulty: string
 ) {
-  let roomId = await createRoom(usernames, topic, difficulty);
-  console.log(roomId);
+  let room = await createRoom(usernames, topic, difficulty);
+  return room;
 }
 
 async function getRandomQuestion(topic: string, difficulty: string) {
@@ -33,5 +33,10 @@ async function createRoom(users: string[], topic: string, difficulty: string) {
     users: users,
     question: questionId,
   };
-  await axios.post(url, body);
+  let res = await axios.post(url, body);
+  if (res.status == 200) {
+    return res.data;
+  } else {
+    console.error("Error when creating room");
+  }
 }
