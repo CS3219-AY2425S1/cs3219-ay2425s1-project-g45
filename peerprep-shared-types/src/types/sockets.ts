@@ -13,6 +13,8 @@ export enum ClientSocketEvents {
   SEND_MESSAGE = "send_message",
   NEW_CHAT = "new_chat",
   CHAT_STATE = "chat_state",
+  NEXT_QUESTION = "next_question",
+  QUESTION_CHANGE = "question_change",
 }
 
 export enum ServerSocketEvents {

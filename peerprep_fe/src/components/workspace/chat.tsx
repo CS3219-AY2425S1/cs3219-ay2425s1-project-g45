@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { ChatMessage } from "peerprep-shared-types";
 import { useAuth } from "@/contexts/auth-context";
 import Textfield from "../common/text-field";
@@ -25,6 +25,15 @@ const Chat: React.FC<ChatProps> = ({
     ) {
       setNotification(true);
     }
+
+    // Scroll to the bottom of the chat on first load if there are messages
+    if (messageCount === 0 && messages.length > 0) {
+      const chatContainer = document.getElementById("chat-container");
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
+
     setMessageCount(messages.length);
   }, [messages]);
 
