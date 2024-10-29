@@ -35,6 +35,8 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [room, setRoom] = useState<RoomDto>();
   const [isNextQnsModalOpen, setIsNextQnsModalOpen] = useState<boolean>(false);
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
   const handleCodeChange = (newContent: string) => {
     setSharedCode(newContent);
@@ -146,6 +148,25 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     );
   };
 
+  const ErrorModal = () => {
+    return (
+      <Modal isOpen={isErrorModalOpen} isCloseable={false} width="lg">
+        <div className="flex flex-col">
+          <h1>{error}</h1>
+          <div className="w-1/4 flex space-x-5 self-end">
+            <Button
+              text="Ok"
+              type="reset"
+              onClick={() => {
+                setIsErrorModalOpen(false);
+              }}
+            />
+          </div>
+        </div>
+      </Modal>
+    );
+  };
+
   useEffect(() => {
     console.log(params.id);
   }, []);
@@ -244,6 +265,11 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
             console.log("Request accepted by user", username);
           } else {
             console.log("Request rejected by user", username);
+
+            setError(
+              `${username} rejected the request to proceed to next question`
+            );
+            setIsErrorModalOpen(true);
           }
         }
       );
@@ -322,6 +348,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
         </div>
       </div>
       <NextQuestionRequestModal />
+      <ErrorModal />
     </div>
   );
 };
