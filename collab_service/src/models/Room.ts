@@ -1,21 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { DifficultyLevel } from "peerprep-shared-types";
-
-// First, let's define the interface for our Room document
-interface IRoom extends Document {
-  _id: string;
-  users: string[];
-  question: string;
-  topic: string;
-  difficulty: DifficultyLevel;
-  //   messages: {
-  //     userId: string;
-  //     content: string;
-  //     timestamp: Date;
-  //   }[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { DifficultyLevel, ChatMessage, RoomDto } from "peerprep-shared-types";
 
 // Now, let's create the Mongoose schema
 const RoomSchema: Schema = new Schema({
@@ -25,8 +9,8 @@ const RoomSchema: Schema = new Schema({
   question: { type: mongoose.Types.ObjectId, required: true },
   messages: [
     {
-      userId: { type: String, required: true },
-      content: { type: String, required: true },
+      username: { type: String, required: true },
+      message: { type: String, required: true },
       timestamp: { type: Date, default: Date.now },
     },
   ],
@@ -35,6 +19,6 @@ const RoomSchema: Schema = new Schema({
 });
 
 // Create and export the Mongoose model
-const RoomModel = mongoose.model<IRoom>("Room", RoomSchema);
+const RoomModel = mongoose.model<RoomDto>("Room", RoomSchema);
 
-export { IRoom, RoomModel };
+export { RoomModel };

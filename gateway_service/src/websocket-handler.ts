@@ -90,8 +90,10 @@ export class WebSocketHandler {
         );
 
         validateKafkaEvent(event, topic as Topics);
-
-        await this.handleGatewayEvent(event);
+        if (topic === Topics.GATEWAY_EVENTS) {
+          const typedEvent = event as KafkaEvent<GatewayEvents>;
+          await this.handleGatewayEvent(typedEvent);
+        }
       },
     });
   }
@@ -139,6 +141,20 @@ export class WebSocketHandler {
         await this.sendCollaborationEvent(event, data.roomId);
       });
 
+      socket.on(ClientSocketEvents.LEAVE_ROOM, async (data) => {
+        console.log("Leaving room:", data.roomId);
+
+        socket.leave(data.roomId);
+
+        const event = createEvent(CollaborationEvents.LEAVE_ROOM, {
+          roomId: data.roomId,
+          username: data.username,
+        });
+
+        // send event to collaboration service
+        await this.sendCollaborationEvent(event, data.roomId);
+      });
+
       socket.on(ClientSocketEvents.CODE_CHANGE, async (data) => {
         const { roomId, username, message } = data;
         console.log("Code change in room:", message);
@@ -162,13 +178,35 @@ export class WebSocketHandler {
         await this.sendCollaborationEvent(event, roomId);
       });
 
-      socket.on("disconnect", () => {
-        console.log("Client disconnected:", socket.id);
+      socket.on(ClientSocketEvents.SEND_MESSAGE, async (data) => {
+        const { roomId, username, message } = data;
+        console.log("Sending message in room:", data);
+
+        const event = createEvent(CollaborationEvents.SEND_MESSAGE, {
+          roomId: roomId,
+          username: username,
+          message: message,
+        });
+
+        // send event to collaboration service
+        await this.sendCollaborationEvent(event, roomId);
+      });
+
+      socket.on(ClientSocketEvents.CHAT_STATE, async (data) => {
+        const { roomId } = data;
+        console.log("Requesting chat state for room:", roomId);
+
+        const event = createEvent(CollaborationEvents.REQUEST_CHAT_STATE, {
+          roomId: roomId,
+        });
+
+        // send event to collaboration service
+        await this.sendCollaborationEvent(event, roomId);
       });
     });
   }
 
-  private async handleGatewayEvent(event: KafkaEvent<keyof EventPayloads>) {
+  private async handleGatewayEvent(event: KafkaEvent<GatewayEvents>) {
     const { type, payload } = event;
     try {
       switch (type) {
@@ -189,6 +227,32 @@ export class WebSocketHandler {
           console.log("Error event received:", payload);
           break;
         // todo send the error to the client socket
+        case GatewayEvents.NEW_CHAT:
+          const newChatPayload =
+            event.payload as EventPayloads[GatewayEvents.NEW_CHAT];
+          console.log(
+            "Sending new chat to room:",
+            newChatPayload.roomId,
+            newChatPayload.message
+          );
+          this.io
+            .to(newChatPayload.roomId)
+            .emit(ClientSocketEvents.NEW_CHAT, newChatPayload.message);
+          break;
+        case GatewayEvents.REFRESH_CHAT_STATE:
+          const chatStatePayload =
+            event.payload as EventPayloads[GatewayEvents.REFRESH_CHAT_STATE];
+          console.log(
+            "Sending chat state to room:",
+            chatStatePayload.roomId,
+            chatStatePayload.chatState
+          );
+          this.io
+            .to(chatStatePayload.roomId)
+            .emit(ClientSocketEvents.CHAT_STATE, {
+              messages: chatStatePayload.chatState.messages,
+            });
+          break;
         case GatewayEvents.MATCH_FOUND:
           const matchFoundPayload =
             event.payload as EventPayloads[GatewayEvents.MATCH_FOUND];
