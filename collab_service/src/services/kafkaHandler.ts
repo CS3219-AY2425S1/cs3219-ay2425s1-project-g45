@@ -135,6 +135,14 @@ export class KafkaHandler {
       await RoomModel.findByIdAndUpdate(roomId, {
         $pull: { activeUsers: username },
       });
+
+      await this.sendGatewayEvent(
+        createEvent(GatewayEvents.REFRESH_ROOM_STATE, {
+          roomId,
+          editorState: newState,
+        }),
+        roomId
+      );
     }
   }
 
