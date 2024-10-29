@@ -11,6 +11,7 @@ import {
 } from "peerprep-shared-types";
 import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
 import { ChatManager } from "./chat";
+import { setRandomQuestion } from "./roomService";
 
 export type CollaborationEventKeys = keyof Pick<
   EventPayloads,
@@ -21,11 +22,13 @@ export class KafkaHandler {
   private producer: Producer;
   private editorManager: EditorManager;
   private chatManager: ChatManager;
+  private nextQuestionRequests: Map<string, Set<string>>;
 
   constructor(kafka: Kafka) {
     this.producer = kafka.producer();
     this.editorManager = new EditorManager();
     this.chatManager = new ChatManager();
+    this.nextQuestionRequests = new Map();
   }
 
   async initialize() {
@@ -76,6 +79,16 @@ export class KafkaHandler {
           const chatStatePayload =
             event.payload as EventPayloads[CollaborationEvents.REQUEST_CHAT_STATE];
           await this.handleChatStateRequest(chatStatePayload.roomId);
+          break;
+
+        case CollaborationEvents.NEXT_QUESTION:
+          const nextQuestionPayload =
+            event.payload as EventPayloads[CollaborationEvents.NEXT_QUESTION];
+          await this.handleNextQuestion(
+            nextQuestionPayload.roomId,
+            nextQuestionPayload.username,
+            nextQuestionPayload.accept
+          );
           break;
       }
     } catch (error) {
@@ -181,6 +194,62 @@ export class KafkaHandler {
     });
 
     await this.sendGatewayEvent(event, roomId);
+  }
+
+  private async handleNextQuestion(
+    roomId: string,
+    username: string,
+    accept: boolean
+  ) {
+    // Check if both user accept
+    console.log("Next question request received:", roomId, username, accept);
+    if (!accept) {
+      this.nextQuestionRequests.delete(roomId);
+      return;
+    }
+
+    if (!this.nextQuestionRequests.has(roomId)) {
+      this.nextQuestionRequests.set(roomId, new Set());
+    }
+
+    const requests = this.nextQuestionRequests.get(roomId);
+
+    if (!requests) {
+      console.error("Failed to get requests for room", roomId);
+      return;
+    }
+
+    requests.add(username);
+
+    if (requests.size < 2) {
+      // wait for other user to accept
+      return;
+    }
+
+    // Both users accepted
+    this.nextQuestionRequests.delete(roomId);
+
+    // Update Room question
+    const question: string = await setRandomQuestion(roomId);
+    let event: KafkaEvent<GatewayEvents.ERROR | GatewayEvents.CHANGE_QUESTION>;
+
+    if (!question) {
+      console.error("Failed to set random question");
+      event = createEvent(GatewayEvents.ERROR, {
+        error: "Failed to set random question",
+        roomId,
+      });
+    } else {
+      // Send new question event to gateway
+      event = createEvent(GatewayEvents.CHANGE_QUESTION, {
+        roomId,
+        questionId: question,
+      });
+      this.nextQuestionRequests.delete(roomId);
+    }
+
+    await this.sendGatewayEvent(event, roomId);
+    // Delete request from map
   }
 
   private async sendGatewayEvent<T extends GatewayEvents>(

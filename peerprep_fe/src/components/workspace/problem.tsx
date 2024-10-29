@@ -17,7 +17,7 @@ const Problem: React.FC<ProblemProps> = ({ questionId }) => {
         setQuestion(data?.message);
       });
     }
-  }, [token]);
+  }, [token, questionId]);
 
   return (
     <div className="h-full flex flex-col">
@@ -26,7 +26,7 @@ const Problem: React.FC<ProblemProps> = ({ questionId }) => {
         <h2 className="questiontitle">{question?.title}</h2>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 overflow-y-scroll rounded-b-lg">
+      <div className="bg-white dark:bg-slate-800 overflow-y-scroll rounded-b-lg flex-grow">
         {/* Problem content */}
         <div className="flex-grow p-6 shadow-sm">
           {/* Difficulty*/}
