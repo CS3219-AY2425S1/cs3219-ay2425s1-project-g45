@@ -146,6 +146,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
 
     socket.on("roomUpdated", (room) => {
       setSharedCode(room.room.content);
+      setActiveUsers(room.room.activeUsers);
     });
 
     socket.on(ClientSocketEvents.USER_LEFT, ({ username, activeUsers }) => {
@@ -187,7 +188,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
               User 1
             </h3>
             <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 text-center text-sm">
-              {(room?.users?.length && room.users[0]) || "Waiting..."}
+              {(activeUsers.length && activeUsers[0]) || "Waiting..."}
             </div>
           </div>
           <div className="w-max flex items-center justify-start">
@@ -195,7 +196,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
               User 2
             </h3>
             <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 text-center text-sm">
-              {(room?.users?.length && room.users[1]) || "Waiting..."}
+              {(activeUsers.length > 1 && activeUsers[1]) || "Waiting..."}
             </div>
           </div>
         </div>
