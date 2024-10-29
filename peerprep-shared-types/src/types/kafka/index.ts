@@ -35,6 +35,10 @@ export interface EventPayloads {
   [GatewayEvents.MATCH_TIMEOUT]: {
     username: string;
   };
+  [GatewayEvents.CHANGE_QUESTION]: {
+    roomId: string;
+    questionId: string;
+  };
 
   // Collaboration Events
   [CollaborationEvents.JOIN_ROOM]: {
@@ -57,6 +61,11 @@ export interface EventPayloads {
   };
   [CollaborationEvents.REQUEST_CHAT_STATE]: {
     roomId: string;
+  };
+  [CollaborationEvents.NEXT_QUESTION]: {
+    roomId: string;
+    username: string;
+    accept: boolean;
   };
 
   // Matching Events
