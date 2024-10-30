@@ -3,33 +3,12 @@
 import { createClient, RedisClientType } from "redis";
 import { KafkaHandler } from "./kafkaHandler";
 import { GatewayEvents } from "peerprep-shared-types";
-
-// Define necessary types within this file
-
-export interface MatchRequest {
-  username: string;
-  topic: string;
-  difficulty: string;
-  timestamp?: number;
-}
-
-export interface MatchCancelRequest {
-  username: string;
-}
-
-export interface MatchResponse {
-  success: boolean;
-}
-
-export interface MatchCancelResponse {
-  success: boolean;
-}
-
-export interface Match {
-  usernames: string[];
-  topic: string;
-  difficulty: string;
-}
+import {
+  MatchResponse,
+  MatchRequest,
+  MatchCancelRequest,
+  MatchCancelResponse,
+} from "../types/matcherTypes";
 
 export class Queue {
   private static instance: Queue;

@@ -1,9 +1,10 @@
 // src/services/matcher.ts
 
-import { Queue, MatchRequest, Match } from "./queue";
+import { Queue } from "./queue";
 import { KafkaHandler } from "./kafkaHandler";
 import { GatewayEvents } from "peerprep-shared-types";
 import { MatchingEvents } from "peerprep-shared-types/dist/types/kafka/matching-events";
+import { Match, MatchRequest } from "../types/matcherTypes";
 // Define necessary types within this file
 
 export class Matcher {
