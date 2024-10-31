@@ -124,7 +124,6 @@ export class WebSocketHandler {
 
       socket.on(ClientSocketEvents.JOIN_ROOM, async (data) => {
         console.log("Joining room:", data.roomId);
-
         socket.join(data.roomId);
 
         // Purpose: to send the room details back to the user who joined the room
@@ -143,7 +142,9 @@ export class WebSocketHandler {
 
       socket.on(ClientSocketEvents.LEAVE_ROOM, async (data) => {
         console.log("Leaving room:", data.roomId);
-
+        socket
+          .to(data.roomId)
+          .emit(ClientSocketEvents.LEAVE_ROOM, data.username);
         socket.leave(data.roomId);
 
         const event = createEvent(CollaborationEvents.LEAVE_ROOM, {
