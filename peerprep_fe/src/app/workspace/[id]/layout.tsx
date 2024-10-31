@@ -1,15 +1,9 @@
 import { CallProvider } from "@/contexts/call-context";
 
-export default function RootLayout({
+export default function WorkspaceLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en">
-      <body>
-        <CallProvider>{children}</CallProvider>
-      </body>
-    </html>
-  );
+  return <CallProvider>{children}</CallProvider>;
 }
