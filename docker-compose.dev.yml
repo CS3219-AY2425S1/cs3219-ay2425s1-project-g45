@@ -45,10 +45,13 @@ services:
       - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
       - REDIS_ROUTE=redis://redis
       - REDIS_PORT=${REDIS_PORT}
+      - PISTON_SERVICE_ROUTE=piston
+      - PISTON_PORT=2000
     ports:
       - ${API_GATEWAY_PORT}:5003
-
     depends_on:
+      piston:
+        condition: service_started
       kafka-init:
         condition: service_completed_successfully
       kafka-service:
@@ -60,7 +63,7 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./users_service:/app
-      - /app/node_modules # This prevents the host's node_modules from overwriting the container's
+      - /app/node_modules
     environment:
       - MONGODB_URI=${MONGODB_URI}
       - USER_SERVICE_PORT=${USER_SERVICE_PORT}
@@ -76,7 +79,7 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./question_service:/app
-      - /app/node_modules # This prevents the host's node_modules from overwriting the container's
+      - /app/node_modules
     environment:
       - MONGODB_URI=${MONGODB_URI}
       - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
@@ -89,7 +92,7 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./collab_service:/app
-      - /app/node_modules # This prevents the host's node_modules from overwriting the container's
+      - /app/node_modules
     environment:
       - COLLAB_SERVICE_PORT=${COLLAB_SERVICE_PORT}
       - MONGODB_URI=${MONGODB_URI}
@@ -119,7 +122,7 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./matching_service:/app
-      - /app/node_modules # This prevents the host's node_modules from overwriting the container's
+      - /app/node_modules
     environment:
       - MONGODB_URI=${MONGODB_URI}
       - MATCHING_SERVICE_PORT=${MATCHING_SERVICE_PORT}
@@ -162,7 +165,6 @@ services:
     ports:
       - "${KAFKA_BROKER_PORT}:9092"
     healthcheck:
-      # Checks that the Kafka broker is up and running
       test: ["CMD", "nc", "-z", "${KAFKA_BROKER_ROUTE}", "${KAFKA_BROKER_PORT}"]
       interval: 30s
       timeout: 20s
@@ -196,13 +198,6 @@ services:
           --create \
           --if-not-exists \
           --bootstrap-server kafka-service:${KAFKA_BROKER_PORT} \
-          --topic gateway-events \
-          --partitions ${KAFKA_NUM_PARTITIONS:-1} \
-          --replication-factor 1 &&
-        /opt/kafka/bin/kafka-topics.sh \
-          --create \
-          --if-not-exists \
-          --bootstrap-server kafka-service:${KAFKA_BROKER_PORT} \
           --topic matching-events \
           --partitions ${KAFKA_NUM_PARTITIONS:-1} \
           --replication-factor 1
@@ -214,9 +209,30 @@ services:
   redis:
     image: redis:latest
     ports:
-       - ${REDIS_PORT}:6379
+      - ${REDIS_PORT}:6379
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
+
+  piston:
+    image: ghcr.io/engineer-man/piston:latest
+    container_name: piston
+    restart: unless-stopped
+    privileged: true
+    environment:
+      - PORT=2000
+      - MAX_CONCURRENT_PER_LANGUAGE=5
+      - MAX_PROCESS_COUNT=100
+      - MAX_QUEUE_SIZE=1000
+      - RUN_TIME_LIMIT=5
+      - RUN_MEMORY_LIMIT=256
+      - RUN_NETWORK=false
+    ports:
+      - "2000:2000"
+    volumes:
+      - piston_data:/piston
+
+volumes:
+  piston_data:

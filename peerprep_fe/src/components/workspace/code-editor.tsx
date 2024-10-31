@@ -1,3 +1,5 @@
+import { handleRunCode } from "@/app/actions/editor";
+import { useAuth } from "@/contexts/auth-context";
 import { Editor } from "@monaco-editor/react";
 import React, { useRef, useState } from "react";
 
@@ -28,7 +30,10 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   language,
   setLanguage,
 }) => {
-  const editorRef = useRef();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const editorRef = useRef<any>();
+  const [output, setOutput] = useState<string>("");
+  const { token } = useAuth();
 
   const onMount = (editor: any) => {
     editorRef.current = editor;
@@ -40,10 +45,24 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     handleCodeChange(CODE_SNIPPETS[language]);
   };
 
+  const runCode = async () => {
+    const code = editorRef.current.getValue();
+    try {
+      const result = await handleRunCode(code, language, token);
+      if (!result.error) {
+        setOutput(result.output);
+      } else {
+        setOutput(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      setOutput(`Error: ${error.message}`);
+    }
+  };
+
   return (
     <div className="inline-flex flex-col p-2 bg-slate-800 rounded-lg shadow-sm h-full w-full">
       <select
-        name="difficultyLevel"
+        name="language"
         className="bg-slate-200 dark:bg-slate-700 rounded-lg w-full py-2 px-4 mb-2 focus:outline-none"
         value={language}
         onChange={(e) => onSelect(e.target.value as Language)}
@@ -54,23 +73,32 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
           </option>
         ))}
       </select>
+
       <Editor
-        options={{
-          minimap: {
-            enabled: false,
-          },
-        }}
+        options={{ minimap: { enabled: false } }}
         theme="vs-dark"
         language={language}
-        defaultValue={CODE_SNIPPETS[language]}
-        onMount={onMount}
         value={sharedCode}
-        onChange={(sharedCode) => {
-          if (sharedCode) {
-            handleCodeChange(sharedCode);
+        onMount={onMount}
+        onChange={(value) => {
+          if (value !== undefined) {
+            handleCodeChange(value);
           }
         }}
       />
+
+      <button
+        onClick={runCode}
+        className="mt-2 bg-blue-500 text-white py-2 px-4 rounded"
+      >
+        Run Code
+      </button>
+
+      {output && (
+        <div className="mt-2 bg-gray-900 text-white p-2 rounded">
+          <pre>{output}</pre>
+        </div>
+      )}
     </div>
   );
 };

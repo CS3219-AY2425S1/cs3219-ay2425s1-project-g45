@@ -6,6 +6,7 @@ import cors from "cors";
 import userRoutes from "./api/routes/userRoutes";
 import questionRoutes from "./api/routes/questionRoutes";
 import matchingRoutes from "./api/routes/matchingRoutes";
+import collabRoutes from "./api/routes/collabRoutes";
 import { authenticateToken } from "./utility/jwtHelper";
 import { WebSocketHandler } from "./websocket-handler";
 import RedisService from "./services/redisService";
@@ -73,6 +74,7 @@ class ApiGateway {
     this.app.use("/auth", userRoutes);
     this.app.use(authenticateToken);
     this.app.use("/api/questions", questionRoutes);
+    this.app.use("/collab", collabRoutes);
     this.app.use("/", matchingRoutes);
 
     this.app.get("/health", (req: Request, res: Response) => {

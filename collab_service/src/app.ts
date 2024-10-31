@@ -10,10 +10,10 @@ import {
   KafkaEvent,
 } from "peerprep-shared-types";
 import { KafkaHandler } from "./services/kafkaHandler";
-import { RoomModel } from "./models/Room";
 import { CollaborationEventKeys } from "./services/kafkaHandler";
 import { getRoom } from "./services/roomService";
 import roomRoutes from "./routes/roomRoutes";
+import editorRoutes from "./routes/editorRoutes";
 
 // Load environment variables
 dotenv.config();
@@ -92,6 +92,7 @@ const initialize = async () => {
 
 // Routes
 app.use("/rooms", roomRoutes);
+app.use("/editor", editorRoutes);
 app.get("/room/:id", async (req, res) => {
   try {
     console.log("Fetching room");
