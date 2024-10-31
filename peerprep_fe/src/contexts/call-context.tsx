@@ -14,6 +14,7 @@ import Peer from "simple-peer";
 import { ClientSocketEvents, CallStates } from "peerprep-shared-types";
 import Modal from "@/components/common/modal";
 import Button from "@/components/common/button";
+import { useOnPageLeave } from "@/components/hooks/onPageLeave";
 
 interface CallContextType {
   callState: CallState;
@@ -25,6 +26,7 @@ interface CallContextType {
   endCall: (roomId: string) => void;
   setVideo: (on: boolean) => void;
   setAudio: (on: boolean) => void;
+  stopStream: () => void;
 }
 
 const CallContext = createContext<CallContextType | null>(null);
@@ -123,14 +125,26 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   }, [socket, peer]);
 
   useEffect(() => {
-    navigator.mediaDevices
-      .getUserMedia({ video: true, audio: true })
-      .then((stream) => {
+    const getUserMedia = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
         setVideoStream(stream);
         if (ownVideoRef.current) {
           ownVideoRef.current.srcObject = stream;
         }
-      });
+      } catch (error) {
+        console.error("Error getting user media:", error);
+      }
+    };
+
+    getUserMedia();
+
+    return () => {
+      stopStream();
+    };
   }, []);
 
   useEffect(() => {
@@ -274,6 +288,24 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     );
   };
 
+  const stopStream = () => {
+    if (videoStream) {
+      console.log("stopping stream");
+      console.log(videoStream.getTracks());
+      const tracks = videoStream.getTracks();
+      tracks.forEach((track) => {
+        track.stop();
+        videoStream.removeTrack(track);
+      });
+      console.log(videoStream.getTracks());
+      setVideoStream(undefined);
+    }
+    peer?.destroy();
+    setPeer(null);
+  };
+
+  useOnPageLeave(stopStream);
+
   return (
     <CallContext.Provider
       value={{
@@ -286,6 +318,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
         endCall,
         setVideo,
         setAudio,
+        stopStream,
       }}
     >
       {children}
