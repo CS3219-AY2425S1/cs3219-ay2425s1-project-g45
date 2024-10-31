@@ -17,6 +17,7 @@ import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/coll
 import { MatchingEvents } from "peerprep-shared-types/dist/types/kafka/matching-events";
 import { handleMatchFound } from "./services/matchingHandler";
 import RedisService from "./services/redisService";
+import { setUpChatHandler } from "./socketHandlers/chatHandler";
 
 type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
 
@@ -179,31 +180,7 @@ export class WebSocketHandler {
         await this.sendCollaborationEvent(event, roomId);
       });
 
-      socket.on(ClientSocketEvents.SEND_MESSAGE, async (data) => {
-        const { roomId, username, message } = data;
-        console.log("Sending message in room:", data);
-
-        const event = createEvent(CollaborationEvents.SEND_MESSAGE, {
-          roomId: roomId,
-          username: username,
-          message: message,
-        });
-
-        // send event to collaboration service
-        await this.sendCollaborationEvent(event, roomId);
-      });
-
-      socket.on(ClientSocketEvents.CHAT_STATE, async (data) => {
-        const { roomId } = data;
-        console.log("Requesting chat state for room:", roomId);
-
-        const event = createEvent(CollaborationEvents.REQUEST_CHAT_STATE, {
-          roomId: roomId,
-        });
-
-        // send event to collaboration service
-        await this.sendCollaborationEvent(event, roomId);
-      });
+      setUpChatHandler(socket, this.sendCollaborationEvent.bind(this));
 
       // Handle next question that has just been initiated by a user
       socket.on(ClientSocketEvents.NEXT_QUESTION, async (data) => {
