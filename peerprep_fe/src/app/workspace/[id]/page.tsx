@@ -80,10 +80,11 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   }
 
   function sendMessage(message: string) {
-    if (!socket || !room || message.length < 1) return;
-    console.log("Sending message from", username, ":", message);
+    const trimmedMessage = message.trim();
+    if (!socket || !room || trimmedMessage.length < 1) return;
+    console.log("Sending message from", username, ":", trimmedMessage);
     socket.emit(ClientSocketEvents.SEND_MESSAGE, {
-      message: message,
+      message: trimmedMessage,
       event: ClientSocketEvents.SEND_MESSAGE,
       roomId: room._id,
       username: username,
