@@ -19,6 +19,7 @@ import { handleMatchFound } from "./services/matchingHandler";
 import RedisService from "./services/redisService";
 import { setUpChatHandler } from "./socketHandlers/chatHandler";
 import { setupRoomHandler } from "./socketHandlers/roomHandler";
+import { setUpCallHandler } from "./socketHandlers/callHandler";
 
 type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
 
@@ -126,6 +127,7 @@ export class WebSocketHandler {
 
       setUpChatHandler(socket, this.sendCollaborationEvent.bind(this));
       setupRoomHandler(socket, this.sendCollaborationEvent.bind(this));
+      setUpCallHandler(socket, this.sendCollaborationEvent.bind(this));
     });
   }
 

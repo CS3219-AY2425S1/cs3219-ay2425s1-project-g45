@@ -90,6 +90,32 @@ export class KafkaHandler {
             nextQuestionPayload.accept
           );
           break;
+        case CollaborationEvents.CALL:
+          const callPayload =
+            event.payload as EventPayloads[CollaborationEvents.CALL];
+          await this.handleCallEvent(
+            callPayload.roomId,
+            callPayload.from,
+            callPayload.signalData
+          );
+          break;
+        case CollaborationEvents.ACCEPT_CALL:
+          const acceptCallPayload =
+            event.payload as EventPayloads[CollaborationEvents.ACCEPT_CALL];
+          await this.handleAcceptCallEvent(
+            acceptCallPayload.roomId,
+            acceptCallPayload.from,
+            acceptCallPayload.signalData
+          );
+          break;
+        case CollaborationEvents.END_CALL:
+          const endCallPayload =
+            event.payload as EventPayloads[CollaborationEvents.END_CALL];
+          await this.handleEndCallEvent(
+            endCallPayload.roomId,
+            endCallPayload.from
+          );
+          break;
       }
     } catch (error) {
       console.error(`Error handling ${type} event:`, error);
@@ -250,6 +276,87 @@ export class KafkaHandler {
 
     await this.sendGatewayEvent(event, roomId);
     // Delete request from map
+  }
+
+  private async handleCallEvent(roomId: string, from: string, signalData: any) {
+    console.log("Call event received:", roomId, from, signalData);
+
+    const to = await this.checkValidCallEvent(roomId, from);
+
+    if (to) {
+      const event = createEvent(GatewayEvents.CALL, { to, from, signalData });
+      await this.sendGatewayEvent(event, roomId);
+    }
+  }
+
+  private async handleAcceptCallEvent(
+    roomId: string,
+    from: string,
+    signalData: any
+  ) {
+    console.log("Accept call event received:", roomId, from, signalData);
+
+    const to = await this.checkValidCallEvent(roomId, from);
+
+    if (to) {
+      const event = createEvent(GatewayEvents.ACCEPT_CALL, {
+        to,
+        from,
+        signalData,
+      });
+      await this.sendGatewayEvent(event, roomId);
+    }
+  }
+
+  private async handleEndCallEvent(roomId: string, from: string) {
+    console.log("End call event received:", roomId, from);
+
+    const to = await this.checkValidCallEvent(roomId, from);
+
+    if (to) {
+      const event = createEvent(GatewayEvents.END_CALL, { to, from });
+      await this.sendGatewayEvent(event, roomId);
+    }
+  }
+
+  private async checkValidCallEvent(roomId: string, from: string) {
+    const roomState = this.editorManager.getRoomState(roomId);
+
+    if (!roomState) {
+      console.error("Room not found");
+      const event = createEvent(GatewayEvents.ERROR, {
+        error: "Room not found",
+        roomId,
+      });
+      this.sendGatewayEvent(event, roomId);
+      return null;
+    }
+
+    // Check if user is in room
+    const activeUsers = roomState.activeUsers;
+    if (!activeUsers.includes(from)) {
+      console.error("User not in room");
+      const event = createEvent(GatewayEvents.ERROR, {
+        error: "Unable to start call with user not in room",
+        roomId,
+      });
+      this.sendGatewayEvent(event, roomId);
+      return null;
+    }
+
+    // Attempt to send call event to other user
+
+    const to = activeUsers.find((user) => user !== from);
+    if (!to) {
+      console.error("Failed to find other user in room");
+      const event = createEvent(GatewayEvents.ERROR, {
+        error: "Failed to find other user in room",
+        roomId,
+      });
+      this.sendGatewayEvent(event, roomId);
+      return null;
+    }
+    return to;
   }
 
   private async sendGatewayEvent<T extends GatewayEvents>(
