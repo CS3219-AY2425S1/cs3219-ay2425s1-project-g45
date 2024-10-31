@@ -1,7 +1,7 @@
 export default function Textfield({
   name,
   secure = false,
-  text = "",
+  text,
   placeholder_text = "Enter your text",
   required = false,
   onChange,
@@ -31,7 +31,7 @@ export default function Textfield({
         minLength={minLength}
         maxLength={maxLength}
         onChange={onChange}
-        value={text ? text : undefined}
+        value={text}
       />
       <label
         className="absolute text-sm text-gray-500 dark:text-gray-400

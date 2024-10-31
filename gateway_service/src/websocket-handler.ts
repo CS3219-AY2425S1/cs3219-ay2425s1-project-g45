@@ -17,6 +17,9 @@ import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/coll
 import { MatchingEvents } from "peerprep-shared-types/dist/types/kafka/matching-events";
 import { handleMatchFound } from "./services/matchingHandler";
 import RedisService from "./services/redisService";
+import { setUpChatHandler } from "./socketHandlers/chatHandler";
+import { setupRoomHandler } from "./socketHandlers/roomHandler";
+import { setUpCallHandler } from "./socketHandlers/callHandler";
 
 type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
 
@@ -122,136 +125,9 @@ export class WebSocketHandler {
         console.log(`Sent event: ${JSON.stringify(event)}`);
       });
 
-      socket.on(ClientSocketEvents.JOIN_ROOM, async (data) => {
-        console.log("Joining room:", data.roomId);
-        socket.join(data.roomId);
-
-        // Purpose: to send the room details back to the user who joined the room
-        //  first sends the join room event to collaboration service
-        // collaboration will send back a refresh room state event which contains the current state of the room
-        // this event will be sent back to the user who joined the room
-        // create event
-        const event = createEvent(CollaborationEvents.JOIN_ROOM, {
-          roomId: data.roomId,
-          username: data.username,
-        });
-
-        // send event to collaboration service
-        await this.sendCollaborationEvent(event, data.roomId);
-      });
-
-      socket.on(ClientSocketEvents.LEAVE_ROOM, async (data) => {
-        console.log("Leaving room:", data.roomId);
-        socket
-          .to(data.roomId)
-          .emit(ClientSocketEvents.LEAVE_ROOM, data.username);
-        socket.leave(data.roomId);
-
-        const event = createEvent(CollaborationEvents.LEAVE_ROOM, {
-          roomId: data.roomId,
-          username: data.username,
-        });
-
-        // send event to collaboration service
-        await this.sendCollaborationEvent(event, data.roomId);
-      });
-
-      socket.on(ClientSocketEvents.CODE_CHANGE, async (data) => {
-        const { roomId, username, message } = data;
-        console.log("Code change in room:", message);
-
-        // everyone in the room except the sender will receive the code change on frontend
-        socket.to(roomId).emit(ClientSocketEvents.CODE_CHANGE, {
-          username,
-          roomId,
-          content: message.sharedCode,
-          language: message.language,
-          timestamp: Date.now(),
-        });
-
-        const event = createEvent(CollaborationEvents.UPDATE_CODE, {
-          roomId: data.roomId,
-          username: data.username,
-          content: data.message.sharedCode,
-        });
-
-        // send event to collaboration service
-        await this.sendCollaborationEvent(event, roomId);
-      });
-
-      socket.on(ClientSocketEvents.SEND_MESSAGE, async (data) => {
-        const { roomId, username, message } = data;
-        console.log("Sending message in room:", data);
-
-        const event = createEvent(CollaborationEvents.SEND_MESSAGE, {
-          roomId: roomId,
-          username: username,
-          message: message,
-        });
-
-        // send event to collaboration service
-        await this.sendCollaborationEvent(event, roomId);
-      });
-
-      socket.on(ClientSocketEvents.CHAT_STATE, async (data) => {
-        const { roomId } = data;
-        console.log("Requesting chat state for room:", roomId);
-
-        const event = createEvent(CollaborationEvents.REQUEST_CHAT_STATE, {
-          roomId: roomId,
-        });
-
-        // send event to collaboration service
-        await this.sendCollaborationEvent(event, roomId);
-      });
-
-      // Handle next question that has just been initiated by a user
-      socket.on(ClientSocketEvents.NEXT_QUESTION, async (data) => {
-        const { roomId, username } = data;
-
-        // everyone in the room except the sender will receive request for next question on frontend
-        socket.to(roomId).emit(ClientSocketEvents.NEXT_QUESTION, {
-          username: username,
-          roomId: roomId,
-        });
-
-        const event = createEvent(CollaborationEvents.NEXT_QUESTION, {
-          roomId: roomId,
-          username: username,
-          accept: true,
-        });
-
-        // send event to collaboration service
-        await this.sendCollaborationEvent(event, roomId);
-      });
-
-      // Handle reply to next question request
-      socket.on(ClientSocketEvents.REPLY_NEXT_QUESTION, async (data) => {
-        const { roomId, username, accept } = data;
-
-        console.log(
-          "Next question",
-          "for room:",
-          roomId,
-          accept ? "accepted" : "rejected",
-          "by",
-          username
-        );
-
-        socket.to(roomId).emit(ClientSocketEvents.REPLY_NEXT_QUESTION, {
-          username: username,
-          roomId: roomId,
-          accept: accept,
-        });
-
-        const event = createEvent(CollaborationEvents.NEXT_QUESTION, {
-          roomId: roomId,
-          username: username,
-          accept: accept,
-        });
-
-        await this.sendCollaborationEvent(event, roomId);
-      });
+      setUpChatHandler(socket, this.sendCollaborationEvent.bind(this));
+      setupRoomHandler(socket, this.sendCollaborationEvent.bind(this));
+      setUpCallHandler(socket, this.sendCollaborationEvent.bind(this));
     });
   }
 
@@ -336,6 +212,49 @@ export class WebSocketHandler {
             .emit(ClientSocketEvents.QUESTION_CHANGE, {
               questionId: changeQuestionPayload.questionId,
             });
+          break;
+        case GatewayEvents.CALL:
+          const callPayload =
+            event.payload as EventPayloads[GatewayEvents.CALL];
+          console.log("Sending call to user:", callPayload.to);
+          const toSocketId = await this.getUsernameSocketId(callPayload.to);
+          if (toSocketId) {
+            this.io.to(toSocketId).emit(ClientSocketEvents.INITIATE_CALL, {
+              from: callPayload.from,
+              signalData: callPayload.signalData,
+            });
+          } else {
+            throw Error("No socket found for user");
+          }
+          break;
+        case GatewayEvents.ACCEPT_CALL:
+          const acceptCallPayload =
+            event.payload as EventPayloads[GatewayEvents.ACCEPT_CALL];
+          console.log("Accepting call from user:", acceptCallPayload.to);
+          const acceptSocketId = await this.getUsernameSocketId(
+            acceptCallPayload.to
+          );
+          if (acceptSocketId) {
+            this.io.to(acceptSocketId).emit(ClientSocketEvents.ACCEPT_CALL, {
+              from: acceptCallPayload.from,
+              signalData: acceptCallPayload.signalData,
+            });
+          } else {
+            throw Error("No socket found for user");
+          }
+          break;
+        case GatewayEvents.END_CALL:
+          const endCallPayload =
+            event.payload as EventPayloads[GatewayEvents.END_CALL];
+          console.log("Ending call with user:", endCallPayload.to);
+          const endSocketId = await this.getUsernameSocketId(endCallPayload.to);
+          if (endSocketId) {
+            this.io.to(endSocketId).emit(ClientSocketEvents.END_CALL, {
+              from: endCallPayload.from,
+            });
+          } else {
+            throw Error("No socket found for user");
+          }
           break;
       }
     } catch (error) {

@@ -17,6 +17,7 @@ import {
 import { useSocket } from "@/app/actions/socket";
 import Modal from "@/components/common/modal";
 import { set } from "mongoose";
+import { VideoFeed } from "@/components/workspace/videofeed";
 
 type WorkspaceProps = {
   params: {
@@ -80,10 +81,11 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   }
 
   function sendMessage(message: string) {
-    if (!socket || !room || message.length < 1) return;
-    console.log("Sending message from", username, ":", message);
+    const trimmedMessage = message.trim();
+    if (!socket || !room || trimmedMessage.length < 1) return;
+    console.log("Sending message from", username, ":", trimmedMessage);
     socket.emit(ClientSocketEvents.SEND_MESSAGE, {
-      message: message,
+      message: trimmedMessage,
       event: ClientSocketEvents.SEND_MESSAGE,
       roomId: room._id,
       username: username,
@@ -380,6 +382,9 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
           </div>
           <div className="flex-grow pt-4 h-1/2">
             <Chat messages={messages} sendMessage={sendMessage} />
+          </div>
+          <div className="flex-grow pt-4 h-1/2">
+            <VideoFeed roomId={params.id} />
           </div>
         </div>
 

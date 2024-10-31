@@ -87,8 +87,7 @@ const Chat: React.FC<ChatProps> = ({
             maxLength={200}
             text={messageToSend}
             onChange={(e) => {
-              e.preventDefault();
-              setMessageToSend(e.target.value.trim());
+              setMessageToSend(e.target.value);
             }}
           />
         </div>

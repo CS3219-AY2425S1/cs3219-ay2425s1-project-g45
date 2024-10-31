@@ -6,4 +6,7 @@ export enum GatewayEvents {
   MATCH_FOUND = "match_found",
   MATCH_TIMEOUT = "match_timeout",
   CHANGE_QUESTION = "change_question",
+  CALL = "call",
+  ACCEPT_CALL = "accept_call",
+  END_CALL = "end_call",
 }

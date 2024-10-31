@@ -39,6 +39,20 @@ export interface EventPayloads {
     roomId: string;
     questionId: string;
   };
+  [GatewayEvents.CALL]: {
+    to: string;
+    from: string;
+    signalData: any;
+  };
+  [GatewayEvents.ACCEPT_CALL]: {
+    to: string;
+    from: string;
+    signalData: any;
+  };
+  [GatewayEvents.END_CALL]: {
+    to: string;
+    from: string;
+  };
 
   // Collaboration Events
   [CollaborationEvents.JOIN_ROOM]: {
@@ -66,6 +80,20 @@ export interface EventPayloads {
     roomId: string;
     username: string;
     accept: boolean;
+  };
+  [CollaborationEvents.CALL]: {
+    roomId: string;
+    from: string;
+    signalData: any;
+  };
+  [CollaborationEvents.ACCEPT_CALL]: {
+    roomId: string;
+    from: string;
+    signalData: any;
+  };
+  [CollaborationEvents.END_CALL]: {
+    roomId: string;
+    from: string;
   };
 
   // Matching Events

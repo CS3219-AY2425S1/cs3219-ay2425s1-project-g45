@@ -16,6 +16,9 @@ export enum ClientSocketEvents {
   NEXT_QUESTION = "next_question",
   REPLY_NEXT_QUESTION = "reply_next_question",
   QUESTION_CHANGE = "question_change",
+  INITIATE_CALL = "initiate_call",
+  ACCEPT_CALL = "accept_call",
+  END_CALL = "end_call",
 }
 
 export enum ServerSocketEvents {
