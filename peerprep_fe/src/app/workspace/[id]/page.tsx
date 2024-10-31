@@ -36,7 +36,9 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   const [room, setRoom] = useState<RoomDto>();
   const [isNextQnsModalOpen, setIsNextQnsModalOpen] = useState<boolean>(false);
   const [isErrorModalOpen, setIsErrorModalOpen] = useState<boolean>(false);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [leaveMessage, setLeaveMessage] = useState<string>("");
 
   const handleCodeChange = (newContent: string) => {
     setSharedCode(newContent);
@@ -90,7 +92,6 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
 
   function handleLeaveRoom() {
     if (!socket || !room) return;
-    console.log("Leaving room", room._id);
     socket.emit(ClientSocketEvents.LEAVE_ROOM, {
       event: ClientSocketEvents.LEAVE_ROOM,
       roomId: room._id,
@@ -167,6 +168,25 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     );
   };
 
+  const LeaveModal = () => {
+    return (
+      <Modal isOpen={isLeaveModalOpen} isCloseable={false} width="lg">
+        <div className="flex flex-col">
+          <h1>{leaveMessage}</h1>
+          <div className="w-1/4 flex space-x-5 self-end">
+            <Button
+              text="Ok"
+              type="reset"
+              onClick={() => {
+                setIsLeaveModalOpen(false);
+              }}
+            />
+          </div>
+        </div>
+      </Modal>
+    );
+  };
+
   useEffect(() => {
     console.log(params.id);
   }, []);
@@ -224,6 +244,12 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
 
     socket.on(ClientSocketEvents.USER_LEFT, ({ username, activeUsers }) => {
       setActiveUsers(activeUsers);
+    });
+
+    socket.on(ClientSocketEvents.LEAVE_ROOM, (username) => {
+      setLeaveMessage(`${username} has left the room`);
+      console.log(leaveMessage);
+      setIsLeaveModalOpen(true);
     });
 
     // Chat listeners
@@ -291,6 +317,29 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     socket.on("disconnect", () => {});
   }, [socket, room]);
 
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      sessionStorage.setItem("isClosing", "true");
+      setTimeout(() => {
+        sessionStorage.removeItem("isClosing");
+      }, 100); // Slight delay to ensure the flag is cleared on refresh
+    };
+
+    const handleUnload = () => {
+      if (sessionStorage.getItem("isClosing") === "true") {
+        handleLeaveRoom();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("unload", handleUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("unload", handleUnload);
+    };
+  }, [handleLeaveRoom]);
+
   if (!room) {
     return <div>Loading...</div>;
   }
@@ -348,6 +397,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
         </div>
       </div>
       <NextQuestionRequestModal />
+      <LeaveModal />
       <ErrorModal />
     </div>
   );
