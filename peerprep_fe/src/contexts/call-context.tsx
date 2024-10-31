@@ -7,7 +7,6 @@ import React, {
   useRef,
   ReactNode,
   useEffect,
-  use,
 } from "react";
 import { useSocket } from "./socket-context";
 import { useAuth } from "./auth-context";
@@ -60,9 +59,8 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   const [videoStream, setVideoStream] = useState<MediaStream | undefined>(
     undefined
   );
-  const [audioStream, setAudioStream] = useState<MediaStream | undefined>(
-    undefined
-  );
+  const [peer, setPeer] = useState<Peer.Instance | null>(null);
+
   const [callState, setCallState] = useState<CallState>({
     current_state: CallStates.CALL_ENDED,
     otherUser: "",
@@ -71,7 +69,6 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
 
   const ownVideoRef = useRef<HTMLVideoElement>(null);
   const userVideoRef = useRef<HTMLVideoElement>(null);
-  const connectionRef = useRef<Peer.Instance | null>(null);
   const [isCallEndedModalOpen, setIsCallEndedModalOpen] = useState(false);
   const [isVideoAllowed, setIsVideoAllowed] = useState(false);
   const [isAudioAllowed, setIsAudioAllowed] = useState(false);
@@ -100,7 +97,9 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
           signalData: signalData,
         });
 
-        connectionRef.current?.signal(signalData);
+        if (peer) {
+          peer.signal(signalData);
+        }
       }
     );
 
@@ -111,10 +110,17 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
         signalData: null,
       });
 
-      connectionRef.current?.destroy();
+      peer?.destroy();
+      setPeer(null);
       setIsCallEndedModalOpen(true);
     });
-  }, [socket]);
+
+    return () => {
+      socket.off(ClientSocketEvents.INITIATE_CALL);
+      socket.off(ClientSocketEvents.ACCEPT_CALL);
+      socket.off(ClientSocketEvents.END_CALL);
+    };
+  }, [socket, peer]);
 
   useEffect(() => {
     navigator.mediaDevices
@@ -125,7 +131,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
           ownVideoRef.current.srcObject = stream;
         }
       });
-  }, [ownVideoRef, setVideoStream]);
+  }, []);
 
   useEffect(() => {
     if (videoStream) {
@@ -161,7 +167,16 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
       stream: videoStream,
     });
 
+    peer.on("connect", () => {
+      console.log("Peer connection established");
+    });
+
+    peer.on("error", (err) => {
+      console.error("Peer connection error:", err);
+    });
+
     peer.on("signal", (signalData) => {
+      console.log("sending signal data", signalData);
       socket.emit(ClientSocketEvents.INITIATE_CALL, {
         from: username,
         roomId: roomId,
@@ -170,16 +185,19 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     });
 
     peer.on("stream", (stream) => {
+      console.log("received stream");
       if (userVideoRef.current) {
         userVideoRef.current.srcObject = stream;
       }
     });
 
-    connectionRef.current = peer;
+    setPeer(peer);
   };
 
   const acceptCall = (roomId: string) => {
     if (!socket || !callState.signalData) return;
+
+    console.log("Accepting call...");
 
     setCallState({
       current_state: CallStates.CALL_ACCEPTED,
@@ -193,7 +211,16 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
       stream: videoStream,
     });
 
+    peer.on("connect", () => {
+      console.log("Peer connection established");
+    });
+
+    peer.on("error", (err) => {
+      console.error("Peer connection error:", err);
+    });
+
     peer.on("signal", (signalData) => {
+      console.log("sending signal data", signalData);
       socket.emit(ClientSocketEvents.ACCEPT_CALL, {
         roomId: roomId,
         from: username,
@@ -201,15 +228,15 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
       });
     });
 
-    peer.signal(callState.signalData);
-
     peer.on("stream", (stream) => {
+      console.log("received stream");
       if (userVideoRef.current) {
         userVideoRef.current.srcObject = stream;
       }
     });
 
-    connectionRef.current = peer;
+    peer.signal(callState.signalData);
+    setPeer(peer);
   };
 
   const endCall = (roomId: string) => {
@@ -226,7 +253,8 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
       signalData: null,
     });
 
-    connectionRef.current?.destroy();
+    peer?.destroy();
+    setPeer(null);
   };
 
   const CallEndedModal = () => {

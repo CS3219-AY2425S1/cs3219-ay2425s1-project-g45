@@ -279,7 +279,7 @@ export class KafkaHandler {
   }
 
   private async handleCallEvent(roomId: string, from: string, signalData: any) {
-    console.log("Call event received:", roomId, from, signalData);
+    console.log("Call event received:", roomId, from);
 
     const to = await this.checkValidCallEvent(roomId, from);
 
@@ -294,7 +294,7 @@ export class KafkaHandler {
     from: string,
     signalData: any
   ) {
-    console.log("Accept call event received:", roomId, from, signalData);
+    console.log("Accept call event received:", roomId, from);
 
     const to = await this.checkValidCallEvent(roomId, from);
 
@@ -321,7 +321,6 @@ export class KafkaHandler {
 
   private async checkValidCallEvent(roomId: string, from: string) {
     const roomState = this.editorManager.getRoomState(roomId);
-    console.log(roomState);
 
     if (!roomState) {
       console.error("Room not found");
