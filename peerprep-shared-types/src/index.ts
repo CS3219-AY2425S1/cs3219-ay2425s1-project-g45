@@ -6,3 +6,4 @@ export * from "./types/editor";
 export * from "./helper";
 export * from "./types/service";
 export * from "./types/chat";
+export * from "./types/call";
