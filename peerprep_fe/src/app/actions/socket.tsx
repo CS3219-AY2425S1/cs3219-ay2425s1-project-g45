@@ -30,7 +30,7 @@ export const useSocket = () => {
     return () => {
       socketConnection.disconnect();
     };
-  }, [token]);
+  }, []);
 
   const sendMessage = (message: unknown) => {
     socket?.emit("clientToServer", message);

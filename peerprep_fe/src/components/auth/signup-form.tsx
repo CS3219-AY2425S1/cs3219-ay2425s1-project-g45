@@ -13,7 +13,7 @@ export function SignupForm() {
 
   useEffect(() => {
     if (state?.message) {
-      updateToken(state.message);
+      updateToken(state.message.token);
     } else if (state?.errors?.errorMessage) {
       alert(state.errors.errorMessage);
     }

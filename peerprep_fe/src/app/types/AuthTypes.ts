@@ -6,7 +6,7 @@ export type FormState =
         password?: string;
         errorMessage?: string;
       };
-      message?: string;
+      message?: { token: string; username: string };
     }
   | undefined;
 

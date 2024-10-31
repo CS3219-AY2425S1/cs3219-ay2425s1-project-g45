@@ -29,7 +29,9 @@ export async function signup(state: FormState, formData: FormData) {
   try {
     const responseData = await response.json();
     if (responseData.token) {
-      return { message: responseData.token };
+      return {
+        message: { token: responseData.token, username: data.username },
+      };
     } else {
       return { errors: { errorMessage: responseData } };
     }
@@ -41,7 +43,7 @@ export async function signup(state: FormState, formData: FormData) {
   }
 }
 
-export async function login(state: FormState, formData: FormData) {
+export async function login(formState: FormState, formData: FormData) {
   const result = validateLoginFormData(formData);
   if (!result.success) {
     return { errors: result.errors };

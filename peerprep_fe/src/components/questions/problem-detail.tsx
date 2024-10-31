@@ -1,5 +1,5 @@
 import React from "react";
-
+import { QuestionDto } from "peerprep-shared-types";
 type ProblemDetailProps = {
   question: QuestionDto | undefined;
 };

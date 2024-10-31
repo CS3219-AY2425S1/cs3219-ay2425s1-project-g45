@@ -6,9 +6,11 @@ import Button from "@/components/common/button";
 import { login } from "@/app/actions/auth";
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { FormState } from "@/app/types/AuthTypes";
 
 export function LoginForm() {
-  const [state, action] = useFormState(login, undefined);
+  const defaultState: FormState = {};
+  const [state, action] = useFormState(login, defaultState);
   const { updateToken } = useAuth();
 
   useEffect(() => {
