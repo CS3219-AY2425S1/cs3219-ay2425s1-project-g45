@@ -17,6 +17,7 @@ import {
 import { useSocket } from "@/app/actions/socket";
 import Modal from "@/components/common/modal";
 import { set } from "mongoose";
+import { VideoFeed } from "@/components/workspace/videofeed";
 
 type WorkspaceProps = {
   params: {
@@ -381,6 +382,9 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
           </div>
           <div className="flex-grow pt-4 h-1/2">
             <Chat messages={messages} sendMessage={sendMessage} />
+          </div>
+          <div className="flex-grow pt-4 h-1/2">
+            <VideoFeed roomId={params.id} />
           </div>
         </div>
 
