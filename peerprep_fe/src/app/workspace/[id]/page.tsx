@@ -16,7 +16,6 @@ import {
 } from "peerprep-shared-types";
 import { useSocket } from "@/app/actions/socket";
 import Modal from "@/components/common/modal";
-import { set } from "mongoose";
 import { VideoFeed } from "@/components/workspace/videofeed";
 
 type WorkspaceProps = {
@@ -340,7 +339,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("unload", handleUnload);
     };
-  }, [handleLeaveRoom]);
+  }, []);
 
   if (!room) {
     return <div>Loading...</div>;

@@ -1,0 +1,22 @@
+# Use the same base image as in development
+FROM node:18.16.0-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json and yarn.lock (if available) to install dependencies
+COPY package.json ./
+
+# Install only production dependencies
+RUN npm install --production
+
+# Copy the source code into the container
+COPY . .
+
+# Build the application if required (useful for frontend frameworks or transpiled code)
+# RUN npm run build  # Uncomment this if your project has a build step
+
+# Expose the port your app will run on
+EXPOSE 5005 
+# Run the application
+CMD ["npm", "start"]

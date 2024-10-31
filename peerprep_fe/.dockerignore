@@ -1,4 +1,4 @@
 ./node_modules
-Dockerfile
+Dockerfile.prod
 .dockerignore
 docker-compose.yml

@@ -109,7 +109,7 @@ export async function editQuestion(
       },
     };
   }
-  const { _id, ...rest } = question;
+  const _id = question?._id;
   const questionData = prepareFormDataForSubmission(formData);
 
   if ("error" in questionData) {
