@@ -16,8 +16,8 @@ import {
 } from "peerprep-shared-types";
 import { useSocket } from "@/app/actions/socket";
 import Modal from "@/components/common/modal";
-import { set } from "mongoose";
 import { VideoFeed } from "@/components/workspace/videofeed";
+import { CallProvider } from "@/contexts/call-context";
 
 type WorkspaceProps = {
   params: {
@@ -99,7 +99,8 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       roomId: room._id,
       username: username,
     });
-    router.push("/home");
+
+    router.back();
   }
 
   function handleReplyNextQuestion(accept: boolean) {
@@ -347,64 +348,66 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   }
 
   return (
-    <div className="flex flex-col max-h-screen">
-      <Header>
-        <div className="w-full flex items-start justify-start bg-gray-800 py-2 px-4 rounded-lg shadow-lg ">
-          <div className="w-max flex items-center justify-start mr-5">
-            <h3 className="text-base font-semibold text-gray-300 mr-4">
-              User 1
-            </h3>
-            <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 text-center text-sm">
-              {(activeUsers.length && activeUsers[0]) || "Waiting..."}
+    <CallProvider>
+      <div className="flex flex-col max-h-screen">
+        <Header>
+          <div className="w-full flex items-start justify-start bg-gray-800 py-2 px-4 rounded-lg shadow-lg ">
+            <div className="w-max flex items-center justify-start mr-5">
+              <h3 className="text-base font-semibold text-gray-300 mr-4">
+                User 1
+              </h3>
+              <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 text-center text-sm">
+                {(activeUsers.length && activeUsers[0]) || "Waiting..."}
+              </div>
+            </div>
+            <div className="w-max flex items-center justify-start">
+              <h3 className="text-base font-semibold text-gray-300 mr-4">
+                User 2
+              </h3>
+              <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 text-center text-sm">
+                {(activeUsers.length > 1 && activeUsers[1]) || "Waiting..."}
+              </div>
             </div>
           </div>
-          <div className="w-max flex items-center justify-start">
-            <h3 className="text-base font-semibold text-gray-300 mr-4">
-              User 2
-            </h3>
-            <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 text-center text-sm">
-              {(activeUsers.length > 1 && activeUsers[1]) || "Waiting..."}
-            </div>
-          </div>
-        </div>
-        <Button
-          text="Leave Room"
-          onClick={() => {
-            handleLeaveRoom();
-          }}
-        />
-      </Header>
-      <div className="flex h-full overflow-auto">
-        {/* Left Pane */}
-        <div className="flex flex-col w-2/5 px-4">
-          <div className="flex-grow h-1/2">
-            <Problem questionId={room.question} />
-          </div>
-          <div className="flex-grow pt-4 h-1/2">
-            <Chat messages={messages} sendMessage={sendMessage} />
-          </div>
-          <div className="flex-grow pt-4 h-1/2">
-            <VideoFeed roomId={params.id} />
-          </div>
-        </div>
-
-        <div className="border border-gray-300" />
-
-        {/* Right Pane */}
-        <div className="w-3/5 px-4 inline-flex flex-col">
-          <CodeEditor
-            language={language}
-            sharedCode={sharedCode}
-            handleCodeChange={handleCodeChange}
-            setLanguage={handleLanguageChange}
+          <Button
+            text="Leave Room"
+            onClick={() => {
+              handleLeaveRoom();
+            }}
           />
-          <Button text="Next Question" onClick={handleNextQuestion} />
+        </Header>
+        <div className="flex h-full overflow-auto">
+          {/* Left Pane */}
+          <div className="flex flex-col w-2/5 px-4">
+            <div className="flex-grow h-1/2">
+              <Problem questionId={room.question} />
+            </div>
+            <div className="flex-grow pt-4 h-1/2">
+              <Chat messages={messages} sendMessage={sendMessage} />
+            </div>
+            <div className="flex-grow pt-4 h-1/2">
+              <VideoFeed roomId={params.id} />
+            </div>
+          </div>
+
+          <div className="border border-gray-300" />
+
+          {/* Right Pane */}
+          <div className="w-3/5 px-4 inline-flex flex-col">
+            <CodeEditor
+              language={language}
+              sharedCode={sharedCode}
+              handleCodeChange={handleCodeChange}
+              setLanguage={handleLanguageChange}
+            />
+            <Button text="Next Question" onClick={handleNextQuestion} />
+          </div>
         </div>
+        <NextQuestionRequestModal />
+        <LeaveModal />
+        <ErrorModal />
       </div>
-      <NextQuestionRequestModal />
-      <LeaveModal />
-      <ErrorModal />
-    </div>
+    </CallProvider>
   );
 };
 
