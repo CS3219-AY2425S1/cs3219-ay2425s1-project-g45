@@ -17,7 +17,7 @@ import {
 import { useSocket } from "@/app/actions/socket";
 import Modal from "@/components/common/modal";
 import { VideoFeed } from "@/components/workspace/videofeed";
-import { CallProvider } from "@/contexts/call-context";
+import { CallProvider, useCall } from "@/contexts/call-context";
 
 type WorkspaceProps = {
   params: {
@@ -40,6 +40,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [leaveMessage, setLeaveMessage] = useState<string>("");
+  const { endCall } = useCall();
 
   const handleCodeChange = (newContent: string) => {
     setSharedCode(newContent);
@@ -94,6 +95,8 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
 
   function handleLeaveRoom() {
     if (!socket || !room) return;
+    endCall(room._id);
+
     socket.emit(ClientSocketEvents.LEAVE_ROOM, {
       event: ClientSocketEvents.LEAVE_ROOM,
       roomId: room._id,
