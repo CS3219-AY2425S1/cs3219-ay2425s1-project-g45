@@ -213,6 +213,49 @@ export class WebSocketHandler {
               questionId: changeQuestionPayload.questionId,
             });
           break;
+        case GatewayEvents.CALL:
+          const callPayload =
+            event.payload as EventPayloads[GatewayEvents.CALL];
+          console.log("Sending call to user:", callPayload.to);
+          const toSocketId = await this.getUsernameSocketId(callPayload.to);
+          if (toSocketId) {
+            this.io.to(toSocketId).emit(ClientSocketEvents.INITIATE_CALL, {
+              from: callPayload.from,
+              signalData: callPayload.signalData,
+            });
+          } else {
+            throw Error("No socket found for user");
+          }
+          break;
+        case GatewayEvents.ACCEPT_CALL:
+          const acceptCallPayload =
+            event.payload as EventPayloads[GatewayEvents.ACCEPT_CALL];
+          console.log("Accepting call from user:", acceptCallPayload.to);
+          const acceptSocketId = await this.getUsernameSocketId(
+            acceptCallPayload.to
+          );
+          if (acceptSocketId) {
+            this.io.to(acceptSocketId).emit(ClientSocketEvents.ACCEPT_CALL, {
+              from: acceptCallPayload.from,
+              signalData: acceptCallPayload.signalData,
+            });
+          } else {
+            throw Error("No socket found for user");
+          }
+          break;
+        case GatewayEvents.END_CALL:
+          const endCallPayload =
+            event.payload as EventPayloads[GatewayEvents.END_CALL];
+          console.log("Ending call with user:", endCallPayload.to);
+          const endSocketId = await this.getUsernameSocketId(endCallPayload.to);
+          if (endSocketId) {
+            this.io.to(endSocketId).emit(ClientSocketEvents.END_CALL, {
+              from: endCallPayload.from,
+            });
+          } else {
+            throw Error("No socket found for user");
+          }
+          break;
       }
     } catch (error) {
       console.error("Error handling gateway event:", error);
