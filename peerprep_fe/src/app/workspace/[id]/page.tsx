@@ -344,7 +344,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("unload", handleUnload);
     };
-  }, [handleLeaveRoom]);
+  }, []);
 
   if (!room) {
     return <div>Loading...</div>;

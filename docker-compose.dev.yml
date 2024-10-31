@@ -15,7 +15,7 @@ services:
       - API_GATEWAY_PORT=${API_GATEWAY_PORT}
       - GATEWAY_SERVICE_ROUTE=gateway-service
     ports:
-      - ${FRONTEND_PORT}:${FRONTEND_PORT}
+      - ${FRONTEND_PORT}:3000
     depends_on:
       - gateway-service
 
@@ -46,7 +46,7 @@ services:
       - REDIS_ROUTE=redis://redis
       - REDIS_PORT=${REDIS_PORT}
     ports:
-      - ${API_GATEWAY_PORT}:${API_GATEWAY_PORT}
+      - ${API_GATEWAY_PORT}:5003
 
     depends_on:
       kafka-init:
@@ -66,7 +66,7 @@ services:
       - USER_SERVICE_PORT=${USER_SERVICE_PORT}
       - JWT_SECRET=${JWT_SECRET}
     ports:
-      - ${USER_SERVICE_PORT}:${USER_SERVICE_PORT}
+      - ${USER_SERVICE_PORT}:5001
     depends_on:
       - matching-service
 
@@ -81,7 +81,7 @@ services:
       - MONGODB_URI=${MONGODB_URI}
       - QUESTION_SERVICE_PORT=${QUESTION_SERVICE_PORT}
     ports:
-      - ${QUESTION_SERVICE_PORT}:${QUESTION_SERVICE_PORT}
+      - ${QUESTION_SERVICE_PORT}:5002
 
   collab-service:
     build:
@@ -106,7 +106,7 @@ services:
       - KAFKA_BROKER_ROUTE=kafka-service
       - KAFKA_CONTROLLER_ROUTE=kafka-service
     ports:
-      - ${COLLAB_SERVICE_PORT}:${COLLAB_SERVICE_PORT}
+      - ${COLLAB_SERVICE_PORT}:5005
     depends_on:
       kafka-init:
         condition: service_completed_successfully
@@ -137,7 +137,7 @@ services:
       - REDIS_ROUTE=redis://redis
       - REDIS_PORT=${REDIS_PORT}
     ports:
-      - ${MATCHING_SERVICE_PORT}:${MATCHING_SERVICE_PORT}
+      - ${MATCHING_SERVICE_PORT}:5004
     depends_on:
       kafka-init:
         condition: service_completed_successfully
@@ -160,7 +160,7 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_NUM_PARTITIONS: ${KAFKA_NUM_PARTITIONS}
     ports:
-      - "${KAFKA_BROKER_PORT}:${KAFKA_BROKER_PORT}"
+      - "${KAFKA_BROKER_PORT}:9092"
     healthcheck:
       # Checks that the Kafka broker is up and running
       test: ["CMD", "nc", "-z", "${KAFKA_BROKER_ROUTE}", "${KAFKA_BROKER_PORT}"]
@@ -214,7 +214,7 @@ services:
   redis:
     image: redis:latest
     ports:
-       - ${REDIS_PORT}:${REDIS_PORT}
+       - ${REDIS_PORT}:6379
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
