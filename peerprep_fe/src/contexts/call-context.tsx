@@ -7,19 +7,25 @@ import React, {
   useRef,
   ReactNode,
   useEffect,
+  use,
 } from "react";
 import { useSocket } from "./socket-context";
 import { useAuth } from "./auth-context";
 import Peer from "simple-peer";
 import { ClientSocketEvents, CallStates } from "peerprep-shared-types";
+import Modal from "@/components/common/modal";
+import Button from "@/components/common/button";
 
 interface CallContextType {
   callState: CallState;
+  callPermissions: CallPermissions;
   ownVideoRef: React.RefObject<HTMLVideoElement>;
   userVideoRef: React.RefObject<HTMLVideoElement>;
   call: (roomId: string) => void;
   acceptCall: (roomId: string) => void;
   endCall: (roomId: string) => void;
+  setVideo: (on: boolean) => void;
+  setAudio: (on: boolean) => void;
 }
 
 const CallContext = createContext<CallContextType | null>(null);
@@ -42,11 +48,19 @@ interface CallState {
   signalData: Peer.SignalData | null;
 }
 
+interface CallPermissions {
+  videoOn: boolean;
+  audioOn: boolean;
+}
+
 export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   const { socket } = useSocket();
   const { username } = useAuth();
 
   const [videoStream, setVideoStream] = useState<MediaStream | undefined>(
+    undefined
+  );
+  const [audioStream, setAudioStream] = useState<MediaStream | undefined>(
     undefined
   );
   const [callState, setCallState] = useState<CallState>({
@@ -58,6 +72,9 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   const ownVideoRef = useRef<HTMLVideoElement>(null);
   const userVideoRef = useRef<HTMLVideoElement>(null);
   const connectionRef = useRef<Peer.Instance | null>(null);
+  const [isCallEndedModalOpen, setIsCallEndedModalOpen] = useState(false);
+  const [isVideoAllowed, setIsVideoAllowed] = useState(false);
+  const [isAudioAllowed, setIsAudioAllowed] = useState(false);
 
   useEffect(() => {
     if (!socket) return;
@@ -95,6 +112,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
       });
 
       connectionRef.current?.destroy();
+      setIsCallEndedModalOpen(true);
     });
   }, [socket]);
 
@@ -108,6 +126,25 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
         }
       });
   }, [ownVideoRef, setVideoStream]);
+
+  useEffect(() => {
+    if (videoStream) {
+      videoStream.getAudioTracks().forEach((track) => {
+        track.enabled = isAudioAllowed;
+      });
+      videoStream.getVideoTracks().forEach((track) => {
+        track.enabled = isVideoAllowed;
+      });
+    }
+  }, [isAudioAllowed, isVideoAllowed, videoStream]);
+
+  const setVideo = (on: boolean) => {
+    setIsVideoAllowed(on);
+  };
+
+  const setAudio = (on: boolean) => {
+    setIsAudioAllowed(on);
+  };
 
   const call = (roomId: string) => {
     if (callState.current_state !== CallStates.CALL_ENDED || !socket) return;
@@ -192,18 +229,39 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     connectionRef.current?.destroy();
   };
 
+  const CallEndedModal = () => {
+    return (
+      <Modal isOpen={isCallEndedModalOpen} isCloseable={false} width="md">
+        <div>
+          <h1>Call ended by other user</h1>
+          <div>
+            <Button
+              type="button"
+              onClick={() => setIsCallEndedModalOpen(false)}
+              text="Ok"
+            />
+          </div>
+        </div>
+      </Modal>
+    );
+  };
+
   return (
     <CallContext.Provider
       value={{
         callState,
+        callPermissions: { videoOn: isVideoAllowed, audioOn: isAudioAllowed },
         ownVideoRef,
         userVideoRef,
         call,
         acceptCall,
         endCall,
+        setVideo,
+        setAudio,
       }}
     >
       {children}
+      <CallEndedModal />
     </CallContext.Provider>
   );
 };

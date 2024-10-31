@@ -1,14 +1,24 @@
 import { useCall } from "@/contexts/call-context";
 import Modal from "../common/modal";
 import Button from "../common/button";
+import { CallStates } from "peerprep-shared-types";
 
 export interface VideoFeedProps {
   roomId: string;
 }
 
 export const VideoFeed: React.FC<VideoFeedProps> = ({ roomId }) => {
-  const { callState, ownVideoRef, userVideoRef, call, acceptCall, endCall } =
-    useCall();
+  const {
+    callState,
+    callPermissions,
+    ownVideoRef,
+    userVideoRef,
+    call,
+    acceptCall,
+    endCall,
+    setVideo,
+    setAudio,
+  } = useCall();
 
   const AcceptCallModal = () => {
     return (
@@ -36,6 +46,48 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ roomId }) => {
     );
   };
 
+  const ToggleVideoButton = () => {
+    return (
+      <Button
+        type="button"
+        onClick={() => {
+          setVideo(!callPermissions.videoOn);
+        }}
+        text={callPermissions.videoOn ? "Video On" : "Video Off"}
+      />
+    );
+  };
+
+  const ToggleAudioButton = () => {
+    return (
+      <Button
+        type="button"
+        onClick={() => {
+          setAudio(!callPermissions.audioOn);
+        }}
+        text={callPermissions.audioOn ? "Audio On" : "Audio Off"}
+      />
+    );
+  };
+
+  const CallButton = () => {
+    return (
+      <Button
+        type="button"
+        onClick={() => {
+          if (callState.current_state == CallStates.CALL_ENDED) {
+            call(roomId);
+          } else {
+            endCall(roomId);
+          }
+        }}
+        text={
+          callState.current_state == CallStates.CALL_ENDED ? "Call" : "End Call"
+        }
+      />
+    );
+  };
+
   return (
     <div className="h-full w-full flex-col">
       <div>
@@ -43,15 +95,9 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ roomId }) => {
         <video playsInline autoPlay ref={userVideoRef} />
       </div>
       <div>
-        {callState.current_state === "CALL_ENDED" ? (
-          <Button type="button" text="Call" onClick={() => call(roomId)} />
-        ) : (
-          <Button
-            type="reset"
-            onClick={() => endCall(roomId)}
-            text="End Call"
-          />
-        )}
+        <ToggleVideoButton />
+        <ToggleAudioButton />
+        <CallButton />
       </div>
       <AcceptCallModal />
     </div>
