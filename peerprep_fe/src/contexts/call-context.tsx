@@ -180,7 +180,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
 
     socket.emit(ClientSocketEvents.END_CALL, {
       roomId: roomId,
-      to: callState.otherUser,
+      from: username,
     });
 
     setCallState({

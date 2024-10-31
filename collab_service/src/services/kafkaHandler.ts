@@ -321,6 +321,7 @@ export class KafkaHandler {
 
   private async checkValidCallEvent(roomId: string, from: string) {
     const roomState = this.editorManager.getRoomState(roomId);
+    console.log(roomState);
 
     if (!roomState) {
       console.error("Room not found");
@@ -337,7 +338,7 @@ export class KafkaHandler {
     if (!activeUsers.includes(from)) {
       console.error("User not in room");
       const event = createEvent(GatewayEvents.ERROR, {
-        error: "Unable to start call with user not in room",
+        error: "User not in room",
         roomId,
       });
       this.sendGatewayEvent(event, roomId);
@@ -345,7 +346,6 @@ export class KafkaHandler {
     }
 
     // Attempt to send call event to other user
-
     const to = activeUsers.find((user) => user !== from);
     if (!to) {
       console.error("Failed to find other user in room");
