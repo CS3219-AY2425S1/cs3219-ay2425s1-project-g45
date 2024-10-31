@@ -18,6 +18,7 @@ import { MatchingEvents } from "peerprep-shared-types/dist/types/kafka/matching-
 import { handleMatchFound } from "./services/matchingHandler";
 import RedisService from "./services/redisService";
 import { setUpChatHandler } from "./socketHandlers/chatHandler";
+import { setupRoomHandler } from "./socketHandlers/roomHandler";
 
 type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
 
@@ -123,112 +124,8 @@ export class WebSocketHandler {
         console.log(`Sent event: ${JSON.stringify(event)}`);
       });
 
-      socket.on(ClientSocketEvents.JOIN_ROOM, async (data) => {
-        console.log("Joining room:", data.roomId);
-        socket.join(data.roomId);
-
-        // Purpose: to send the room details back to the user who joined the room
-        //  first sends the join room event to collaboration service
-        // collaboration will send back a refresh room state event which contains the current state of the room
-        // this event will be sent back to the user who joined the room
-        // create event
-        const event = createEvent(CollaborationEvents.JOIN_ROOM, {
-          roomId: data.roomId,
-          username: data.username,
-        });
-
-        // send event to collaboration service
-        await this.sendCollaborationEvent(event, data.roomId);
-      });
-
-      socket.on(ClientSocketEvents.LEAVE_ROOM, async (data) => {
-        console.log("Leaving room:", data.roomId);
-        socket
-          .to(data.roomId)
-          .emit(ClientSocketEvents.LEAVE_ROOM, data.username);
-        socket.leave(data.roomId);
-
-        const event = createEvent(CollaborationEvents.LEAVE_ROOM, {
-          roomId: data.roomId,
-          username: data.username,
-        });
-
-        // send event to collaboration service
-        await this.sendCollaborationEvent(event, data.roomId);
-      });
-
-      socket.on(ClientSocketEvents.CODE_CHANGE, async (data) => {
-        const { roomId, username, message } = data;
-        console.log("Code change in room:", message);
-
-        // everyone in the room except the sender will receive the code change on frontend
-        socket.to(roomId).emit(ClientSocketEvents.CODE_CHANGE, {
-          username,
-          roomId,
-          content: message.sharedCode,
-          language: message.language,
-          timestamp: Date.now(),
-        });
-
-        const event = createEvent(CollaborationEvents.UPDATE_CODE, {
-          roomId: data.roomId,
-          username: data.username,
-          content: data.message.sharedCode,
-        });
-
-        // send event to collaboration service
-        await this.sendCollaborationEvent(event, roomId);
-      });
-
       setUpChatHandler(socket, this.sendCollaborationEvent.bind(this));
-
-      // Handle next question that has just been initiated by a user
-      socket.on(ClientSocketEvents.NEXT_QUESTION, async (data) => {
-        const { roomId, username } = data;
-
-        // everyone in the room except the sender will receive request for next question on frontend
-        socket.to(roomId).emit(ClientSocketEvents.NEXT_QUESTION, {
-          username: username,
-          roomId: roomId,
-        });
-
-        const event = createEvent(CollaborationEvents.NEXT_QUESTION, {
-          roomId: roomId,
-          username: username,
-          accept: true,
-        });
-
-        // send event to collaboration service
-        await this.sendCollaborationEvent(event, roomId);
-      });
-
-      // Handle reply to next question request
-      socket.on(ClientSocketEvents.REPLY_NEXT_QUESTION, async (data) => {
-        const { roomId, username, accept } = data;
-
-        console.log(
-          "Next question",
-          "for room:",
-          roomId,
-          accept ? "accepted" : "rejected",
-          "by",
-          username
-        );
-
-        socket.to(roomId).emit(ClientSocketEvents.REPLY_NEXT_QUESTION, {
-          username: username,
-          roomId: roomId,
-          accept: accept,
-        });
-
-        const event = createEvent(CollaborationEvents.NEXT_QUESTION, {
-          roomId: roomId,
-          username: username,
-          accept: accept,
-        });
-
-        await this.sendCollaborationEvent(event, roomId);
-      });
+      setupRoomHandler(socket, this.sendCollaborationEvent.bind(this));
     });
   }
 
