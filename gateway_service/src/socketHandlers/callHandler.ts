@@ -20,12 +20,12 @@ export interface CallEventDelegate {
 
 export function setUpCallHandler(socket: Socket, delegate: CallEventDelegate) {
   socket.on(ClientSocketEvents.INITIATE_CALL, async (data) => {
-    const { roomId, from, signalData } = data;
-    console.log("Initiating call in room:", data);
+    const { roomId, username, signalData } = data;
+    console.log("Initiating call in room:", roomId, username);
 
     const event = createEvent(CollaborationEvents.CALL, {
       roomId: roomId,
-      from: from,
+      from: username,
       signalData: signalData,
     });
 
@@ -34,12 +34,12 @@ export function setUpCallHandler(socket: Socket, delegate: CallEventDelegate) {
   });
 
   socket.on(ClientSocketEvents.ACCEPT_CALL, async (data) => {
-    const { roomId, from, signalData } = data;
-    console.log("Accepting call in room:", data);
+    const { roomId, username, signalData } = data;
+    console.log("Accepting call in room:", roomId, username);
 
     const event = createEvent(CollaborationEvents.ACCEPT_CALL, {
       roomId: roomId,
-      from: from,
+      from: username,
       signalData: signalData,
     });
 
@@ -48,12 +48,12 @@ export function setUpCallHandler(socket: Socket, delegate: CallEventDelegate) {
   });
 
   socket.on(ClientSocketEvents.END_CALL, async (data) => {
-    const { roomId, from } = data;
+    const { roomId, username } = data;
     console.log("Ending call in room:", data);
 
     const event = createEvent(CollaborationEvents.END_CALL, {
       roomId: roomId,
-      from: from,
+      from: username,
     });
 
     // send event to collaboration service

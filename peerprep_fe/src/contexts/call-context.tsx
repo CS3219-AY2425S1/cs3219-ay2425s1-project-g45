@@ -11,10 +11,15 @@ import React, {
 import { useSocket } from "./socket-context";
 import { useAuth } from "./auth-context";
 import Peer from "simple-peer";
-import { ClientSocketEvents, CallStates } from "peerprep-shared-types";
+import {
+  ClientSocketEvents,
+  CallStates,
+  ServerSocketEvents,
+} from "peerprep-shared-types";
 import Modal from "@/components/common/modal";
 import Button from "@/components/common/button";
 import { useOnPageLeave } from "@/components/hooks/onPageLeave";
+import { Server } from "http";
 
 interface CallContextType {
   callState: CallState;
@@ -79,8 +84,9 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     if (!socket) return;
     // For receiving calls
     socket.on(
-      ClientSocketEvents.INITIATE_CALL,
+      ServerSocketEvents.CALL_REQUESTED,
       ({ from, signalData }: { from: string; signalData: Peer.SignalData }) => {
+        console.log("Received call from:", from);
         setCallState({
           current_state: CallStates.CALL_RECEIVED,
           otherUser: from,
@@ -91,8 +97,9 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
 
     // For receiving call acceptance
     socket.on(
-      ClientSocketEvents.ACCEPT_CALL,
+      ServerSocketEvents.CALL_ACCEPTED,
       ({ from, signalData }: { from: string; signalData: Peer.SignalData }) => {
+        console.log("Call accepted by:", from);
         setCallState({
           current_state: CallStates.CALL_ACCEPTED,
           otherUser: from,
@@ -105,7 +112,8 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
       }
     );
 
-    socket.on(ClientSocketEvents.END_CALL, () => {
+    socket.on(ServerSocketEvents.CALL_ENDED, () => {
+      console.log("Call ended by other user");
       setCallState({
         current_state: CallStates.CALL_ENDED,
         otherUser: "",
@@ -118,9 +126,9 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     });
 
     return () => {
-      socket.off(ClientSocketEvents.INITIATE_CALL);
-      socket.off(ClientSocketEvents.ACCEPT_CALL);
-      socket.off(ClientSocketEvents.END_CALL);
+      socket.off(ServerSocketEvents.CALL_REQUESTED);
+      socket.off(ServerSocketEvents.CALL_ACCEPTED);
+      socket.off(ServerSocketEvents.CALL_ENDED);
     };
   }, [socket, peer]);
 
@@ -192,8 +200,8 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     peer.on("signal", (signalData) => {
       console.log("sending signal data", signalData);
       socket.emit(ClientSocketEvents.INITIATE_CALL, {
-        from: username,
         roomId: roomId,
+        username: username,
         signalData: signalData,
       });
     });
@@ -237,7 +245,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
       console.log("sending signal data", signalData);
       socket.emit(ClientSocketEvents.ACCEPT_CALL, {
         roomId: roomId,
-        from: username,
+        username: username,
         signalData,
       });
     });
@@ -258,7 +266,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
 
     socket.emit(ClientSocketEvents.END_CALL, {
       roomId: roomId,
-      from: username,
+      username: username,
     });
 
     setCallState({

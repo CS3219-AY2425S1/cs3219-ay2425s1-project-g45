@@ -142,7 +142,6 @@ export class WebSocketHandler {
           console.log("Room state refresh event received:", roomPayload);
 
           console.log("Broadcasting code change:");
-          //   socket.emit("roomUpdated", {});
           this.io.to(roomPayload.roomId).emit("roomUpdated", {
             room: roomPayload.editorState,
           });
@@ -162,7 +161,7 @@ export class WebSocketHandler {
           );
           this.io
             .to(newChatPayload.roomId)
-            .emit(ClientSocketEvents.NEW_CHAT, newChatPayload.message);
+            .emit(ServerSocketEvents.NEW_CHAT, newChatPayload.message);
           break;
         case GatewayEvents.REFRESH_CHAT_STATE:
           const chatStatePayload =
@@ -174,7 +173,7 @@ export class WebSocketHandler {
           );
           this.io
             .to(chatStatePayload.roomId)
-            .emit(ClientSocketEvents.CHAT_STATE, {
+            .emit(ServerSocketEvents.CHAT_STATE, {
               messages: chatStatePayload.chatState.messages,
             });
           break;
@@ -209,7 +208,7 @@ export class WebSocketHandler {
           );
           this.io
             .to(changeQuestionPayload.roomId)
-            .emit(ClientSocketEvents.QUESTION_CHANGE, {
+            .emit(ServerSocketEvents.QUESTION_CHANGED, {
               questionId: changeQuestionPayload.questionId,
             });
           break;
@@ -219,7 +218,7 @@ export class WebSocketHandler {
           console.log("Sending call to user:", callPayload.to);
           const toSocketId = await this.getUsernameSocketId(callPayload.to);
           if (toSocketId) {
-            this.io.to(toSocketId).emit(ClientSocketEvents.INITIATE_CALL, {
+            this.io.to(toSocketId).emit(ServerSocketEvents.CALL_REQUESTED, {
               from: callPayload.from,
               signalData: callPayload.signalData,
             });
@@ -235,7 +234,7 @@ export class WebSocketHandler {
             acceptCallPayload.to
           );
           if (acceptSocketId) {
-            this.io.to(acceptSocketId).emit(ClientSocketEvents.ACCEPT_CALL, {
+            this.io.to(acceptSocketId).emit(ServerSocketEvents.CALL_ACCEPTED, {
               from: acceptCallPayload.from,
               signalData: acceptCallPayload.signalData,
             });
@@ -249,7 +248,7 @@ export class WebSocketHandler {
           console.log("Ending call with user:", endCallPayload.to);
           const endSocketId = await this.getUsernameSocketId(endCallPayload.to);
           if (endSocketId) {
-            this.io.to(endSocketId).emit(ClientSocketEvents.END_CALL, {
+            this.io.to(endSocketId).emit(ServerSocketEvents.CALL_ENDED, {
               from: endCallPayload.from,
             });
           } else {

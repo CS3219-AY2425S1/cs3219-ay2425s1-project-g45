@@ -3,6 +3,7 @@ import {
   createEvent,
   EventPayloads,
   KafkaEvent,
+  ServerSocketEvents,
 } from "peerprep-shared-types";
 import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
 import { Socket } from "socket.io";
@@ -40,7 +41,9 @@ export function setupRoomHandler(socket: Socket, delegate: RoomEventDelegate) {
 
   socket.on(ClientSocketEvents.LEAVE_ROOM, async (data) => {
     console.log("Leaving room:", data.roomId);
-    socket.to(data.roomId).emit(ClientSocketEvents.LEAVE_ROOM, data.username);
+    socket.to(data.roomId).emit(ServerSocketEvents.USER_LEFT, {
+      username: data.username,
+    });
     socket.leave(data.roomId);
 
     const event = createEvent(CollaborationEvents.LEAVE_ROOM, {
@@ -52,39 +55,54 @@ export function setupRoomHandler(socket: Socket, delegate: RoomEventDelegate) {
     await delegate(event, data.roomId);
   });
 
-  socket.on(ClientSocketEvents.CODE_CHANGE, async (data) => {
-    const { roomId, username, message } = data;
-    console.log("Code change in room:", message);
+  socket.on(ClientSocketEvents.CHANGE_CODE, async (data) => {
+    const { roomId, username, sharedCode } = data;
+    console.log("Code change in room:", data);
 
     // everyone in the room except the sender will receive the code change on frontend
-    socket.to(roomId).emit(ClientSocketEvents.CODE_CHANGE, {
+    socket.to(roomId).emit(ServerSocketEvents.CODE_CHANGED, {
       username,
       roomId,
-      content: message.sharedCode,
-      language: message.language,
+      sharedCode: sharedCode,
       timestamp: Date.now(),
     });
 
     const event = createEvent(CollaborationEvents.UPDATE_CODE, {
-      roomId: data.roomId,
-      username: data.username,
-      content: data.message.sharedCode,
+      roomId: roomId,
+      username: username,
+      content: sharedCode,
     });
 
     // send event to collaboration service
     await delegate(event, roomId);
   });
 
+  socket.on(ClientSocketEvents.CHANGE_LANGUAGE, async (data) => {
+    const { roomId, username, language } = data;
+    console.log("Language change in room:", data);
+
+    socket.to(roomId).emit(ServerSocketEvents.LANGUAGE_CHANGED, {
+      username,
+      roomId,
+      language,
+    });
+  });
+
   // Handle next question that has just been initiated by a user
-  socket.on(ClientSocketEvents.NEXT_QUESTION, async (data) => {
-    const { roomId, username, accept } = data;
+  socket.on(ClientSocketEvents.REQUEST_NEXT_QUESTION, async (data) => {
+    const { roomId, username } = data;
     console.log("Requesting next question for room:", roomId);
 
-    // everyone in the room except the sender will receive request for next question on frontend
+    // send the event to everyone in the room
+    socket.to(roomId).emit(ServerSocketEvents.NEXT_QUESTION_REQUESTED, {
+      username: username,
+      roomId: roomId,
+    });
+
     const event = createEvent(CollaborationEvents.NEXT_QUESTION, {
       roomId: roomId,
       username: username,
-      accept: accept,
+      accept: true,
     });
 
     // send event to collaboration service
@@ -104,7 +122,7 @@ export function setupRoomHandler(socket: Socket, delegate: RoomEventDelegate) {
       username
     );
 
-    socket.to(roomId).emit(ClientSocketEvents.REPLY_NEXT_QUESTION, {
+    socket.to(roomId).emit(ServerSocketEvents.NEXT_QUESTION_REPLIED, {
       username: username,
       roomId: roomId,
       accept: accept,

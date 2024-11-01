@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node dist/app.js",         
+    "start": "node dist/app.js",
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/app.ts",
-    "build": "tsc"                        
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",
@@ -16,7 +16,7 @@
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
     "kafkajs": "^2.2.4",
-    "peerprep-shared-types": "^1.0.65",
+    "peerprep-shared-types": "^1.0.69",
     "redis": "^4.7.0",
     "socket.io": "^4.8.0",
     "socket.io-client": "^4.8.0",
