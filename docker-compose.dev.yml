@@ -214,25 +214,5 @@ services:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 3            
 
-  piston:
-    image: ghcr.io/engineer-man/piston:latest
-    container_name: piston
-    restart: unless-stopped
-    privileged: true
-    environment:
-      - PORT=2000
-      - MAX_CONCURRENT_PER_LANGUAGE=5
-      - MAX_PROCESS_COUNT=100
-      - MAX_QUEUE_SIZE=1000
-      - RUN_TIME_LIMIT=5
-      - RUN_MEMORY_LIMIT=256
-      - RUN_NETWORK=false
-    ports:
-      - "2000:2000"
-    volumes:
-      - piston_data:/piston
-
-volumes:
-  piston_data:
