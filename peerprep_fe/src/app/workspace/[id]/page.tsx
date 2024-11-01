@@ -262,7 +262,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
 
     if (messages.length === 0) {
       console.log("Requesting chat state");
-      socket.emit(ServerSocketEvents.CHAT_STATE, {
+      socket.emit(ClientSocketEvents.GET_CHAT_STATE, {
         roomId: room._id,
       });
       socket.once(ServerSocketEvents.CHAT_STATE, ({ messages }) => {
