@@ -24,13 +24,11 @@ import {
 } from "./room";
 
 export interface PeerprepRequest {
-  event: ClientSocketEvents;
   username: string;
   timestamp?: string;
 }
 
 export interface PeerprepResponse {
-  event: ServerSocketEvents;
   username: string;
 }
 

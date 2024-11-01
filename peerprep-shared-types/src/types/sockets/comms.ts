@@ -19,61 +19,51 @@ export enum CommsServerEvents {
 }
 
 export interface SendMessageRequest extends PeerprepRequest {
-  event: CommsClientEvents.SEND_MESSAGE;
   roomId: string;
   message: string;
 }
 
 export interface GetChatStateRequest extends PeerprepRequest {
-  event: CommsClientEvents.GET_CHAT_STATE;
   roomId: string;
 }
 
 export interface InitiateCallRequest extends PeerprepRequest {
-  event: CommsClientEvents.INITIATE_CALL;
   roomId: string;
   signalData: any;
 }
 
 export interface AcceptCallRequest extends PeerprepRequest {
-  event: CommsClientEvents.ACCEPT_CALL;
   roomId: string;
   signalData: any;
 }
 
 export interface EndCallRequest extends PeerprepRequest {
-  event: CommsClientEvents.END_CALL;
   roomId: string;
 }
 
 export interface NewChatResponse extends PeerprepResponse {
-  event: CommsServerEvents.NEW_CHAT;
   roomId: string;
   message: ChatMessage;
 }
 
 export interface ChatStateResponse extends PeerprepResponse {
-  event: CommsServerEvents.CHAT_STATE;
   roomId: string;
   messages: ChatMessage[];
 }
 
 export interface CallRequestedResponse extends PeerprepResponse {
-  event: CommsServerEvents.CALL_REQUESTED;
   roomId: string;
   from: string;
   signalData: any;
 }
 
 export interface CallAcceptedResponse extends PeerprepResponse {
-  event: CommsServerEvents.CALL_ACCEPTED;
   roomId: string;
   from: string;
   signalData: any;
 }
 
 export interface CallEndedResponse extends PeerprepResponse {
-  event: CommsServerEvents.CALL_ENDED;
   roomId: string;
   from: string;
 }

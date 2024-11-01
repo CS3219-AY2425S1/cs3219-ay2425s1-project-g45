@@ -12,23 +12,19 @@ export enum RoomServerEvents {
 
 // Joining and Leaving Room
 export interface RoomJoinRequest extends PeerprepRequest {
-  event: RoomClientEvents.JOIN_ROOM;
   roomId: string;
 }
 
 export interface RoomLeaveRequest extends PeerprepRequest {
-  event: RoomClientEvents.LEAVE_ROOM;
   roomId: string;
 }
 
 export interface UserJoinedResponse extends PeerprepResponse {
-  event: RoomServerEvents.USER_JOINED;
   roomId: string;
   username: string;
 }
 
 export interface UserLeftResponse extends PeerprepResponse {
-  event: RoomServerEvents.USER_LEFT;
   roomId: string;
   username: string;
 }

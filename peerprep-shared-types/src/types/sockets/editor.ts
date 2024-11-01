@@ -18,59 +18,49 @@ export enum EditorServerEvents {
 }
 
 export interface CodeChangeRequest extends PeerprepRequest {
-  event: EditorClientEvents.CHANGE_CODE;
   roomId: string;
   sharedcode: string;
 }
 
 export interface LanguageChangeRequest extends PeerprepRequest {
-  event: EditorClientEvents.CHANGE_LANGUAGE;
   roomId: string;
   language: string;
 }
 
 export interface NextQuestionRequest extends PeerprepRequest {
-  event: EditorClientEvents.REQUEST_NEXT_QUESTION;
   roomId: string;
 }
 
 export interface NextQuestionReply extends PeerprepResponse {
-  event: EditorServerEvents.NEXT_QUESTION_REPLIED;
   roomId: string;
   accepted: boolean;
 }
 
 export interface EditorStateResponse extends PeerprepResponse {
-  event: EditorServerEvents.EDITOR_STATE;
   roomId: string;
   state: EditorState;
 }
 
 export interface CodeChangedResponse extends PeerprepResponse {
-  event: EditorServerEvents.CODE_CHANGED;
   roomId: string;
   sharedcode: string;
 }
 
 export interface LanguageChangedResponse extends PeerprepResponse {
-  event: EditorServerEvents.LANGUAGE_CHANGED;
   roomId: string;
   language: string;
 }
 
 export interface NextQuestionResponse extends PeerprepResponse {
-  event: EditorServerEvents.NEXT_QUESTION_REQUESTED;
   roomId: string;
 }
 
 export interface ReplyNextResponse extends PeerprepResponse {
-  event: EditorServerEvents.NEXT_QUESTION_REPLIED;
   roomId: string;
   accepted: boolean;
 }
 
 export interface QuestionChangedResponse extends PeerprepResponse {
-  event: EditorServerEvents.QUESTION_CHANGED;
   roomId: string;
   questionId: string;
 }
