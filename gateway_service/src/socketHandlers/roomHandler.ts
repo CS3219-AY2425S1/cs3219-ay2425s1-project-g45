@@ -41,7 +41,9 @@ export function setupRoomHandler(socket: Socket, delegate: RoomEventDelegate) {
 
   socket.on(ClientSocketEvents.LEAVE_ROOM, async (data) => {
     console.log("Leaving room:", data.roomId);
-    socket.to(data.roomId).emit(ClientSocketEvents.LEAVE_ROOM, data.username);
+    socket.to(data.roomId).emit(ServerSocketEvents.USER_LEFT, {
+      username: data.username,
+    });
     socket.leave(data.roomId);
 
     const event = createEvent(CollaborationEvents.LEAVE_ROOM, {
