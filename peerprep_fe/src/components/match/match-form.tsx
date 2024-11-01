@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from "react";
-import LargeTextfield from "@/components/common/large-text-field";
 import Button from "@/components/common/button";
 import {
   ClientSocketEvents,
   DifficultyLevel,
+  ServerSocketEvents,
+} from "peerprep-shared-types";
+
+import {
   MatchAddedResponse,
   MatchCancelRequest,
   MatchCancelResponse,
   MatchFoundResponse,
   MatchRequest,
   MatchTimeoutResponse,
-  ServerSocketEvents,
-} from "peerprep-shared-types";
+} from "peerprep-shared-types/dist/types/sockets/match";
+
 import Timer from "@/components/match/timer";
 import "../../styles/modal.css";
 import { useSocket } from "@/contexts/socket-context";
@@ -67,7 +70,6 @@ export function MatchForm() {
   ) => {
     if (socket && username) {
       const matchRequest: MatchRequest = {
-        event: ClientSocketEvents.REQUEST_MATCH,
         selectedDifficulty,
         selectedTopic,
         username: username,
@@ -80,7 +82,6 @@ export function MatchForm() {
   const cancelMatchRequest = () => {
     if (socket && username) {
       const matchRequest: MatchCancelRequest = {
-        event: ClientSocketEvents.CANCEL_MATCH,
         username: username,
       };
       socket.on(ServerSocketEvents.MATCH_CANCELED, onMatchCancel);

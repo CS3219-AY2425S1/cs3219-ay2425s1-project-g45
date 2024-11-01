@@ -197,7 +197,6 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     peer.on("signal", (signalData) => {
       console.log("sending signal data", signalData);
       socket.emit(ClientSocketEvents.INITIATE_CALL, {
-        event: ClientSocketEvents.INITIATE_CALL,
         roomId: roomId,
         username: username,
         signalData: signalData,
@@ -243,7 +242,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
       console.log("sending signal data", signalData);
       socket.emit(ClientSocketEvents.ACCEPT_CALL, {
         roomId: roomId,
-        from: username,
+        username: username,
         signalData,
       });
     });
@@ -264,7 +263,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
 
     socket.emit(ClientSocketEvents.END_CALL, {
       roomId: roomId,
-      from: username,
+      username: username,
     });
 
     setCallState({

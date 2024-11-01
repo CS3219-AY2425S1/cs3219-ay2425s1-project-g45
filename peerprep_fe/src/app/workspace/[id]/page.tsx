@@ -2,7 +2,7 @@
 
 import Header from "@/components/common/header";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { act, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import Button from "@/components/common/button";
 import Chat from "@/components/workspace/chat";
@@ -13,6 +13,7 @@ import {
   ClientSocketEvents,
   RoomDto,
   ChatMessage,
+  ServerSocketEvents,
 } from "peerprep-shared-types";
 import { useSocket } from "@/app/actions/socket";
 import Modal from "@/components/common/modal";
@@ -47,12 +48,8 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     if (!socket) return;
     console.log("Emitting code change");
 
-    socket.emit(ClientSocketEvents.CODE_CHANGE, {
-      message: {
-        sharedCode: newContent,
-        language: language,
-      },
-      event: ClientSocketEvents.CODE_CHANGE,
+    socket.emit(ClientSocketEvents.CHANGE_CODE, {
+      sharedCode: newContent,
       roomId: params.id,
       username: username,
     });
@@ -65,12 +62,8 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     console.log("Emitting code change");
     console.log(language);
 
-    socket.emit(ClientSocketEvents.CODE_CHANGE, {
-      message: {
-        sharedCode: sharedCode,
-        language: language,
-      },
-      event: ClientSocketEvents.CODE_CHANGE,
+    socket.emit(ClientSocketEvents.CHANGE_LANGUAGE, {
+      language: language,
       roomId: params.id,
       username: username,
     });
@@ -121,8 +114,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   function handleNextQuestion() {
     if (!socket || !room || activeUsers.length < 2) return;
     console.log("Requesting next question");
-    socket.emit(ClientSocketEvents.NEXT_QUESTION, {
-      event: ClientSocketEvents.NEXT_QUESTION,
+    socket.emit(ClientSocketEvents.REQUEST_NEXT_QUESTION, {
       roomId: room._id,
       username: username,
     });
@@ -223,24 +215,24 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       event: ClientSocketEvents.JOIN_ROOM,
       username: username,
     });
-    socket.on(ClientSocketEvents.EDITOR_STATE, ({ content, activeUsers }) => {
+    socket.on(ServerSocketEvents.EDITOR_STATE, ({ content, activeUsers }) => {
       setSharedCode(content);
       setActiveUsers(activeUsers);
     });
 
     socket.on(
-      ClientSocketEvents.CODE_CHANGE,
-      ({ username: remoteUser, content: newContent, language }) => {
-        console.log("hi, language is", language, "new content is", newContent);
+      ServerSocketEvents.CODE_CHANGED,
+      ({ username: remoteUser, content: newContent }) => {
+        console.log("hi new content is", newContent);
         if (remoteUser !== username) {
           setSharedCode(newContent);
-          setLanguage(language);
         }
       }
     );
 
-    socket.on(ClientSocketEvents.USER_JOINED, ({ username, activeUsers }) => {
-      setActiveUsers(activeUsers);
+    socket.on(ServerSocketEvents.USER_JOINED, ({ username }) => {
+      if (activeUsers.includes(username)) return;
+      setActiveUsers((prevUsers) => [...prevUsers, username]);
     });
 
     socket.on("roomUpdated", (room) => {
@@ -248,48 +240,45 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       setActiveUsers(room.room.activeUsers);
     });
 
-    socket.on(ClientSocketEvents.USER_LEFT, ({ username, activeUsers }) => {
+    socket.on(ServerSocketEvents.USER_LEFT, ({ username }) => {
       setActiveUsers(activeUsers);
-    });
-
-    socket.on(ClientSocketEvents.LEAVE_ROOM, (username) => {
       setLeaveMessage(`${username} has left the room`);
       console.log(leaveMessage);
       setIsLeaveModalOpen(true);
     });
 
     // Chat listeners
-    if (!socket.hasListeners(ClientSocketEvents.NEW_CHAT)) {
+    if (!socket.hasListeners(ServerSocketEvents.NEW_CHAT)) {
       console.log("Adding new chat listener");
-      socket.on(ClientSocketEvents.NEW_CHAT, (newMessage) => {
+      socket.on(ServerSocketEvents.NEW_CHAT, (newMessage) => {
         handleNewMessage(newMessage);
       });
     }
 
     if (messages.length === 0) {
       console.log("Requesting chat state");
-      socket.emit(ClientSocketEvents.CHAT_STATE, {
-        event: ClientSocketEvents.CHAT_STATE,
+      socket.emit(ServerSocketEvents.CHAT_STATE, {
+        event: ServerSocketEvents.CHAT_STATE,
         roomId: room._id,
       });
-      socket.once(ClientSocketEvents.CHAT_STATE, ({ messages }) => {
+      socket.once(ServerSocketEvents.CHAT_STATE, ({ messages }) => {
         console.log("Chat state received", messages);
         setMessages(messages);
       });
     }
 
     // Next question listeners
-    if (!socket.hasListeners(ClientSocketEvents.NEXT_QUESTION)) {
-      socket.on(ClientSocketEvents.NEXT_QUESTION, () => {
+    if (!socket.hasListeners(ServerSocketEvents.NEXT_QUESTION_REQUESTED)) {
+      socket.on(ServerSocketEvents.NEXT_QUESTION_REQUESTED, () => {
         console.log("Next question request received");
         // Show modal
         setIsNextQnsModalOpen(true);
       });
     }
 
-    if (!socket.hasListeners(ClientSocketEvents.REPLY_NEXT_QUESTION)) {
+    if (!socket.hasListeners(ServerSocketEvents.NEXT_QUESTION_REPLIED)) {
       socket.on(
-        ClientSocketEvents.REPLY_NEXT_QUESTION,
+        ServerSocketEvents.NEXT_QUESTION_REPLIED,
         ({ username, accept }) => {
           console.log("Reply to next question request received");
           if (accept) {
@@ -307,8 +296,8 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       );
     }
 
-    if (!socket.hasListeners(ClientSocketEvents.QUESTION_CHANGE)) {
-      socket.on(ClientSocketEvents.QUESTION_CHANGE, ({ questionId }) => {
+    if (!socket.hasListeners(ServerSocketEvents.QUESTION_CHANGED)) {
+      socket.on(ServerSocketEvents.QUESTION_CHANGED, ({ questionId }) => {
         console.log("Question changed to", questionId);
         setRoom((prevRoom) => {
           if (!prevRoom) return prevRoom;
