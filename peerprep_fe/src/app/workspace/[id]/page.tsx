@@ -2,7 +2,7 @@
 
 import Header from "@/components/common/header";
 import { useRouter } from "next/navigation";
-import { act, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import Button from "@/components/common/button";
 import Chat from "@/components/workspace/chat";
@@ -18,7 +18,7 @@ import {
 import { useSocket } from "@/app/actions/socket";
 import Modal from "@/components/common/modal";
 import { VideoFeed } from "@/components/workspace/videofeed";
-import { CallProvider, useCall } from "@/contexts/call-context";
+import { useCall } from "@/contexts/call-context";
 
 type WorkspaceProps = {
   params: {
@@ -80,7 +80,6 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     console.log("Sending message from", username, ":", trimmedMessage);
     socket.emit(ClientSocketEvents.SEND_MESSAGE, {
       message: trimmedMessage,
-      event: ClientSocketEvents.SEND_MESSAGE,
       roomId: room._id,
       username: username,
     });
@@ -91,7 +90,6 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     endCall(room._id);
 
     socket.emit(ClientSocketEvents.LEAVE_ROOM, {
-      event: ClientSocketEvents.LEAVE_ROOM,
       roomId: room._id,
       username: username,
     });
@@ -103,7 +101,6 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     if (!socket || !room) return;
     console.log("Replying to next question request");
     socket.emit(ClientSocketEvents.REPLY_NEXT_QUESTION, {
-      event: ClientSocketEvents.REPLY_NEXT_QUESTION,
       roomId: room._id,
       username: username,
       accept: accept,
@@ -212,7 +209,6 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     // Join room using existing socket
     socket.emit(ClientSocketEvents.JOIN_ROOM, {
       roomId: room?._id,
-      event: ClientSocketEvents.JOIN_ROOM,
       username: username,
     });
     socket.on(ServerSocketEvents.EDITOR_STATE, ({ content, activeUsers }) => {
@@ -222,10 +218,19 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
 
     socket.on(
       ServerSocketEvents.CODE_CHANGED,
-      ({ username: remoteUser, content: newContent }) => {
+      ({ username: remoteUser, sharedCode: newContent }) => {
         console.log("hi new content is", newContent);
         if (remoteUser !== username) {
           setSharedCode(newContent);
+        }
+      }
+    );
+
+    socket.on(
+      ServerSocketEvents.LANGUAGE_CHANGED,
+      ({ username: remoteUser, language: newLanguage }) => {
+        if (remoteUser !== username) {
+          setLanguage(newLanguage);
         }
       }
     );
@@ -258,7 +263,6 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
     if (messages.length === 0) {
       console.log("Requesting chat state");
       socket.emit(ServerSocketEvents.CHAT_STATE, {
-        event: ServerSocketEvents.CHAT_STATE,
         roomId: room._id,
       });
       socket.once(ServerSocketEvents.CHAT_STATE, ({ messages }) => {
@@ -340,66 +344,64 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   }
 
   return (
-    <CallProvider>
-      <div className="flex flex-col max-h-screen">
-        <Header>
-          <div className="w-full flex items-start justify-start bg-gray-800 py-2 px-4 rounded-lg shadow-lg ">
-            <div className="w-max flex items-center justify-start mr-5">
-              <h3 className="text-base font-semibold text-gray-300 mr-4">
-                User 1
-              </h3>
-              <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 text-center text-sm">
-                {(activeUsers.length && activeUsers[0]) || "Waiting..."}
-              </div>
-            </div>
-            <div className="w-max flex items-center justify-start">
-              <h3 className="text-base font-semibold text-gray-300 mr-4">
-                User 2
-              </h3>
-              <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 text-center text-sm">
-                {(activeUsers.length > 1 && activeUsers[1]) || "Waiting..."}
-              </div>
+    <div className="flex flex-col max-h-screen">
+      <Header>
+        <div className="w-full flex items-start justify-start bg-gray-800 py-2 px-4 rounded-lg shadow-lg ">
+          <div className="w-max flex items-center justify-start mr-5">
+            <h3 className="text-base font-semibold text-gray-300 mr-4">
+              User 1
+            </h3>
+            <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 text-center text-sm">
+              {(activeUsers.length && activeUsers[0]) || "Waiting..."}
             </div>
           </div>
-          <Button
-            text="Leave Room"
-            onClick={() => {
-              handleLeaveRoom();
-            }}
-          />
-        </Header>
-        <div className="flex h-full overflow-auto">
-          {/* Left Pane */}
-          <div className="flex flex-col w-2/5 px-4">
-            <div className="flex-grow h-1/2">
-              <Problem questionId={room.question} />
+          <div className="w-max flex items-center justify-start">
+            <h3 className="text-base font-semibold text-gray-300 mr-4">
+              User 2
+            </h3>
+            <div className="bg-gray-700 px-4 py-2 rounded-md text-gray-100 text-center text-sm">
+              {(activeUsers.length > 1 && activeUsers[1]) || "Waiting..."}
             </div>
-            <div className="flex-grow pt-4 h-1/2">
-              <Chat messages={messages} sendMessage={sendMessage} />
-            </div>
-            <div className="flex-grow pt-4 h-1/2">
-              <VideoFeed roomId={params.id} />
-            </div>
-          </div>
-
-          <div className="border border-gray-300" />
-
-          {/* Right Pane */}
-          <div className="w-3/5 px-4 inline-flex flex-col">
-            <CodeEditor
-              language={language}
-              sharedCode={sharedCode}
-              handleCodeChange={handleCodeChange}
-              setLanguage={handleLanguageChange}
-            />
-            <Button text="Next Question" onClick={handleNextQuestion} />
           </div>
         </div>
-        <NextQuestionRequestModal />
-        <LeaveModal />
-        <ErrorModal />
+        <Button
+          text="Leave Room"
+          onClick={() => {
+            handleLeaveRoom();
+          }}
+        />
+      </Header>
+      <div className="flex h-full overflow-auto">
+        {/* Left Pane */}
+        <div className="flex flex-col w-2/5 px-4">
+          <div className="flex-grow h-1/2">
+            <Problem questionId={room.question} />
+          </div>
+          <div className="flex-grow pt-4 h-1/2">
+            <Chat messages={messages} sendMessage={sendMessage} />
+          </div>
+          <div className="flex-grow pt-4 h-1/2">
+            <VideoFeed roomId={params.id} />
+          </div>
+        </div>
+
+        <div className="border border-gray-300" />
+
+        {/* Right Pane */}
+        <div className="w-3/5 px-4 inline-flex flex-col">
+          <CodeEditor
+            language={language}
+            sharedCode={sharedCode}
+            handleCodeChange={handleCodeChange}
+            setLanguage={handleLanguageChange}
+          />
+          <Button text="Next Question" onClick={handleNextQuestion} />
+        </div>
       </div>
-    </CallProvider>
+      <NextQuestionRequestModal />
+      <LeaveModal />
+      <ErrorModal />
+    </div>
   );
 };
 

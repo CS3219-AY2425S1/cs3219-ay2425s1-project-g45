@@ -86,6 +86,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     socket.on(
       ServerSocketEvents.CALL_REQUESTED,
       ({ from, signalData }: { from: string; signalData: Peer.SignalData }) => {
+        console.log("Received call from:", from);
         setCallState({
           current_state: CallStates.CALL_RECEIVED,
           otherUser: from,
@@ -98,6 +99,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     socket.on(
       ServerSocketEvents.CALL_ACCEPTED,
       ({ from, signalData }: { from: string; signalData: Peer.SignalData }) => {
+        console.log("Call accepted by:", from);
         setCallState({
           current_state: CallStates.CALL_ACCEPTED,
           otherUser: from,
@@ -111,6 +113,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     );
 
     socket.on(ServerSocketEvents.CALL_ENDED, () => {
+      console.log("Call ended by other user");
       setCallState({
         current_state: CallStates.CALL_ENDED,
         otherUser: "",

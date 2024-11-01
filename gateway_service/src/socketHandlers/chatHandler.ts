@@ -31,7 +31,7 @@ export function setUpChatHandler(socket: Socket, delegate: ChatEventDelegate) {
     await delegate(event, roomId);
   });
 
-  socket.on(ClientSocketEvents.CHAT_STATE, async (data) => {
+  socket.on(ClientSocketEvents.GET_CHAT_STATE, async (data) => {
     const { roomId } = data;
     console.log("Requesting chat state for room:", roomId);
 
