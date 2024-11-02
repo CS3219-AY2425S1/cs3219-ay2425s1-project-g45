@@ -1,5 +1,6 @@
 import { handleRunCode } from "@/app/actions/editor";
 import { useAuth } from "@/contexts/auth-context";
+import { Language, useEditor } from "@/contexts/editor-context";
 import { Editor } from "@monaco-editor/react";
 import React, { useRef, useState } from "react";
 
@@ -10,30 +11,14 @@ const CODE_SNIPPETS = {
   java: `\npublic class HelloWorld {\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println("Hello World");\n\t}\n}\n`,
 };
 
-export enum Language {
-  javascript = "javascript",
-  python = "python",
-  java = "java",
-  typescript = "typescript",
-}
+type CodeEditorProps = {};
 
-type CodeEditorProps = {
-  sharedCode: string;
-  handleCodeChange: (sharedCode: string) => void;
-  language: Language;
-  setLanguage: (language: Language) => void;
-};
-
-const CodeEditor: React.FC<CodeEditorProps> = ({
-  sharedCode,
-  handleCodeChange,
-  language,
-  setLanguage,
-}) => {
+const CodeEditor: React.FC<CodeEditorProps> = ({}) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef = useRef<any>();
   const [output, setOutput] = useState<string>("");
   const { token } = useAuth();
+  const { code, setCode, language, setLanguage } = useEditor();
 
   const onMount = (editor: any) => {
     editorRef.current = editor;
@@ -42,7 +27,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 
   const onSelect = (language: Language) => {
     setLanguage(language);
-    handleCodeChange(CODE_SNIPPETS[language]);
+    setCode(CODE_SNIPPETS[language]);
   };
 
   const runCode = async () => {
@@ -78,11 +63,11 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
         options={{ minimap: { enabled: false } }}
         theme="vs-dark"
         language={language}
-        value={sharedCode}
+        value={code}
         onMount={onMount}
         onChange={(value) => {
           if (value !== undefined) {
-            handleCodeChange(value);
+            setCode(value);
           }
         }}
       />
