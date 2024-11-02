@@ -125,8 +125,8 @@ export class WebSocketHandler {
         console.log(`Sent event: ${JSON.stringify(event)}`);
       });
 
-      setUpChatHandler(socket, this.sendCollaborationEvent.bind(this));
       setupRoomHandler(socket, this.sendCollaborationEvent.bind(this));
+      setUpChatHandler(socket, this.sendCollaborationEvent.bind(this));
       setUpCallHandler(socket, this.sendCollaborationEvent.bind(this));
     });
   }
@@ -142,8 +142,9 @@ export class WebSocketHandler {
           console.log("Room state refresh event received:", roomPayload);
 
           console.log("Broadcasting code change:");
-          this.io.to(roomPayload.roomId).emit("roomUpdated", {
-            room: roomPayload.editorState,
+          this.io.to(roomPayload.roomId).emit(ServerSocketEvents.EDITOR_STATE, {
+            room: roomPayload.roomId,
+            state: roomPayload.editorState,
           });
 
           break;
@@ -159,9 +160,9 @@ export class WebSocketHandler {
             newChatPayload.roomId,
             newChatPayload.message
           );
-          this.io
-            .to(newChatPayload.roomId)
-            .emit(ServerSocketEvents.NEW_CHAT, newChatPayload.message);
+          this.io.to(newChatPayload.roomId).emit(ServerSocketEvents.NEW_CHAT, {
+            message: newChatPayload.message,
+          });
           break;
         case GatewayEvents.REFRESH_CHAT_STATE:
           const chatStatePayload =
