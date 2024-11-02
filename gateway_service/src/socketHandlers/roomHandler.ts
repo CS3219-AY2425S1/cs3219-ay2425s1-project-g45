@@ -112,13 +112,15 @@ export function setupRoomHandler(socket: Socket, delegate: RoomEventDelegate) {
 
   // Handle reply to next question request
   socket.on(ClientSocketEvents.REPLY_NEXT_QUESTION, async (data) => {
-    const { roomId, username, accept } = data;
+    const { roomId, username, accepted } = data;
+
+    console.log(data);
 
     console.log(
       "Next question",
       "for room:",
       roomId,
-      accept ? "accepted" : "rejected",
+      accepted ? "accepted" : "rejected",
       "by",
       username
     );
@@ -126,13 +128,13 @@ export function setupRoomHandler(socket: Socket, delegate: RoomEventDelegate) {
     socket.to(roomId).emit(ServerSocketEvents.NEXT_QUESTION_REPLIED, {
       username: username,
       roomId: roomId,
-      accept: accept,
+      accepted: accepted,
     });
 
     const event = createEvent(CollaborationEvents.NEXT_QUESTION, {
       roomId: roomId,
       username: username,
-      accept: accept,
+      accept: accepted,
     });
 
     await delegate(event, roomId);

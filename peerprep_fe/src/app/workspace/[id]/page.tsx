@@ -24,7 +24,6 @@ type WorkspaceProps = {
 
 const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   const router = useRouter();
-  const { username } = useAuth();
   const { socket } = useSocket();
   const {
     room,
@@ -62,6 +61,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
               type="reset"
               onClick={() => {
                 replyNextQuestion(false);
+                setIsNextQnsModalOpen(false);
               }}
             />
             <Button
@@ -69,6 +69,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
               type="button"
               onClick={() => {
                 replyNextQuestion(true);
+                setIsNextQnsModalOpen(false);
               }}
             />
           </div>
