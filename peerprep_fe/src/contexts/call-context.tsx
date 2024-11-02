@@ -19,16 +19,20 @@ import {
 import Modal from "@/components/common/modal";
 import Button from "@/components/common/button";
 import { useOnPageLeave } from "@/components/hooks/onPageLeave";
-import { CallRequestedResponse } from "peerprep-shared-types/dist/types/sockets/comms";
+import {
+  CallAcceptedResponse,
+  CallRequestedResponse,
+} from "peerprep-shared-types/dist/types/sockets/comms";
+import { useWorkspaceRoom } from "./workspaceroom-context";
 
 interface CallContextType {
   callState: CallState;
   callPermissions: CallPermissions;
   ownVideoRef: React.RefObject<HTMLVideoElement>;
   userVideoRef: React.RefObject<HTMLVideoElement>;
-  call: (roomId: string) => void;
-  acceptCall: (roomId: string) => void;
-  endCall: (roomId: string) => void;
+  call: () => void;
+  acceptCall: () => void;
+  endCall: () => void;
   setVideo: (on: boolean) => void;
   setAudio: (on: boolean) => void;
   stopStream: () => void;
@@ -62,6 +66,7 @@ interface CallPermissions {
 export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   const { socket } = useSocket();
   const { username } = useAuth();
+  const { roomId } = useWorkspaceRoom();
 
   const [videoStream, setVideoStream] = useState<MediaStream | undefined>(
     undefined
@@ -88,7 +93,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     setIsAudioAllowed(on);
   };
 
-  const call = (roomId: string) => {
+  const call = () => {
     if (callState.current_state !== CallStates.CALL_ENDED || !socket) return;
 
     setCallState({
@@ -130,7 +135,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     setPeer(peer);
   };
 
-  const acceptCall = (roomId: string) => {
+  const acceptCall = () => {
     if (!socket || !callState.signalData) return;
 
     console.log("Accepting call...");
@@ -175,7 +180,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     setPeer(peer);
   };
 
-  const endCall = (roomId: string) => {
+  const endCall = () => {
     if (!socket) return;
 
     socket.emit(ClientSocketEvents.END_CALL, {
