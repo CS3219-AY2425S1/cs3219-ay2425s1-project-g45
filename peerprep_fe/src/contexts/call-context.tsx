@@ -19,7 +19,7 @@ import {
 import Modal from "@/components/common/modal";
 import Button from "@/components/common/button";
 import { useOnPageLeave } from "@/components/hooks/onPageLeave";
-import { Server } from "http";
+import { CallRequestedResponse } from "peerprep-shared-types/dist/types/sockets/comms";
 
 interface CallContextType {
   callState: CallState;
@@ -79,92 +79,6 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   const [isCallEndedModalOpen, setIsCallEndedModalOpen] = useState(false);
   const [isVideoAllowed, setIsVideoAllowed] = useState(false);
   const [isAudioAllowed, setIsAudioAllowed] = useState(false);
-
-  useEffect(() => {
-    if (!socket) return;
-    // For receiving calls
-    socket.on(
-      ServerSocketEvents.CALL_REQUESTED,
-      ({ from, signalData }: { from: string; signalData: Peer.SignalData }) => {
-        console.log("Received call from:", from);
-        setCallState({
-          current_state: CallStates.CALL_RECEIVED,
-          otherUser: from,
-          signalData,
-        });
-      }
-    );
-
-    // For receiving call acceptance
-    socket.on(
-      ServerSocketEvents.CALL_ACCEPTED,
-      ({ from, signalData }: { from: string; signalData: Peer.SignalData }) => {
-        console.log("Call accepted by:", from);
-        setCallState({
-          current_state: CallStates.CALL_ACCEPTED,
-          otherUser: from,
-          signalData: signalData,
-        });
-
-        if (peer) {
-          peer.signal(signalData);
-        }
-      }
-    );
-
-    socket.on(ServerSocketEvents.CALL_ENDED, () => {
-      console.log("Call ended by other user");
-      setCallState({
-        current_state: CallStates.CALL_ENDED,
-        otherUser: "",
-        signalData: null,
-      });
-
-      peer?.destroy();
-      setPeer(null);
-      setIsCallEndedModalOpen(true);
-    });
-
-    return () => {
-      socket.off(ServerSocketEvents.CALL_REQUESTED);
-      socket.off(ServerSocketEvents.CALL_ACCEPTED);
-      socket.off(ServerSocketEvents.CALL_ENDED);
-    };
-  }, [socket, peer]);
-
-  useEffect(() => {
-    const getUserMedia = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
-        setVideoStream(stream);
-        if (ownVideoRef.current) {
-          ownVideoRef.current.srcObject = stream;
-        }
-      } catch (error) {
-        console.error("Error getting user media:", error);
-      }
-    };
-
-    getUserMedia();
-
-    return () => {
-      stopStream();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (videoStream) {
-      videoStream.getAudioTracks().forEach((track) => {
-        track.enabled = isAudioAllowed;
-      });
-      videoStream.getVideoTracks().forEach((track) => {
-        track.enabled = isVideoAllowed;
-      });
-    }
-  }, [isAudioAllowed, isVideoAllowed, videoStream]);
 
   const setVideo = (on: boolean) => {
     setIsVideoAllowed(on);
@@ -278,6 +192,94 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     peer?.destroy();
     setPeer(null);
   };
+
+  const handleCallRequested = (response: CallRequestedResponse) => {
+    const { from, signalData } = response;
+    console.log("Received call from:", from);
+    setCallState({
+      current_state: CallStates.CALL_RECEIVED,
+      otherUser: from,
+      signalData,
+    });
+  };
+
+  const handleCallAccepted = (response: CallAcceptedResponse) => {
+    const { from, signalData } = response;
+    console.log("Call accepted by:", from);
+    setCallState({
+      current_state: CallStates.CALL_ACCEPTED,
+      otherUser: from,
+      signalData: signalData,
+    });
+
+    if (peer) {
+      peer.signal(signalData);
+    }
+  };
+
+  const handleCallEnded = () => {
+    console.log("Call ended by other user");
+    setCallState({
+      current_state: CallStates.CALL_ENDED,
+      otherUser: "",
+      signalData: null,
+    });
+
+    peer?.destroy();
+    setPeer(null);
+    setIsCallEndedModalOpen(true);
+  };
+
+  useEffect(() => {
+    if (!socket) return;
+    // For receiving calls
+    socket.on(ServerSocketEvents.CALL_REQUESTED, handleCallRequested);
+
+    // For receiving call acceptance
+    socket.on(ServerSocketEvents.CALL_ACCEPTED, handleCallAccepted);
+
+    socket.on(ServerSocketEvents.CALL_ENDED, handleCallEnded);
+
+    return () => {
+      socket.off(ServerSocketEvents.CALL_REQUESTED);
+      socket.off(ServerSocketEvents.CALL_ACCEPTED);
+      socket.off(ServerSocketEvents.CALL_ENDED);
+    };
+  }, [socket, peer]);
+
+  useEffect(() => {
+    const getUserMedia = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+        setVideoStream(stream);
+        if (ownVideoRef.current) {
+          ownVideoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error("Error getting user media:", error);
+      }
+    };
+
+    getUserMedia();
+
+    return () => {
+      stopStream();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (videoStream) {
+      videoStream.getAudioTracks().forEach((track) => {
+        track.enabled = isAudioAllowed;
+      });
+      videoStream.getVideoTracks().forEach((track) => {
+        track.enabled = isVideoAllowed;
+      });
+    }
+  }, [isAudioAllowed, isVideoAllowed, videoStream]);
 
   const CallEndedModal = () => {
     return (

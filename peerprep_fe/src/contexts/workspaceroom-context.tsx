@@ -134,28 +134,29 @@ export const WorkspaceRoomProvider = ({
   };
 
   const handleUserJoined = (response: UserJoinedResponse) => {
-    const { roomId, username: user } = response;
-    if (room && room._id === roomId && !activeUsers.includes(user)) {
-      console.log("User joined", user);
-      setActiveUsers((prevUsers) => [...prevUsers, user]);
-      userJoinedDelegate.current(user);
-    }
+    const { username: user } = response;
+    console.log("User joined", user);
+    setActiveUsers((prevUsers) => [...prevUsers, user]);
+    userJoinedDelegate.current(user);
   };
 
   const handleUserLeft = (response: UserLeftResponse) => {
-    const { roomId, username: user } = response;
-    if (room && room._id === roomId && activeUsers.includes(user)) {
-      console.log("User left", user);
-      setActiveUsers((prevUsers) => prevUsers.filter((u) => u !== user));
-      userLeftDelegate.current(user);
-    }
+    const { username: user } = response;
+    console.log("User Left Response Received", response);
+    console.log("Active Users", activeUsers);
+    console.log("User left", user);
+    setActiveUsers((prevUsers) => prevUsers.filter((u) => u !== user));
+    userLeftDelegate.current(user);
   };
 
   const handleEditorState = (response: EditorStateResponse) => {
-    console.log("Editor state received");
+    console.log("Editor state received", response);
+
     const { state } = response;
     const { activeUsers } = state;
-    setActiveUsers(activeUsers);
+    setActiveUsers(() => {
+      return activeUsers;
+    });
   };
 
   const handleNextQuestionRequested = () => {
