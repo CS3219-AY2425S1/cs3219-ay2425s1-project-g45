@@ -12,7 +12,6 @@ import { validateToken } from "@/app/actions/auth";
 
 import Modal from "@/components/common/modal";
 import Button from "@/components/common/button";
-import { on } from "events";
 
 interface TAuthContext {
   token: string | null;
