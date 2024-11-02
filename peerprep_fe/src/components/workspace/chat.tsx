@@ -1,19 +1,15 @@
-import React, { use, useEffect, useState } from "react";
-import { ChatMessage } from "peerprep-shared-types";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { useChat } from "@/contexts/chat-context";
 import Textfield from "../common/text-field";
 import Button from "../common/button";
 
-type ChatProps = {
-  messages: ChatMessage[];
-  sendMessage: (message: string) => void;
-};
+type ChatProps = {};
 
-const Chat: React.FC<ChatProps> = ({
-  messages = [],
-  sendMessage = () => {},
-}) => {
+const Chat: React.FC<ChatProps> = () => {
   const { username } = useAuth();
+  const { messages, sendMessage } = useChat();
+
   const [messageToSend, setMessageToSend] = useState("");
   const [messageCount, setMessageCount] = useState(0);
   const [notification, setNotification] = useState(false);
@@ -62,6 +58,7 @@ const Chat: React.FC<ChatProps> = ({
         <div className="flex flex-col-reverse justify-end h-full px-4">
           {messages &&
             messages.toReversed().map((message, index) => {
+              // console.log(message);
               return (
                 <div
                   key={index}

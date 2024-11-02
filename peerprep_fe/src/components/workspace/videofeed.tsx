@@ -30,16 +30,8 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ roomId }) => {
         <div>
           <h1>{callState.otherUser} is calling you</h1>
           <div>
-            <Button
-              type="button"
-              onClick={() => acceptCall(roomId)}
-              text="Accept"
-            />
-            <Button
-              type="reset"
-              onClick={() => endCall(roomId)}
-              text="Reject"
-            />
+            <Button type="button" onClick={() => acceptCall()} text="Accept" />
+            <Button type="reset" onClick={() => endCall()} text="Reject" />
           </div>
         </div>
       </Modal>
@@ -76,9 +68,9 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ roomId }) => {
         type="button"
         onClick={() => {
           if (callState.current_state == CallStates.CALL_ENDED) {
-            call(roomId);
+            call();
           } else {
-            endCall(roomId);
+            endCall();
           }
         }}
         text={

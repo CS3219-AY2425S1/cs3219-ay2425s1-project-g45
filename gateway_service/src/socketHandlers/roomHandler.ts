@@ -1,3 +1,4 @@
+import e from "express";
 import {
   ClientSocketEvents,
   createEvent,
@@ -56,21 +57,21 @@ export function setupRoomHandler(socket: Socket, delegate: RoomEventDelegate) {
   });
 
   socket.on(ClientSocketEvents.CHANGE_CODE, async (data) => {
-    const { roomId, username, sharedCode } = data;
-    console.log("Code change in room:", data);
+    const { roomId, username, sharedcode } = data;
+    console.log("Code change in room:", sharedcode);
 
     // everyone in the room except the sender will receive the code change on frontend
     socket.to(roomId).emit(ServerSocketEvents.CODE_CHANGED, {
       username,
       roomId,
-      sharedCode: sharedCode,
+      sharedcode: sharedcode,
       timestamp: Date.now(),
     });
 
     const event = createEvent(CollaborationEvents.UPDATE_CODE, {
       roomId: roomId,
       username: username,
-      content: sharedCode,
+      content: sharedcode,
     });
 
     // send event to collaboration service
