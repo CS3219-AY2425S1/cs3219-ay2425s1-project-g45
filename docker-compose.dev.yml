@@ -50,8 +50,8 @@ services:
     ports:
       - ${API_GATEWAY_PORT}:5003
     depends_on:
-      piston:
-        condition: service_started
+      # piston:
+      #   condition: service_started
       kafka-init:
         condition: service_completed_successfully
       kafka-service:
@@ -214,5 +214,4 @@ services:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 3            
-
+      retries: 3

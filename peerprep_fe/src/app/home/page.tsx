@@ -6,16 +6,16 @@ import { QuestionDto } from "peerprep-shared-types";
 
 import "../../styles/modal.css";
 
-import { getQuestions } from "@/app/actions/questions";
+import { getQuestions } from "../../app/actions/questions";
 
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "../../contexts/auth-context";
 
-import Header from "@/components/common/header";
-import { QuestionForm } from "@/components/questions/question-form";
-import Button from "@/components/common/button";
-import TableRow from "@/components/questions/table-row";
-import { FormType } from "@/components/questions/question-form";
-import Modal from "@/components/common/modal";
+import Header from "../../components/common/header";
+import { QuestionForm } from "../../components/questions/question-form";
+import Button from "../../components/common/button";
+import TableRow from "../../components/questions/table-row";
+import { FormType } from "../../components/questions/question-form";
+import Modal from "../../components/common/modal";
 
 export default function Home() {
   const router = useRouter();

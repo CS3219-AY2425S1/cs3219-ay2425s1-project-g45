@@ -16,9 +16,9 @@ import {
   CallStates,
   ServerSocketEvents,
 } from "peerprep-shared-types";
-import Modal from "@/components/common/modal";
-import Button from "@/components/common/button";
-import { useOnPageLeave } from "@/components/hooks/onPageLeave";
+import Modal from "../components/common/modal";
+import Button from "../components/common/button";
+import { useOnPageLeave } from "../components/hooks/onPageLeave";
 import {
   CallAcceptedResponse,
   CallRequestedResponse,

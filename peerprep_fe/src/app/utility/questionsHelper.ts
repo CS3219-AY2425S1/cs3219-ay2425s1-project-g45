@@ -1,4 +1,7 @@
-import { Example, QuestionForm } from "@/components/questions/question-form";
+import {
+  Example,
+  QuestionForm,
+} from "../../components/questions/question-form";
 import { QuestionDto } from "peerprep-shared-types";
 
 const prepareFormDataForSubmission = (

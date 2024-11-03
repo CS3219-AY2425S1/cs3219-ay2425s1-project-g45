@@ -21,7 +21,7 @@ import {
   UserJoinedResponse,
   UserLeftResponse,
 } from "peerprep-shared-types/dist/types/sockets/room";
-import { getRoomById } from "@/app/actions/room";
+import { getRoomById } from "../app/actions/room";
 import {
   EditorStateResponse,
   NextQuestionReply,

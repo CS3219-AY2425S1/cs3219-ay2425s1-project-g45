@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Button from "@/components/common/button";
+import Button from "../../components/common/button";
 import {
   ClientSocketEvents,
   DifficultyLevel,
@@ -15,13 +15,13 @@ import {
   MatchTimeoutResponse,
 } from "peerprep-shared-types/dist/types/sockets/match";
 
-import Timer from "@/components/match/timer";
+import Timer from "../../components/match/timer";
 import "../../styles/modal.css";
-import { useSocket } from "@/contexts/socket-context";
-import { useAuth } from "@/contexts/auth-context";
+import { useSocket } from "../../contexts/socket-context";
+import { useAuth } from "../../contexts/auth-context";
 import { useRouter } from "next/navigation";
 import Modal from "../common/modal";
-import { getQuestionTopics } from "@/app/actions/questions";
+import { getQuestionTopics } from "../../app/actions/questions";
 
 export interface MatchFormQuestions {
   difficultyLevel: DifficultyLevel;

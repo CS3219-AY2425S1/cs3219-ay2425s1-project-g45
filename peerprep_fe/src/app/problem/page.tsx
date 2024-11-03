@@ -1,6 +1,6 @@
 import React from "react";
-import Header from "@/components/common/header";
-import ProblemDetail from "@/components/questions/problem-detail";
+import Header from "../../components/common/header";
+import ProblemDetail from "../../components/questions/problem-detail";
 import { QuestionDto } from "peerprep-shared-types";
 
 type ProblemProps = {

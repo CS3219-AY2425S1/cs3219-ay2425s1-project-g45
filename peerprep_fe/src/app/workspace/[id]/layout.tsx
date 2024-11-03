@@ -1,7 +1,7 @@
-import { CallProvider } from "@/contexts/call-context";
-import { ChatProvider } from "@/contexts/chat-context";
-import { EditorProvider } from "@/contexts/editor-context";
-import { WorkspaceRoomProvider } from "@/contexts/workspaceroom-context";
+import { CallProvider } from "../../../contexts/call-context";
+import { ChatProvider } from "../../../contexts/chat-context";
+import { EditorProvider } from "../../../contexts/editor-context";
+import { WorkspaceRoomProvider } from "../../../contexts/workspaceroom-context";
 
 export default function WorkspaceLayout({
   children,

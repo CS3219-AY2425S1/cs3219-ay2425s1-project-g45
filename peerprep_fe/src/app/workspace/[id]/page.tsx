@@ -1,19 +1,19 @@
 "use client";
 
-import Header from "@/components/common/header";
+import Header from "../../../components/common/header";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/auth-context";
-import Button from "@/components/common/button";
-import Chat from "@/components/workspace/chat";
-import Problem from "@/components/workspace/problem";
-import CodeEditor from "@/components/workspace/code-editor";
+import { useAuth } from "../../../contexts/auth-context";
+import Button from "../../../components/common/button";
+import Chat from "../../../components/workspace/chat";
+import Problem from "../../../components/workspace/problem";
+import CodeEditor from "../../../components/workspace/code-editor";
 import { ClientSocketEvents, ServerSocketEvents } from "peerprep-shared-types";
-import { useSocket } from "@/app/actions/socket";
-import Modal from "@/components/common/modal";
-import { VideoFeed } from "@/components/workspace/videofeed";
-import { useCall } from "@/contexts/call-context";
-import { useWorkspaceRoom } from "@/contexts/workspaceroom-context";
+import { useSocket } from "../../../app/actions/socket";
+import Modal from "../../../components/common/modal";
+import { VideoFeed } from "../../../components/workspace/videofeed";
+import { useCall } from "../../../contexts/call-context";
+import { useWorkspaceRoom } from "../../../contexts/workspaceroom-context";
 
 type WorkspaceProps = {
   params: {

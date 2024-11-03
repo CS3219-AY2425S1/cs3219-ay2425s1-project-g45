@@ -8,10 +8,10 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCookies } from "next-client-cookies";
-import { validateToken } from "@/app/actions/auth";
+import { validateToken } from "../app/actions/auth";
 
-import Modal from "@/components/common/modal";
-import Button from "@/components/common/button";
+import Modal from "../components/common/modal";
+import Button from "../components/common/button";
 
 interface TAuthContext {
   token: string | null;

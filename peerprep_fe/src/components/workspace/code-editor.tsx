@@ -1,6 +1,6 @@
-import { handleRunCode } from "@/app/actions/editor";
-import { useAuth } from "@/contexts/auth-context";
-import { Language, useEditor } from "@/contexts/editor-context";
+import { handleRunCode } from "../../app/actions/editor";
+import { useAuth } from "../../contexts/auth-context";
+import { Language, useEditor } from "../../contexts/editor-context";
 import { Editor } from "@monaco-editor/react";
 import React, { useRef, useState } from "react";
 

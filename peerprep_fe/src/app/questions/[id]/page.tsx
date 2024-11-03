@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Header from "@/components/common/header";
-import ProblemDetail from "@/components/questions/problem-detail";
-import { useAuth } from "@/contexts/auth-context";
-import { getQuestion } from "@/app/actions/questions";
+import Header from "../../../components/common/header";
+import ProblemDetail from "../../../components/questions/problem-detail";
+import { useAuth } from "../../../contexts/auth-context";
+import { getQuestion } from "../../../app/actions/questions";
 import { QuestionDto } from "peerprep-shared-types";
 
 const Problem: React.FC<any> = ({ params }) => {

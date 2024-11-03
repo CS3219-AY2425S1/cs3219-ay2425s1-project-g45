@@ -1,7 +1,7 @@
-import TextButton from "@/components/common/text-button";
-import Button from "@/components/common/button";
-import { deleteQuestion } from "@/app/actions/questions";
-import { useAuth } from "@/contexts/auth-context";
+import TextButton from "../../components/common/text-button";
+import Button from "../../components/common/button";
+import { deleteQuestion } from "../../app/actions/questions";
+import { useAuth } from "../../contexts/auth-context";
 
 export default function TableRow({
   id,

@@ -1,10 +1,10 @@
 "use client";
 
-import Header from "@/components/common/header";
+import Header from "../../components/common/header";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/auth-context";
-import Button from "@/components/common/button";
-import { MatchForm } from "@/components/match/match-form";
+import { useAuth } from "../../contexts/auth-context";
+import Button from "../../components/common/button";
+import { MatchForm } from "../../components/match/match-form";
 import Head from "next/head"; // Import Head from next/head
 
 interface MatchPageProps {}

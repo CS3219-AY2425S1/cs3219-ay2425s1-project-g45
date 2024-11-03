@@ -3,12 +3,12 @@
 import Image from "next/image";
 import { useState } from "react";
 
-import Header from "@/components/common/header";
-import Button from "@/components/common/button";
-import Modal from "@/components/common/modal";
+import Header from "../components/common/header";
+import Button from "../components/common/button";
+import Modal from "../components/common/modal";
 
-import { LoginForm } from "@/components/auth/login-form";
-import { SignupForm } from "@/components/auth/signup-form";
+import { LoginForm } from "../components/auth/login-form";
+import { SignupForm } from "../components/auth/signup-form";
 
 export default function Home() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);

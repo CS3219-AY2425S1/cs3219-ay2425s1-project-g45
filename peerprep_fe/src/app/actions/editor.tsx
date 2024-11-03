@@ -1,6 +1,6 @@
 "use server";
 
-import { Language } from "@/contexts/editor-context";
+import { Language } from "../../contexts/editor-context";
 import dotenv from "dotenv";
 
 dotenv.config();

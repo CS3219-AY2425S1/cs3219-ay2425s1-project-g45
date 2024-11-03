@@ -1,4 +1,4 @@
-import { useCall } from "@/contexts/call-context";
+import { useCall } from "../../contexts/call-context";
 import Modal from "../common/modal";
 import Button from "../common/button";
 import { CallStates } from "peerprep-shared-types";

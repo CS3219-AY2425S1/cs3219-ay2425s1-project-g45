@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import LargeTextfield from "@/components/common/large-text-field";
-import Button from "@/components/common/button";
-import { useAuth } from "@/contexts/auth-context";
+import LargeTextfield from "../../components/common/large-text-field";
+import Button from "../../components/common/button";
+import { useAuth } from "../../contexts/auth-context";
 import { QuestionDto, DifficultyLevel } from "peerprep-shared-types";
-import { addQuestion, editQuestion } from "@/app/actions/questions";
+import { addQuestion, editQuestion } from "../../app/actions/questions";
 import { v4 as uuidv4 } from "uuid";
 
 export enum FormType {

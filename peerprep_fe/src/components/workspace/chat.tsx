@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "@/contexts/auth-context";
-import { useChat } from "@/contexts/chat-context";
+import { useAuth } from "../../contexts/auth-context";
+import { useChat } from "../../contexts/chat-context";
 import Textfield from "../common/text-field";
 import Button from "../common/button";
 

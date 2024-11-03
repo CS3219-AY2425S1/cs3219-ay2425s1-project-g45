@@ -1,7 +1,7 @@
-import { getQuestion } from "@/app/actions/questions";
-import { QuestionDto } from "@/../../peerprep-shared-types/src/types/question";
-import { useAuth } from "@/contexts/auth-context";
+import { getQuestion } from "../../app/actions/questions";
+import { useAuth } from "../../contexts/auth-context";
 import React, { useEffect, useState } from "react";
+import { QuestionDto } from "peerprep-shared-types";
 
 type ProblemProps = {
   questionId: string;

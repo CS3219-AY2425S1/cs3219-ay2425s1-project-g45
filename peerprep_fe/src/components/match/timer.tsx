@@ -1,4 +1,3 @@
-import { ThemeProvider } from "@/contexts/theme-context";
 import React, { useEffect, useState } from "react";
 
 type TimerProps = {

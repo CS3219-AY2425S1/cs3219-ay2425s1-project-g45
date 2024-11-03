@@ -1,11 +1,11 @@
 "use client";
 
 import { useFormState } from "react-dom";
-import Textfield from "@/components/common/text-field";
-import Button from "@/components/common/button";
-import { signup } from "@/app/actions/auth";
+import Textfield from "../../components/common/text-field";
+import Button from "../../components/common/button";
+import { signup } from "../../app/actions/auth";
 import { useEffect } from "react";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "../../contexts/auth-context";
 
 export function SignupForm() {
   const [state, action] = useFormState(signup, undefined);
