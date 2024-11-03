@@ -67,7 +67,9 @@ steps:
       - "8080"
       - "--allow-unauthenticated"
       - "--set-secrets"
-      - "MONGODB_URI=MONGODB_URI:latest"
+      - >-
+        MONGODB_URI=MONGODB_URI:latest,
+        JWT_SECRET=JWT_SECRET:latest
 
   # gateway service
   - name: "gcr.io/cloud-builders/docker"
