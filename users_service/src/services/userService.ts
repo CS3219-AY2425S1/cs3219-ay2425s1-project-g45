@@ -30,6 +30,8 @@ export async function signUp(
 
 export async function signIn(username: string, password: string) {
   const user = await User.findOne({ username: username });
+  console.log(username, password, user);
+  console.log("user service");
   if (user) {
     if (!user.is_locked) {
       const isCorrectPassword = await comparePassword(password, user.password);

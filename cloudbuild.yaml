@@ -1,73 +1,73 @@
 steps:
   # Build the question-service
-  # - name: "gcr.io/cloud-builders/docker"
-  #   args:
-  #     - "build"
-  #     - "-t"
-  #     - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
-  #     - "-f"
-  #     - "./question_service/Dockerfile.prod"
-  #     - "./question_service"
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
+      - "-f"
+      - "./question_service/Dockerfile.prod"
+      - "./question_service"
+
+  # Push the image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
+
+  # Deploy to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "question-service"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
+      - "--region"
+      - "us-west2"
+      - "--platform"
+      - "managed"
+      - "--port"
+      - "8080"
+      - "--allow-unauthenticated"
+      - "--set-secrets"
+      - "MONGODB_URI=MONGODB_URI:latest"
+
+  # user service
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
+      - "-f"
+      - "./users_service/Dockerfile.prod"
+      - "./users_service"
 
   # # Push the image
-  # - name: "gcr.io/cloud-builders/docker"
-  #   args:
-  #     - "push"
-  #     - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
 
-  # # Deploy to Cloud Run
-  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-  #   entrypoint: gcloud
-  #   args:
-  #     - "run"
-  #     - "deploy"
-  #     - "question-service"
-  #     - "--image"
-  #     - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
-  #     - "--region"
-  #     - "us-west2"
-  #     - "--platform"
-  #     - "managed"
-  #     - "--port"
-  #     - "8080"
-  #     - "--allow-unauthenticated"
-  #     - "--set-secrets"
-  #     - "MONGODB_URI=MONGODB_URI:latest"
-
-  # # user service
-  # - name: "gcr.io/cloud-builders/docker"
-  #   args:
-  #     - "build"
-  #     - "-t"
-  #     - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
-  #     - "-f"
-  #     - "./users_service/Dockerfile.prod"
-  #     - "./users_service"
-
-  # # # Push the image
-  # - name: "gcr.io/cloud-builders/docker"
-  #   args:
-  #     - "push"
-  #     - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
-
-  # # Deploy to Cloud Run
-  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-  #   entrypoint: gcloud
-  #   args:
-  #     - "run"
-  #     - "deploy"
-  #     - "user-service"
-  #     - "--image"
-  #     - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
-  #     - "--region"
-  #     - "us-west2"
-  #     - "--platform"
-  #     - "managed"
-  #     - "--port"
-  #     - "8080"
-  #     - "--allow-unauthenticated"
-  #     - "--set-secrets"
-  #     - "MONGODB_URI=MONGODB_URI:latest"
+  # Deploy to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "user-service"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
+      - "--region"
+      - "us-west2"
+      - "--platform"
+      - "managed"
+      - "--port"
+      - "8080"
+      - "--allow-unauthenticated"
+      - "--set-secrets"
+      - "MONGODB_URI=MONGODB_URI:latest"
 
   # gateway service
   - name: "gcr.io/cloud-builders/docker"
@@ -120,6 +120,6 @@ substitutions:
   _COLLAB_SERVICE: question-service-url-here # This will be set during deployment
   _REGION: us-west2
 images:
-  # - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
-  # - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
+  - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
+  - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
   - "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"
