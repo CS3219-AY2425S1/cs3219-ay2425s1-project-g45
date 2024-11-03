@@ -92,7 +92,6 @@ class ApiGateway {
   ): void {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] ${req.method} ${req.url}`);
-    console.log("hi i'm here");
     next();
   }
 

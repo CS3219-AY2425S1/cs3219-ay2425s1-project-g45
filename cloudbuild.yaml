@@ -1,182 +1,167 @@
 steps:
-  # Build all services in parallel
+  # Build the question-service
   # - name: "gcr.io/cloud-builders/docker"
-  #   id: "build-question-service"
   #   args:
-  #     [
-  #       "build",
-  #       "-t",
-  #       "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA",
-  #       "-f",
-  #       "./question_service/Dockerfile.prod",
-  #       "./question_service",
-  #     ]
-  #   waitFor: ["-"]
+  #     - "build"
+  #     - "-t"
+  #     - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
+  #     - "-f"
+  #     - "./question_service/Dockerfile.prod"
+  #     - "./question_service"
 
+  # # Push the image
   # - name: "gcr.io/cloud-builders/docker"
-  #   id: "build-user-service"
   #   args:
-  #     [
-  #       "build",
-  #       "-t",
-  #       "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA",
-  #       "-f",
-  #       "./users_service/Dockerfile.prod",
-  #       "./users_service",
-  #     ]
-  #   waitFor: ["-"]
+  #     - "push"
+  #     - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
 
+  # # Deploy to Cloud Run
+  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+  #   entrypoint: gcloud
+  #   args:
+  #     - "run"
+  #     - "deploy"
+  #     - "question-service"
+  #     - "--image"
+  #     - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
+  #     - "--region"
+  #     - "us-west2"
+  #     - "--platform"
+  #     - "managed"
+  #     - "--port"
+  #     - "8080"
+  #     - "--allow-unauthenticated"
+  #     - "--set-secrets"
+  #     - "MONGODB_URI=MONGODB_URI:latest"
+
+  # # user service
   # - name: "gcr.io/cloud-builders/docker"
-  #   id: "build-gateway-service"
   #   args:
-  #     [
-  #       "build",
-  #       "-t",
-  #       "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA",
-  #       "-f",
-  #       "./gateway_service/Dockerfile.prod",
-  #       "./gateway_service",
-  #     ]
-  #   waitFor: ["-"]
+  #     - "build"
+  #     - "-t"
+  #     - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
+  #     - "-f"
+  #     - "./users_service/Dockerfile.prod"
+  #     - "./users_service"
 
+  # # # Push the image
+  # - name: "gcr.io/cloud-builders/docker"
+  #   args:
+  #     - "push"
+  #     - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
+
+  # # Deploy to Cloud Run
+  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+  #   entrypoint: gcloud
+  #   args:
+  #     - "run"
+  #     - "deploy"
+  #     - "user-service"
+  #     - "--image"
+  #     - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
+  #     - "--region"
+  #     - "us-west2"
+  #     - "--platform"
+  #     - "managed"
+  #     - "--port"
+  #     - "8080"
+  #     - "--allow-unauthenticated"
+  #     - "--set-secrets"
+  #     - >-
+  #       MONGODB_URI=MONGODB_URI:latest,
+  #       JWT_SECRET=JWT_SECRET:latest
+
+  # gateway service
   - name: "gcr.io/cloud-builders/docker"
-    id: "build-frontend"
     args:
-      [
-        "build",
-        "-t",
-        "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA",
-        "-f",
-        "./peerprep_fe/Dockerfile.prod",
-        "./peerprep_fe",
-      ]
-    waitFor: ["-"]
+      - "build"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"
+      - "-f"
+      - "./gateway_service/Dockerfile.prod"
+      - "./gateway_service"
 
-  # Push all images in parallel after builds complete
-  # - name: "gcr.io/cloud-builders/docker"
-  #   id: "push-question-service"
-  #   args: ["push", "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"]
-  #   waitFor: ["build-question-service"]
-
-  # - name: "gcr.io/cloud-builders/docker"
-  #   id: "push-user-service"
-  #   args: ["push", "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"]
-  #   waitFor: ["build-user-service"]
-
-  # - name: "gcr.io/cloud-builders/docker"
-  #   id: "push-gateway-service"
-  #   args: ["push", "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"]
-  #   waitFor: ["build-gateway-service"]
-
+  # Push the image
   - name: "gcr.io/cloud-builders/docker"
-    id: "push-frontend"
-    args: ["push", "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"]
-    waitFor: ["build-frontend"]
+    args:
+      - "push"
+      - "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"
 
-  # # Deploy all services in parallel after pushes complete
-  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-  #   id: "deploy-question-service"
-  #   entrypoint: gcloud
-  #   args:
-  #     [
-  #       "run",
-  #       "deploy",
-  #       "question-service",
-  #       "--image",
-  #       "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA",
-  #       "--region",
-  #       "us-west2",
-  #       "--platform",
-  #       "managed",
-  #       "--port",
-  #       "8080",
-  #       "--allow-unauthenticated",
-  #       "--set-secrets",
-  #       "MONGODB_URI=MONGODB_URI:latest",
-  #     ]
-  #   waitFor: ["push-question-service"]
-
-  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-  #   id: "deploy-user-service"
-  #   entrypoint: gcloud
-  #   args:
-  #     [
-  #       "run",
-  #       "deploy",
-  #       "user-service",
-  #       "--image",
-  #       "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA",
-  #       "--region",
-  #       "us-west2",
-  #       "--platform",
-  #       "managed",
-  #       "--port",
-  #       "8080",
-  #       "--allow-unauthenticated",
-  #       "--set-secrets",
-  #       "MONGODB_URI=MONGODB_URI:latest,JWT_SECRET=JWT_SECRET:latest",
-  #     ]
-  #   waitFor: ["push-user-service"]
-
-  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-  #   id: "deploy-gateway-service"
-  #   entrypoint: gcloud
-  #   args:
-  #     [
-  #       "run",
-  #       "deploy",
-  #       "gateway-service",
-  #       "--image",
-  #       "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA",
-  #       "--region",
-  #       "us-west2",
-  #       "--platform",
-  #       "managed",
-  #       "--port",
-  #       "8080",
-  #       "--allow-unauthenticated",
-  #       "--set-secrets",
-  #       "MONGODB_URI=MONGODB_URI:latest,JWT_SECRET=JWT_SECRET:latest",
-  #       "--set-env-vars",
-  #       "QUESTION_SERVICE_URL=${_QUESTION_SERVICE_URL},USER_SERVICE_URL=${_USER_SERVICE_URL},MATCHING_SERVICE_URL=${_MATCHING_SERVICE_URL},COLLAB_SERVICE_URL=${_COLLAB_SERVICE_URL}",
-  #     ]
-  #   waitFor: ["push-gateway-service"]
-
+  # Deploy to Cloud Run
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    id: "deploy-frontend"
     entrypoint: gcloud
     args:
-      [
-        "run",
-        "deploy",
-        "frontend",
-        "--image",
-        "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA",
-        "--region",
-        "us-west2",
-        "--platform",
-        "managed",
-        "--port",
-        "3000",
-        "--allow-unauthenticated",
-        "--set-env-vars",
-        "NODE_ENV=production,GATEWAY_SERVICE_URL=${_GATEWAY_SERVICE_URL}",
-      ]
-    waitFor: ["push-frontend"]
+      - "run"
+      - "deploy"
+      - "gateway-service"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"
+      - "--region"
+      - "us-west2"
+      - "--platform"
+      - "managed"
+      - "--port"
+      - "8080"
+      - "--allow-unauthenticated"
+      - "--set-secrets"
+      - >-
+        MONGODB_URI=MONGODB_URI:latest,
+        JWT_SECRET=JWT_SECRET:latest
+      - "--set-env-vars"
+      - >-
+        QUESTION_SERVICE_URL=${_QUESTION_SERVICE_URL},
+        USER_SERVICE_URL=${_USER_SERVICE_URL},
+        MATCHING_SERVICE_URL=${_MATCHING_SERVICE_URL},
+        COLLAB_SERVICE_URL=${_COLLAB_SERVICE_URL}
+
+  # # Build frontend
+  # - name: "gcr.io/cloud-builders/docker"
+  #   args:
+  #     - "build"
+  #     - "-t"
+  #     - "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"
+  #     - "-f"
+  #     - "./peerprep_fe/Dockerfile.prod" # Adjust path as needed
+  #     - "./peerprep_fe"
+
+  # # Push the image
+  # - name: "gcr.io/cloud-builders/docker"
+  #   args:
+  #     - "push"
+  #     - "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"
+
+  # # Deploy to Cloud Run
+  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+  #   entrypoint: gcloud
+  #   args:
+  #     - "run"
+  #     - "deploy"
+  #     - "frontend"
+  #     - "--image"
+  #     - "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"
+  #     - "--region"
+  #     - "us-west2"
+  #     - "--platform"
+  #     - "managed"
+  #     - "--port"
+  #     - "3000"
+  #     - "--allow-unauthenticated"
+  #     - "--set-env-vars"
+  #     - >-
+  #       NODE_ENV=production,
+  #       NEXT_PUBLIC_API_URL=${_GATEWAY_SERVICE_URL},
 
 options:
   logging: CLOUD_LOGGING_ONLY
-
 substitutions:
-  _QUESTION_SERVICE_URL: https://question-service-72621048198.us-west2.run.app/
-  _USER_SERVICE_URL: https://user-service-72621048198.us-west2.run.app/
-  _MATCHING_SERVICE_URL: question-service-url-here
-  _COLLAB_SERVICE: question-service-url-here
+  _QUESTION_SERVICE_URL: https://question-service-72621048198.us-west2.run.app/ # This will be set during deployment
+  _USER_SERVICE_URL: https://user-service-72621048198.us-west2.run.app/ # This will be set during deployment
+  _MATCHING_SERVICE_URL: question-service-url-here # This will be set during deployment
+  _COLLAB_SERVICE: question-service-url-here # This will be set during deployment
   _GATEWAY_SERVICE_URL: https://gateway-service-72621048198.us-west2.run.app
   _REGION: us-west2
-
 images:
   # - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
   # - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
-  # - "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"
-  - "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"
+  - "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"
+  # - "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"

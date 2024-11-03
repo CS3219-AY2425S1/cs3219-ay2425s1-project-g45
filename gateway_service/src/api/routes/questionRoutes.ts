@@ -4,7 +4,7 @@ import * as requestHelper from "../../utility/requestHelper";
 dotenv.config();
 export const QUESTION_SERVICE =
   process.env.NODE_ENV === "production"
-    ? process.env.QUESTION_SERVICE_URL || "http://question-service/api"
+    ? `${process.env.QUESTION_SERVICE_URL}/api}`
     : `http://${process.env.QUESTION_SERVICE_ROUTE}:${process.env.QUESTION_SERVICE_PORT}/api`;
 
 console.log("QUESTION_SERVICE_URL", QUESTION_SERVICE);
