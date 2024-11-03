@@ -60,6 +60,7 @@ export async function login(formState: FormState, formData: FormData) {
       ? process.env.GATEWAY_SERVICE_URL
       : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
+  console.log("node env: ", process.env.NODE_ENV);
   console.log("gatewayServiceURL: ", gatewayServiceURL);
 
   const response = await fetch(`${gatewayServiceURL}/auth/signin`, {
