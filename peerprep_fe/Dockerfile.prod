@@ -20,3 +20,4 @@ EXPOSE 3000
 
 # Command to start the app in production mode
 CMD ["npm", "start"]
+

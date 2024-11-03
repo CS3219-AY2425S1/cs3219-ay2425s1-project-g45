@@ -113,6 +113,44 @@ steps:
         USER_SERVICE_URL=${_USER_SERVICE_URL},
         MATCHING_SERVICE_URL=${_MATCHING_SERVICE_URL},
         COLLAB_SERVICE_URL=${_COLLAB_SERVICE_URL}
+
+  # Build frontend
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"
+      - "-f"
+      - "./peerprep_fe/Dockerfile.prod" # Adjust path as needed
+      - "./peerprep_fe"
+
+  # Push the image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"
+
+  # Deploy to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "frontend"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"
+      - "--region"
+      - "us-west2"
+      - "--platform"
+      - "managed"
+      - "--port"
+      - "3000"
+      - "--allow-unauthenticated"
+      - "--set-env-vars"
+      - >-
+        NODE_ENV=production,
+        NEXT_PUBLIC_API_URL=${_GATEWAY_SERVICE_URL},
+
 options:
   logging: CLOUD_LOGGING_ONLY
 substitutions:
@@ -120,6 +158,7 @@ substitutions:
   _USER_SERVICE_URL: https://user-service-72621048198.us-west2.run.app/ # This will be set during deployment
   _MATCHING_SERVICE_URL: question-service-url-here # This will be set during deployment
   _COLLAB_SERVICE: question-service-url-here # This will be set during deployment
+  _GATEWAY_SERVICE_URL: https://gateway-service-72621048198.us-west2.run.app
   _REGION: us-west2
 images:
   - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
