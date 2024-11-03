@@ -60,9 +60,6 @@ export async function login(formState: FormState, formData: FormData) {
       ? process.env.GATEWAY_SERVICE_URL
       : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
-  console.log("node env: ", process.env.NODE_ENV);
-  console.log("gatewayServiceURL: ", gatewayServiceURL);
-
   const response = await fetch(`${gatewayServiceURL}/auth/signin`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -89,15 +86,17 @@ export async function login(formState: FormState, formData: FormData) {
 }
 
 export async function validateToken(token: string) {
-  const response = await fetch(
-    `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}/auth/validate`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  const gatewayServiceURL =
+    process.env.NODE_ENV === "production"
+      ? process.env.GATEWAY_SERVICE_URL
+      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
+
+  const response = await fetch(`${gatewayServiceURL}/auth/validate`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
   return response.status === 200;
 }

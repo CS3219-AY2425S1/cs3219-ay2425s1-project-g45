@@ -1,43 +1,43 @@
 steps:
   # Build all services in parallel
-  - name: "gcr.io/cloud-builders/docker"
-    id: "build-question-service"
-    args:
-      [
-        "build",
-        "-t",
-        "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA",
-        "-f",
-        "./question_service/Dockerfile.prod",
-        "./question_service",
-      ]
-    waitFor: ["-"]
+  # - name: "gcr.io/cloud-builders/docker"
+  #   id: "build-question-service"
+  #   args:
+  #     [
+  #       "build",
+  #       "-t",
+  #       "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA",
+  #       "-f",
+  #       "./question_service/Dockerfile.prod",
+  #       "./question_service",
+  #     ]
+  #   waitFor: ["-"]
 
-  - name: "gcr.io/cloud-builders/docker"
-    id: "build-user-service"
-    args:
-      [
-        "build",
-        "-t",
-        "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA",
-        "-f",
-        "./users_service/Dockerfile.prod",
-        "./users_service",
-      ]
-    waitFor: ["-"]
+  # - name: "gcr.io/cloud-builders/docker"
+  #   id: "build-user-service"
+  #   args:
+  #     [
+  #       "build",
+  #       "-t",
+  #       "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA",
+  #       "-f",
+  #       "./users_service/Dockerfile.prod",
+  #       "./users_service",
+  #     ]
+  #   waitFor: ["-"]
 
-  - name: "gcr.io/cloud-builders/docker"
-    id: "build-gateway-service"
-    args:
-      [
-        "build",
-        "-t",
-        "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA",
-        "-f",
-        "./gateway_service/Dockerfile.prod",
-        "./gateway_service",
-      ]
-    waitFor: ["-"]
+  # - name: "gcr.io/cloud-builders/docker"
+  #   id: "build-gateway-service"
+  #   args:
+  #     [
+  #       "build",
+  #       "-t",
+  #       "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA",
+  #       "-f",
+  #       "./gateway_service/Dockerfile.prod",
+  #       "./gateway_service",
+  #     ]
+  #   waitFor: ["-"]
 
   - name: "gcr.io/cloud-builders/docker"
     id: "build-frontend"
@@ -53,94 +53,94 @@ steps:
     waitFor: ["-"]
 
   # Push all images in parallel after builds complete
-  - name: "gcr.io/cloud-builders/docker"
-    id: "push-question-service"
-    args: ["push", "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"]
-    waitFor: ["build-question-service"]
+  # - name: "gcr.io/cloud-builders/docker"
+  #   id: "push-question-service"
+  #   args: ["push", "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"]
+  #   waitFor: ["build-question-service"]
 
-  - name: "gcr.io/cloud-builders/docker"
-    id: "push-user-service"
-    args: ["push", "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"]
-    waitFor: ["build-user-service"]
+  # - name: "gcr.io/cloud-builders/docker"
+  #   id: "push-user-service"
+  #   args: ["push", "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"]
+  #   waitFor: ["build-user-service"]
 
-  - name: "gcr.io/cloud-builders/docker"
-    id: "push-gateway-service"
-    args: ["push", "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"]
-    waitFor: ["build-gateway-service"]
+  # - name: "gcr.io/cloud-builders/docker"
+  #   id: "push-gateway-service"
+  #   args: ["push", "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"]
+  #   waitFor: ["build-gateway-service"]
 
-  - name: "gcr.io/cloud-builders/docker"
-    id: "push-frontend"
-    args: ["push", "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"]
-    waitFor: ["build-frontend"]
+  # - name: "gcr.io/cloud-builders/docker"
+  #   id: "push-frontend"
+  #   args: ["push", "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"]
+  #   waitFor: ["build-frontend"]
 
-  # Deploy all services in parallel after pushes complete
-  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    id: "deploy-question-service"
-    entrypoint: gcloud
-    args:
-      [
-        "run",
-        "deploy",
-        "question-service",
-        "--image",
-        "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA",
-        "--region",
-        "us-west2",
-        "--platform",
-        "managed",
-        "--port",
-        "8080",
-        "--allow-unauthenticated",
-        "--set-secrets",
-        "MONGODB_URI=MONGODB_URI:latest",
-      ]
-    waitFor: ["push-question-service"]
+  # # Deploy all services in parallel after pushes complete
+  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+  #   id: "deploy-question-service"
+  #   entrypoint: gcloud
+  #   args:
+  #     [
+  #       "run",
+  #       "deploy",
+  #       "question-service",
+  #       "--image",
+  #       "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA",
+  #       "--region",
+  #       "us-west2",
+  #       "--platform",
+  #       "managed",
+  #       "--port",
+  #       "8080",
+  #       "--allow-unauthenticated",
+  #       "--set-secrets",
+  #       "MONGODB_URI=MONGODB_URI:latest",
+  #     ]
+  #   waitFor: ["push-question-service"]
 
-  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    id: "deploy-user-service"
-    entrypoint: gcloud
-    args:
-      [
-        "run",
-        "deploy",
-        "user-service",
-        "--image",
-        "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA",
-        "--region",
-        "us-west2",
-        "--platform",
-        "managed",
-        "--port",
-        "8080",
-        "--allow-unauthenticated",
-        "--set-secrets",
-        "MONGODB_URI=MONGODB_URI:latest,JWT_SECRET=JWT_SECRET:latest",
-      ]
-    waitFor: ["push-user-service"]
+  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+  #   id: "deploy-user-service"
+  #   entrypoint: gcloud
+  #   args:
+  #     [
+  #       "run",
+  #       "deploy",
+  #       "user-service",
+  #       "--image",
+  #       "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA",
+  #       "--region",
+  #       "us-west2",
+  #       "--platform",
+  #       "managed",
+  #       "--port",
+  #       "8080",
+  #       "--allow-unauthenticated",
+  #       "--set-secrets",
+  #       "MONGODB_URI=MONGODB_URI:latest,JWT_SECRET=JWT_SECRET:latest",
+  #     ]
+  #   waitFor: ["push-user-service"]
 
-  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
-    id: "deploy-gateway-service"
-    entrypoint: gcloud
-    args:
-      [
-        "run",
-        "deploy",
-        "gateway-service",
-        "--image",
-        "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA",
-        "--region",
-        "us-west2",
-        "--platform",
-        "managed",
-        "--port",
-        "8080",
-        "--allow-unauthenticated",
-        "--set-secrets",
-        "MONGODB_URI=MONGODB_URI:latest,JWT_SECRET=JWT_SECRET:latest",
-        "--set-env-vars",
-        "QUESTION_SERVICE_URL=${_QUESTION_SERVICE_URL},USER_SERVICE_URL=${_USER_SERVICE_URL},MATCHING_SERVICE_URL=${_MATCHING_SERVICE_URL},COLLAB_SERVICE_URL=${_COLLAB_SERVICE_URL}",
-      ]
-    waitFor: ["push-gateway-service"]
+  # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+  #   id: "deploy-gateway-service"
+  #   entrypoint: gcloud
+  #   args:
+  #     [
+  #       "run",
+  #       "deploy",
+  #       "gateway-service",
+  #       "--image",
+  #       "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA",
+  #       "--region",
+  #       "us-west2",
+  #       "--platform",
+  #       "managed",
+  #       "--port",
+  #       "8080",
+  #       "--allow-unauthenticated",
+  #       "--set-secrets",
+  #       "MONGODB_URI=MONGODB_URI:latest,JWT_SECRET=JWT_SECRET:latest",
+  #       "--set-env-vars",
+  #       "QUESTION_SERVICE_URL=${_QUESTION_SERVICE_URL},USER_SERVICE_URL=${_USER_SERVICE_URL},MATCHING_SERVICE_URL=${_MATCHING_SERVICE_URL},COLLAB_SERVICE_URL=${_COLLAB_SERVICE_URL}",
+  #     ]
+  #   waitFor: ["push-gateway-service"]
 
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     id: "deploy-frontend"
@@ -176,7 +176,7 @@ substitutions:
   _REGION: us-west2
 
 images:
-  - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
-  - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
-  - "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"
+  # - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
+  # - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
+  # - "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"
   - "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"
