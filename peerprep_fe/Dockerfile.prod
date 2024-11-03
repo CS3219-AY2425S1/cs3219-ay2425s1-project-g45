@@ -15,6 +15,8 @@ COPY . .
 # Build the application if your frontend app requires a build step (e.g., for Next.js, React)
 RUN npm run build
 
+ENV NODE_ENV=production
+
 # Expose the application port
 EXPOSE 3000
 

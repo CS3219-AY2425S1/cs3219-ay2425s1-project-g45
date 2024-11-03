@@ -149,7 +149,7 @@ steps:
       - "--set-env-vars"
       - >-
         NODE_ENV=production,
-        NEXT_PUBLIC_API_URL=${_GATEWAY_SERVICE_URL},
+        GATEWAY_SERVICE_ROUTE=${_GATEWAY_SERVICE_URL},
 
 options:
   logging: CLOUD_LOGGING_ONLY
