@@ -55,14 +55,18 @@ export async function login(formState: FormState, formData: FormData) {
     password: `${formData.get("password")}`,
   };
 
-  const response = await fetch(
-    `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}/auth/signin`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    }
-  );
+  const gatewayServiceURL =
+    process.env.NODE_ENV === "production"
+      ? process.env.GATEWAY_SERVICE_URL
+      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
+
+  console.log("gatewayServiceURL: ", gatewayServiceURL);
+
+  const response = await fetch(`${gatewayServiceURL}/auth/signin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
 
   try {
     const responseData = await response.json();
