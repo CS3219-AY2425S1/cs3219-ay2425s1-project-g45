@@ -1,23 +1,39 @@
-# Use the same base image as in development
+# Build stage
+FROM node:18.16.0-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files and tsconfig
+COPY package*.json tsconfig.json ./
+
+# Install ALL dependencies (including dev dependencies needed for build)
+RUN npm install
+
+# Copy source code
+COPY src ./src
+
+# Build the application
+RUN npm run build
+
+# Production stage
 FROM node:18.16.0-alpine
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and yarn.lock (if available) to install dependencies
-COPY package.json ./
+# Copy package files
+COPY package*.json ./
 
 # Install only production dependencies
-RUN npm install --production
+RUN npm ci --only=production
 
-# Copy the source code into the container
-COPY . .
+# Copy built application from builder stage
+COPY --from=builder /app/dist ./dist
 
-# Build the application if necessary (uncomment if your project has a build step)
-# RUN npm run build
-
+ENV GATEWAY_SERVICE_PORT=8080
 # Expose the application port
-EXPOSE 5003  
+EXPOSE 8080 
 
-# Command to start the app in production mode
+# Command to start the app
 CMD ["npm", "start"]
