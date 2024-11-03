@@ -68,10 +68,10 @@ steps:
   #   args: ["push", "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"]
   #   waitFor: ["build-gateway-service"]
 
-  # - name: "gcr.io/cloud-builders/docker"
-  #   id: "push-frontend"
-  #   args: ["push", "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"]
-  #   waitFor: ["build-frontend"]
+  - name: "gcr.io/cloud-builders/docker"
+    id: "push-frontend"
+    args: ["push", "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"]
+    waitFor: ["build-frontend"]
 
   # # Deploy all services in parallel after pushes complete
   # - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
