@@ -120,6 +120,6 @@ substitutions:
   _COLLAB_SERVICE: question-service-url-here # This will be set during deployment
   _REGION: us-west2
 images:
-  - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
+  # - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
   - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
   - "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"
