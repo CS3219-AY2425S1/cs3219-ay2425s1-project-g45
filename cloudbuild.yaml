@@ -68,6 +68,8 @@ steps:
       - "--allow-unauthenticated"
       - "--set-secrets"
       - "MONGODB_URI=MONGODB_URI:latest"
+options:
+  logging: CLOUD_LOGGING_ONLY
 images:
   - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
   - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
