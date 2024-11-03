@@ -22,7 +22,7 @@ class ApiGateway {
 
   constructor() {
     this.app = express();
-    this.port = "8080";
+    this.port = this.validatePort();
     this.server = http.createServer(this.app);
     this.setupMiddleware();
     this.setupRoutes();
@@ -92,6 +92,7 @@ class ApiGateway {
   ): void {
     const timestamp = new Date().toISOString();
     console.log(`[${timestamp}] ${req.method} ${req.url}`);
+    console.log("hi i'm here");
     next();
   }
 
