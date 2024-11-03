@@ -4,7 +4,16 @@ import * as requestHelper from "../../utility/requestHelper";
 import { authenticateToken } from "../../utility/jwtHelper";
 
 dotenv.config();
-const USER_SERVICE = `http://${process.env.USER_SERVICE_ROUTE}:${process.env.USER_SERVICE_PORT}/auth`;
+
+export const USER_SERVICE =
+  process.env.NODE_ENV === "production"
+    ? `${process.env.USER_SERVICE_URL}/auth` || "http://users-service/auth"
+    : `http://${process.env.USER_SERVICE_ROUTE}:${process.env.USER_SERVICE_PORT}/auth`;
+
+console.log("USER_SERVICE_URL", USER_SERVICE);
+
+const USER_SERVICE_URL =
+  process.env.USER_SERVICE_URL || "http://user-service/auth";
 
 const router = express.Router();
 router.post("/signup", requestHelper.sendPostRequest("signup", USER_SERVICE));

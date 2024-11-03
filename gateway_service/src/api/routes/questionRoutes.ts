@@ -2,8 +2,12 @@ import express from "express";
 import dotenv from "dotenv";
 import * as requestHelper from "../../utility/requestHelper";
 dotenv.config();
-export const QUESTION_SERVICE = `http://${process.env.QUESTION_SERVICE_ROUTE}:${process.env.QUESTION_SERVICE_PORT}/api`;
+export const QUESTION_SERVICE =
+  process.env.NODE_ENV === "production"
+    ? process.env.QUESTION_SERVICE_URL || "http://question-service/api"
+    : `http://${process.env.QUESTION_SERVICE_ROUTE}:${process.env.QUESTION_SERVICE_PORT}/api`;
 
+console.log("QUESTION_SERVICE_URL", QUESTION_SERVICE);
 const router = express.Router();
 
 router.post(
