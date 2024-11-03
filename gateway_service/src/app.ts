@@ -22,7 +22,7 @@ class ApiGateway {
 
   constructor() {
     this.app = express();
-    this.port = this.validatePort();
+    this.port = "8080";
     this.server = http.createServer(this.app);
     this.setupMiddleware();
     this.setupRoutes();
