@@ -31,7 +31,7 @@ RUN npm ci --only=production
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
-ENV GATEWAY_SERVICE_PORT=8080
+ENV API_GATEWAY_PORT=8080
 # Expose the application port
 EXPOSE 8080 
 
