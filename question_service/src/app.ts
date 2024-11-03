@@ -30,7 +30,7 @@ app.use("/api", questionRoutes);
 
 // Basic route for testing
 app.get("/", (req, res) => {
-  res.send("LeetCode Question API is running!");
+  res.send("LeetCode Question API is running! 123");
 });
 
 // Start the server
