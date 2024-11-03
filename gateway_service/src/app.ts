@@ -16,9 +16,9 @@ dotenv.config();
 class ApiGateway {
   private app: express.Application;
   private server: http.Server;
-  private wsHandler: WebSocketHandler;
+  // private wsHandler: WebSocketHandler;
   private port: string;
-  private redisService: RedisService;
+  // private redisService: RedisService;
 
   constructor() {
     this.app = express();
@@ -28,17 +28,17 @@ class ApiGateway {
     this.setupRoutes();
 
     // Initialize Redis Service
-    this.redisService = RedisService.getInstance();
+    // this.redisService = RedisService.getInstance();
 
     // Initialize WebSocket handler
-    this.wsHandler = new WebSocketHandler(this.server);
+    // this.wsHandler = new WebSocketHandler(this.server);
   }
 
   // Initialize Redis and other async resources
   public async initialize(): Promise<void> {
     try {
       // Connect to Redis
-      await this.redisService.connect();
+      // await this.redisService.connect();
       console.log("🚀 Connected to Redis");
     } catch (error) {
       console.error("Failed to connect to Redis:", error);
@@ -129,7 +129,7 @@ class ApiGateway {
           console.log("HTTP server closed");
 
           // Disconnect from Redis
-          await this.redisService.disconnect();
+          // await this.redisService.disconnect();
           console.log("Disconnected from Redis");
 
           process.exit(0);
