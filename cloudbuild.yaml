@@ -102,7 +102,9 @@ steps:
       - "8080"
       - "--allow-unauthenticated"
       - "--set-secrets"
-      - "MONGODB_URI=MONGODB_URI:latest"
+      - >-
+        MONGODB_URI=MONGODB_URI:latest,
+        JWT_SECRET=JWT_SECRET:latest
       - "--set-env-vars"
       - >-
         QUESTION_SERVICE_URL=${_QUESTION_SERVICE_URL},
