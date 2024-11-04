@@ -106,7 +106,7 @@ steps:
       - "--set-secrets"
       - >-
         MONGODB_URI=MONGODB_URI:latest,
-        JWT_SECRET=JWT_SECRET:latest
+        JWT_SECRET=JWT_SECRET:latest,
         REDIS_URL=REDIS_URL:latest
       - "--set-env-vars"
       - >-
