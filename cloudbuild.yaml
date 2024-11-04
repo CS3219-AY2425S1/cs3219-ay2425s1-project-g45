@@ -124,7 +124,9 @@ steps:
         JWT_SECRET=JWT_SECRET:latest,
         REDIS_URL=REDIS_URL:latest,
         KAFKA_BROKER_ROUTE=KAFKA_BROKER_ROUTE:latest,
-        KAFKA_BROKER_PORT=KAFKA_BROKER_PORT:latest
+        KAFKA_BROKER_PORT=KAFKA_BROKER_PORT:latest,
+        KAFKA_KEY=KAFKA_KEY:latest,
+        KAFKA_PASSWORD=KAFKA_PASSWORD:latest
       - "--set-env-vars"
       - >-
         QUESTION_SERVICE_URL=${_QUESTION_SERVICE_URL},
@@ -176,7 +178,9 @@ steps:
         JWT_SECRET=JWT_SECRET:latest,
         REDIS_URL=REDIS_URL:latest,
         KAFKA_BROKER_ROUTE=KAFKA_BROKER_ROUTE:latest,
-        KAFKA_BROKER_PORT=KAFKA_BROKER_PORT:latest
+        KAFKA_BROKER_PORT=KAFKA_BROKER_PORT:latest,
+        KAFKA_KEY=KAFKA_KEY:latest,
+        KAFKA_PASSWORD=KAFKA_PASSWORD:latest
       - "--set-env-vars"
       - >-
         QUESTION_SERVICE_URL=${_QUESTION_SERVICE_URL},
@@ -228,7 +232,9 @@ steps:
         JWT_SECRET=JWT_SECRET:latest,
         REDIS_URL=REDIS_URL:latest,
         KAFKA_BROKER_ROUTE=KAFKA_BROKER_ROUTE:latest,
-        KAFKA_BROKER_PORT=KAFKA_BROKER_PORT:latest
+        KAFKA_BROKER_PORT=KAFKA_BROKER_PORT:latest,
+        KAFKA_KEY=KAFKA_KEY:latest,
+        KAFKA_PASSWORD=KAFKA_PASSWORD:latest
       - "--set-env-vars"
       - >-
         QUESTION_SERVICE_URL=${_QUESTION_SERVICE_URL},

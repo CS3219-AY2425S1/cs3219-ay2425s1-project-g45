@@ -20,6 +20,8 @@ dotenv.config();
 
 const app = express();
 const port = process.env.COLLAB_SERVICE_PORT;
+const kafkaUsername = process.env.KAFKA_KEY || "";
+const kafkaPassword = process.env.KAFKA_PASSWORD || "";
 
 // MongoDB Atlas connection string
 const mongoURI = process.env.MONGODB_URI;
@@ -42,6 +44,12 @@ const kafka = new Kafka({
   brokers: [
     `${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`,
   ],
+  ssl: true,
+  sasl: {
+    mechanism: "plain",
+    username: kafkaUsername,
+    password: kafkaPassword,
+  },
 });
 
 // Initialize Kafka handler

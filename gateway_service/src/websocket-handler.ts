@@ -23,6 +23,9 @@ import { setUpCallHandler } from "./socketHandlers/callHandler";
 
 type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
 
+const kafkaUsername = process.env.KAFKA_KEY || "";
+const kafkaPassword = process.env.KAFKA_PASSWORD || "";
+
 export class WebSocketHandler {
   private io: Server;
   private kafka: Kafka;
@@ -52,6 +55,12 @@ export class WebSocketHandler {
       brokers: [
         `${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`,
       ],
+      ssl: true,
+      sasl: {
+        mechanism: "plain",
+        username: kafkaUsername,
+        password: kafkaPassword,
+      },
     });
 
     this.setupKafka();

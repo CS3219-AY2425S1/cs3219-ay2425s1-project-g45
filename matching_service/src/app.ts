@@ -11,10 +11,18 @@ dotenv.config();
 // Initialize Express
 const app = express();
 const port = process.env.MATCHING_SERVICE_PORT || 5004;
+const kafkaUsername = process.env.KAFKA_KEY || "";
+const kafkaPassword = process.env.KAFKA_PASSWORD || "";
 
 // Initialize Kafka
 const kafka = new Kafka({
   clientId: ServiceNames.MATCHING_SERVICE,
+  ssl: true,
+  sasl: {
+    mechanism: "plain",
+    username: kafkaUsername,
+    password: kafkaPassword,
+  },
   brokers: [
     `${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`,
   ],
