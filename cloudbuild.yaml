@@ -107,7 +107,9 @@ steps:
       - >-
         MONGODB_URI=MONGODB_URI:latest,
         JWT_SECRET=JWT_SECRET:latest,
-        REDIS_URL=REDIS_URL:latest
+        REDIS_URL=REDIS_URL:latest,
+        KAFKA_BROKER_ROUTE=KAFKA_BROKER_ROUTE:latest,
+        KAFKA_BROKER_PORT=KAFKA_BROKER_PORT:latest
       - "--set-env-vars"
       - >-
         QUESTION_SERVICE_URL=${_QUESTION_SERVICE_URL},
@@ -151,7 +153,9 @@ steps:
       - >-
         MONGODB_URI=MONGODB_URI:latest,
         JWT_SECRET=JWT_SECRET:latest,
-        REDIS_URL=REDIS_URL:latest
+        REDIS_URL=REDIS_URL:latest,
+        KAFKA_BROKER_ROUTE=KAFKA_BROKER_ROUTE:latest,
+        KAFKA_BROKER_PORT=KAFKA_BROKER_PORT:latest
       - "--set-env-vars"
       - >-
         QUESTION_SERVICE_URL=${_QUESTION_SERVICE_URL},
