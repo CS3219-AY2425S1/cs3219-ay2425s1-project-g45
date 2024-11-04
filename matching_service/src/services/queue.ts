@@ -20,11 +20,13 @@ export class Queue {
   private constructor(kafkaHandler: KafkaHandler) {
     this.kafkaHandler = kafkaHandler;
 
+    const redisUrl =
+      process.env.NODE_ENV === "production"
+        ? process.env.REDIS_URL
+        : `${process.env.REDIS_ROUTE}:${process.env.REDIS_PORT}`;
     // Initialize Redis client
     this.redisClient = createClient({
-      url:
-        `${process.env.REDIS_ROUTE}:${process.env.REDIS_PORT}` ||
-        "redis://localhost:6379",
+      url: redisUrl,
     });
 
     this.userMap = new Map();

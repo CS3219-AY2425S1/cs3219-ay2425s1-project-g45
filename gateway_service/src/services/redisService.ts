@@ -8,8 +8,9 @@ class RedisService {
 
   private constructor() {
     const redisUrl =
-      `${process.env.REDIS_ROUTE}:${process.env.REDIS_PORT}` ||
-      "redis://localhost:6379";
+      process.env.NODE_ENV === "production"
+        ? process.env.REDIS_URL
+        : `${process.env.REDIS_ROUTE}:${process.env.REDIS_PORT}`;
     this.redisClient = createClient({
       url: redisUrl,
     });

@@ -107,6 +107,7 @@ steps:
       - >-
         MONGODB_URI=MONGODB_URI:latest,
         JWT_SECRET=JWT_SECRET:latest
+        REDIS_URL=REDIS_URL:latest
       - "--set-env-vars"
       - >-
         QUESTION_SERVICE_URL=${_QUESTION_SERVICE_URL},
