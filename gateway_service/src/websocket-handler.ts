@@ -23,9 +23,6 @@ import { setUpCallHandler } from "./socketHandlers/callHandler";
 
 type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
 
-const kafkaUsername = process.env.KAFKA_KEY || "";
-const kafkaPassword = process.env.KAFKA_PASSWORD || "";
-
 export class WebSocketHandler {
   private io: Server;
   private kafka: Kafka;
@@ -33,7 +30,7 @@ export class WebSocketHandler {
   private consumer: any;
   private redis: RedisService;
 
-  constructor(server: any) {
+  constructor(server: any, kafka: Kafka) {
     this.io = new Server(server, {
       cors: {
         origin: `*`,
@@ -50,19 +47,8 @@ export class WebSocketHandler {
     //     retries: 8,
     //   },
     // });
-    this.kafka = new Kafka({
-      clientId: ServiceNames.API_GATEWAY,
-      brokers: [
-        `${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`,
-      ],
-      ssl: true,
-      sasl: {
-        mechanism: "plain",
-        username: kafkaUsername,
-        password: kafkaPassword,
-      },
-    });
 
+    this.kafka = kafka;
     this.setupKafka();
     this.setupSocketHandlers();
     this.redis = RedisService.getInstance();

@@ -10,6 +10,8 @@ import collabRoutes from "./api/routes/collabRoutes";
 import { authenticateToken } from "./utility/jwtHelper";
 import { WebSocketHandler } from "./websocket-handler";
 import RedisService from "./services/redisService";
+import { Kafka } from "kafkajs";
+import { ServiceNames } from "peerprep-shared-types";
 
 dotenv.config();
 
@@ -29,9 +31,23 @@ class ApiGateway {
 
     // Initialize Redis Service
     this.redisService = RedisService.getInstance();
+    const kafkaUsername = process.env.KAFKA_KEY || "";
+    const kafkaPassword = process.env.KAFKA_PASSWORD || "";
 
+    const kafka = new Kafka({
+      clientId: ServiceNames.API_GATEWAY,
+      brokers: [
+        `${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`,
+      ],
+      ssl: true,
+      sasl: {
+        mechanism: "plain",
+        username: kafkaUsername,
+        password: kafkaPassword,
+      },
+    });
     // Initialize WebSocket handler
-    this.wsHandler = new WebSocketHandler(this.server);
+    this.wsHandler = new WebSocketHandler(this.server, kafka);
   }
 
   // Initialize Redis and other async resources
