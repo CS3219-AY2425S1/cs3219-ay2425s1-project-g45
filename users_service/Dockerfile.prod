@@ -32,6 +32,7 @@ RUN npm ci --only=production
 COPY --from=builder /app/dist ./dist
 
 ENV USER_SERVICE_PORT=8080
+ENV NODE_ENV=production
 # Expose the application port
 EXPOSE 8080 
 
