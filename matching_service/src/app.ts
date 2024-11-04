@@ -17,6 +17,9 @@ const kafka = new Kafka({
 
 (async () => {
   // Get singleton instances
+  console.log(
+    `Connecting to Kafka at URL:${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`
+  );
   const kafkaHandler = KafkaHandler.getInstance(kafka);
   const queue = Queue.getInstance(kafkaHandler);
   const matcher = Matcher.getInstance(queue, kafkaHandler);
