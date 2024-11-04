@@ -1,4 +1,4 @@
-import { Kafka, Producer } from "kafkajs";
+import { Consumer, Kafka, Producer } from "kafkajs";
 import { EditorManager } from "./editor";
 import { RoomModel } from "../models/Room";
 import {
@@ -8,6 +8,8 @@ import {
   EventPayloads,
   createEvent,
   TopicEvents,
+  Groups,
+  validateKafkaEvent,
 } from "peerprep-shared-types";
 import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
 import { ChatManager } from "./chat";
@@ -23,9 +25,13 @@ export class KafkaHandler {
   private editorManager: EditorManager;
   private chatManager: ChatManager;
   private nextQuestionRequests: Map<string, Set<string>>;
+  private consumer: Consumer;
 
   constructor(kafka: Kafka) {
     this.producer = kafka.producer();
+    this.consumer = kafka.consumer({
+      groupId: Groups.COLLABORATION_SERVICE_GROUP,
+    });
     this.editorManager = new EditorManager();
     this.chatManager = new ChatManager();
     this.nextQuestionRequests = new Map();
@@ -33,6 +39,36 @@ export class KafkaHandler {
 
   async initialize() {
     await this.producer.connect();
+    await this.consumer.connect();
+    await this.consumer.subscribe({
+      topic: Topics.COLLABORATION_EVENTS,
+      fromBeginning: false,
+    });
+
+    await this.consumer.run({
+      eachMessage: async ({ topic, partition, message }) => {
+        try {
+          console.log(
+            "Received message:",
+            message.value?.toString(),
+            "from topic:",
+            topic
+          );
+          const event = JSON.parse(message.value?.toString() || "");
+
+          validateKafkaEvent(event, topic as Topics);
+
+          if (topic == Topics.COLLABORATION_EVENTS) {
+            const typedEvent = event as KafkaEvent<CollaborationEventKeys>;
+            await this.handleCollaborationEvent(typedEvent);
+          } else {
+            throw new Error("Invalid topic");
+          }
+        } catch (error) {
+          console.error("Error processing message:", error);
+        }
+      },
+    });
   }
 
   async handleCollaborationEvent(event: KafkaEvent<CollaborationEventKeys>) {

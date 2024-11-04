@@ -55,47 +55,9 @@ const kafka = new Kafka({
 // Initialize Kafka handler
 const kafkaHandler = new KafkaHandler(kafka);
 
-// Set up Kafka consumer
-const setupKafkaConsumer = async () => {
-  const consumer = kafka.consumer({
-    groupId: Groups.COLLABORATION_SERVICE_GROUP,
-  });
-
-  await consumer.connect();
-  await consumer.subscribe({
-    topic: Topics.COLLABORATION_EVENTS,
-    fromBeginning: false,
-  });
-
-  await consumer.run({
-    eachMessage: async ({ topic, partition, message }) => {
-      try {
-        console.log(
-          "Received message:",
-          message.value?.toString(),
-          "from topic:",
-          topic
-        );
-        const event = JSON.parse(message.value?.toString() || "");
-
-        validateKafkaEvent(event, topic as Topics);
-        if (topic == Topics.COLLABORATION_EVENTS) {
-          const typedEvent = event as KafkaEvent<CollaborationEventKeys>;
-          await kafkaHandler.handleCollaborationEvent(typedEvent);
-        } else {
-          throw new Error("Invalid topic");
-        }
-      } catch (error) {
-        console.error("Error processing message:", error);
-      }
-    },
-  });
-};
-
 // Initialize services
 const initialize = async () => {
   await kafkaHandler.initialize();
-  await setupKafkaConsumer();
 };
 
 // Routes
