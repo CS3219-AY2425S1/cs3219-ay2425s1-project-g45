@@ -291,8 +291,9 @@ substitutions:
   _GATEWAY_SERVICE_URL: https://gateway-service-72621048198.us-west2.run.app
   _REGION: us-west2
 images:
-  # - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
-  # - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
+  - "gcr.io/$PROJECT_ID/question-service:$COMMIT_SHA"
+  - "gcr.io/$PROJECT_ID/user-service:$COMMIT_SHA"
   - "gcr.io/$PROJECT_ID/gateway-service:$COMMIT_SHA"
   - "gcr.io/$PROJECT_ID/matching-service:$COMMIT_SHA"
-  # - "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"
+  - "gcr.io/$PROJECT_ID/collab-service:$COMMIT_SHA"
+  - "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"
