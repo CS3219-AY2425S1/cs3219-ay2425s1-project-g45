@@ -37,21 +37,21 @@ app.get("/", (req, res) => {
 (async () => {
   try {
     // Get singleton instances
+
     console.log(
       `Connecting to Kafka at URL:${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`
     );
-    const kafkaHandler = KafkaHandler.getInstance(kafka);
-    const queue = Queue.getInstance(kafkaHandler);
-    const matcher = Matcher.getInstance(queue, kafkaHandler);
 
-    // Initialize Kafka and update health status
-    await kafkaHandler.initialize();
-    serviceHealth.kafka = true;
+    try {
+      const kafkaHandler = KafkaHandler.getInstance(kafka);
+      const queue = Queue.getInstance(kafkaHandler);
+      const matcher = Matcher.getInstance(queue, kafkaHandler);
 
-    // Update other component statuses
-    serviceHealth.queue = true;
-    serviceHealth.matcher = true;
-    serviceHealth.status = "running";
+      // Initialize Kafka and update health status
+      await kafkaHandler.initialize();
+    } catch (error) {
+      console.error("Failed to connect to Kafka:", error);
+    }
 
     // Start Express server
     app.listen(port, () => {
