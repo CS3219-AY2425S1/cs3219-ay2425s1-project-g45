@@ -2,7 +2,10 @@ import { RoomModel } from "../models/Room";
 import { DifficultyLevel, ChatMessage } from "peerprep-shared-types";
 import axios from "axios";
 
-export const QUESTION_SERVICE = `http://${process.env.QUESTION_SERVICE_ROUTE}:${process.env.QUESTION_SERVICE_PORT}/api`;
+export const QUESTION_SERVICE =
+  process.env.NODE_ENV == "production"
+    ? process.env.QUESTION_SERVICE_URL
+    : `http://${process.env.QUESTION_SERVICE_ROUTE}:${process.env.QUESTION_SERVICE_PORT}/api`;
 
 // Create a new room
 export async function createRoom(
