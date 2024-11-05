@@ -1,7 +1,10 @@
 import { QUESTION_SERVICE } from "../api/routes/questionRoutes";
 const axios = require("axios");
 
-export const COLLAB_SERVICE = `http://${process.env.COLLAB_SERVICE_ROUTE}:${process.env.COLLAB_SERVICE_PORT}`;
+export const COLLAB_SERVICE =
+  process.env.NODE_ENV == "production"
+    ? process.env.COLLAB_SERVICE_URL
+    : `http://${process.env.COLLAB_SERVICE_ROUTE}:${process.env.COLLAB_SERVICE_PORT}`;
 
 export async function handleMatchFound(
   usernames: string[],
