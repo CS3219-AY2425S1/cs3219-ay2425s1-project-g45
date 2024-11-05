@@ -88,17 +88,6 @@ class ApiGateway {
   }
 
   private setupRoutes(): void {
-    this.app.get("/", (req, res) => {
-      res.sendFile(__dirname + "/index.html");
-    });
-
-    // add this
-    this.app.get("/socket.io/socket.io.js", (req, res) => {
-      res.sendFile(
-        __dirname + "/node_modules/socket.io/client-dist/socket.io.js"
-      );
-    });
-    ///
     this.app.use("/auth", userRoutes);
     this.app.use(authenticateToken);
     this.app.use("/api/questions", questionRoutes);

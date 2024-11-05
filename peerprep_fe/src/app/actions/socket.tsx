@@ -20,6 +20,7 @@ export const useSocket = () => {
       auth: {
         token: token,
       },
+      transports: ["websocket"],
     });
 
     // Handle incoming messages

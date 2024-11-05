@@ -57,6 +57,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         auth: {
           token: token,
         },
+        transports: ["websocket"],
       }
     );
 
