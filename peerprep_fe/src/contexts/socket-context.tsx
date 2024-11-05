@@ -12,13 +12,19 @@ import {
   ServerToClientEvents,
 } from "peerprep-shared-types";
 import { useAuth } from "./auth-context";
+import dotenv from "dotenv";
 
+dotenv.config();
 interface SocketContextType {
   socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
   isConnected: boolean;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
+const gatewayServiceURL =
+  process.env.NODE_ENV === "production"
+    ? process.env.GATEWAY_SERVICE_URL
+    : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
 export const useSocket = () => {
   const context = useContext(SocketContext);
@@ -46,7 +52,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     }
 
     const newSocket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
-      "http://localhost:5003",
+      gatewayServiceURL,
       {
         auth: {
           token: token,
