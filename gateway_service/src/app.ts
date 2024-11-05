@@ -56,6 +56,7 @@ class ApiGateway {
       // Connect to Redis
       await this.redisService.connect();
       console.log("🚀 Connected to Redis");
+      await this.wsHandler.initialize();
     } catch (error) {
       console.error("Failed to connect to Redis:", error);
       throw error; // Re-throw error to handle it in the start method

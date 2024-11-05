@@ -1,6 +1,6 @@
 // api-gateway/websocket-handler.ts
 import { Server, Socket } from "socket.io";
-import { Kafka } from "kafkajs";
+import { Kafka, Producer, Consumer } from "kafkajs";
 import {
   Groups,
   Topics,
@@ -26,8 +26,8 @@ type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
 export class WebSocketHandler {
   private io: Server;
   private kafka: Kafka;
-  private producer: any;
-  private consumer: any;
+  private producer: Producer;
+  private consumer: Consumer;
   private redis: RedisService;
 
   constructor(server: any, kafka: Kafka) {
@@ -49,9 +49,15 @@ export class WebSocketHandler {
     // });
 
     this.kafka = kafka;
-    this.setupKafka();
-    this.setupSocketHandlers();
+    this.producer = kafka.producer();
+    this.consumer = kafka.consumer({ groupId: Groups.API_GATEWAY_GROUP });
+
     this.redis = RedisService.getInstance();
+  }
+
+  async initialize() {
+    await this.setupKafka();
+    await this.setupSocketHandlers();
   }
 
   private async setUsernameSocketId(username: string, socketId: string) {
@@ -66,9 +72,6 @@ export class WebSocketHandler {
   }
 
   private async setupKafka() {
-    this.producer = this.kafka.producer();
-    this.consumer = this.kafka.consumer({ groupId: Groups.API_GATEWAY_GROUP });
-
     await this.producer.connect();
     await this.consumer.connect();
 
