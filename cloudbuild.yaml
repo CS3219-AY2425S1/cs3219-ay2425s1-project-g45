@@ -295,7 +295,7 @@ substitutions:
   _QUESTION_SERVICE_URL: https://question-service-72621048198.us-west2.run.app # This will be set during deployment
   _USER_SERVICE_URL: https://user-service-72621048198.us-west2.run.app # This will be set during deployment
   _MATCHING_SERVICE_URL: https://matching-service-72621048198.us-west2.run.app # This will be set during deployment
-  _COLLAB_SERVICE: https://collab-service-72621048198.us-west2.run.app # This will be set during deployment
+  _COLLAB_SERVICE_URL: https://collab-service-72621048198.us-west2.run.app # This will be set during deployment
   _GATEWAY_SERVICE_URL: https://gateway-service-72621048198.us-west2.run.app
   _REGION: us-west2
 images:
