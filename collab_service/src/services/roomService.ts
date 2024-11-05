@@ -4,7 +4,7 @@ import axios from "axios";
 
 export const QUESTION_SERVICE =
   process.env.NODE_ENV == "production"
-    ? `${process.env.QUESTION_SERVICE_URL}/api`
+    ? `${process.env.QUESTION_SERVICE_URL}/api` || ""
     : `http://${process.env.QUESTION_SERVICE_ROUTE}:${process.env.QUESTION_SERVICE_PORT}/api`;
 
 // Create a new room

@@ -3,7 +3,7 @@ const axios = require("axios");
 
 export const COLLAB_SERVICE =
   process.env.NODE_ENV == "production"
-    ? process.env.COLLAB_SERVICE_URL
+    ? process.env.COLLAB_SERVICE_URL || ""
     : `http://${process.env.COLLAB_SERVICE_ROUTE}:${process.env.COLLAB_SERVICE_PORT}`;
 
 export async function handleMatchFound(
