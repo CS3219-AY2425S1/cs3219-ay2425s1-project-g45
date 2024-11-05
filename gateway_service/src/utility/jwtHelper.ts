@@ -24,7 +24,7 @@ export function authenticateToken(
   res: Response,
   next: NextFunction
 ) {
-  console.log(`Request Received: ${JSON.stringify(req)}`);
+  console.log(`Request Received: ${JSON.stringify(req.body)}`);
   const auth = req.get("Authorization");
   const token = auth && auth.split(" ")[1];
   if (token == null || token == undefined) {
