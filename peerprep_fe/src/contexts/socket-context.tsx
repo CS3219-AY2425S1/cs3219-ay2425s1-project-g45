@@ -12,9 +12,6 @@ import {
   ServerToClientEvents,
 } from "peerprep-shared-types";
 import { useAuth } from "./auth-context";
-import dotenv from "dotenv";
-
-dotenv.config();
 interface SocketContextType {
   socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
   isConnected: boolean;
@@ -23,7 +20,7 @@ interface SocketContextType {
 const SocketContext = createContext<SocketContextType | null>(null);
 const gatewayServiceURL =
   process.env.NODE_ENV === "production"
-    ? process.env.GATEWAY_SERVICE_URL
+    ? process.env.NEXT_PUBLIC_GATEWAY_SERVICE_URL
     : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
 export const useSocket = () => {
@@ -58,6 +55,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           token: token,
         },
         transports: ["websocket"],
+        secure: true,
       }
     );
 

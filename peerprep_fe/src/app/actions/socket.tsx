@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "../../contexts/auth-context";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 export const useSocket = () => {
   const { token } = useAuth();
@@ -11,7 +8,7 @@ export const useSocket = () => {
   const [message, setMessage] = useState<string | null>(null);
   const gatewayServiceURL =
     process.env.NODE_ENV === "production"
-      ? process.env.GATEWAY_SERVICE_URL
+      ? process.env.NEXT_PUBLIC_GATEWAY_SERVICE_URL
       : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
   useEffect(() => {
@@ -21,6 +18,7 @@ export const useSocket = () => {
         token: token,
       },
       transports: ["websocket"],
+      secure: true,
     });
 
     // Handle incoming messages
