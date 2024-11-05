@@ -9,10 +9,14 @@ export const useSocket = () => {
   const { token } = useAuth();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const gatewayServiceURL =
+    process.env.NODE_ENV === "production"
+      ? process.env.GATEWAY_SERVICE_URL
+      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
   useEffect(() => {
     // Initialize the WebSocket connection to the API gateway
-    const socketConnection = io(`http://localhost:5003`, {
+    const socketConnection = io(gatewayServiceURL, {
       auth: {
         token: token,
       },
