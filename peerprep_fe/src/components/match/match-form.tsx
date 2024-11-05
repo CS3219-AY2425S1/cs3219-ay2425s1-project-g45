@@ -43,6 +43,10 @@ export function MatchForm() {
     if (token) {
       getQuestionTopics(token).then((data) => {
         setTopics(data?.message);
+        setFormData({
+          difficultyLevel: DifficultyLevel.Easy,
+          topic: topics[0],
+        });
       });
     }
   }, [token]);
