@@ -24,6 +24,7 @@ const gatewayServiceURL =
     : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
 export const useSocket = () => {
+  console.log(gatewayServiceURL);
   const context = useContext(SocketContext);
   if (!context) {
     throw new Error("useSocket must be used within a SocketProvider");
