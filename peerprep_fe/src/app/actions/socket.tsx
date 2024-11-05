@@ -12,7 +12,8 @@ export const useSocket = () => {
       : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
   useEffect(() => {
-    console.log(gatewayServiceURL);
+    console.log(`Gateway Service URL: ${gatewayServiceURL}`);
+    console.log(`Env: ${process.env.NODE_ENV}`);
     // Initialize the WebSocket connection to the API gateway
     const socketConnection = io(gatewayServiceURL, {
       auth: {
