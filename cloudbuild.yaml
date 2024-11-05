@@ -255,6 +255,8 @@ steps:
       - "gcr.io/$PROJECT_ID/frontend:$COMMIT_SHA"
       - "-f"
       - "./peerprep_fe/Dockerfile.prod" # Adjust path as needed
+      - "--build-arg"
+      - "NEXT_PUBLIC_GATEWAY_SERVICE_URL=${_GATEWAY_SERVICE_URL}"
       - "./peerprep_fe"
 
   # Push the image
@@ -283,7 +285,6 @@ steps:
       - >-
         NODE_ENV=production,
         GATEWAY_SERVICE_URL=${_GATEWAY_SERVICE_URL},
-        NEXT_PUBLIC_GATEWAY_SERVICE_URL=${_GATEWAY_SERVICE_URL},
 
   ############################
   # end frontend
