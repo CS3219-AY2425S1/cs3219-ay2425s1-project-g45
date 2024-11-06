@@ -3,12 +3,10 @@
 import Header from "../../../components/common/header";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAuth } from "../../../contexts/auth-context";
 import Button from "../../../components/common/button";
 import Chat from "../../../components/workspace/chat";
 import Problem from "../../../components/workspace/problem";
 import CodeEditor from "../../../components/workspace/code-editor";
-import { ClientSocketEvents, ServerSocketEvents } from "peerprep-shared-types";
 import { useSocket } from "../../../app/actions/socket";
 import Modal from "../../../components/common/modal";
 import { VideoFeed } from "../../../components/workspace/videofeed";
@@ -40,6 +38,8 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   const [isErrorModalOpen, setIsErrorModalOpen] = useState<boolean>(false);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
+  const [isVideoOpen, setIsVideoOpen] = useState<boolean>(true);
   const [leaveMessage, setLeaveMessage] = useState<string>("");
   const { endCall } = useCall();
 
@@ -130,6 +130,14 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       setIsErrorModalOpen(true);
     }
   };
+  const openChat = () => {
+    setIsChatOpen(true);
+    setIsVideoOpen(false);
+  };
+  const openVideo = () => {
+    setIsChatOpen(false);
+    setIsVideoOpen(true);
+  };
 
   useEffect(() => {
     if (!socket) return;
@@ -199,17 +207,29 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
           }}
         />
       </Header>
-      <div className="flex h-full overflow-auto">
+      <div className="flex h-full">
         {/* Left Pane */}
-        <div className="flex flex-col w-2/5 px-4">
-          <div className="flex-grow h-1/2">
+        <div className="flex flex-col w-2/5 min-h-full px-4">
+          <div className="min-h-1/2">
             <Problem questionId={room.question} />
           </div>
-          {/* <div className="flex-grow pt-4 h-1/2">
-            <Chat />
-          </div> */}
-          <div className="flex-grow pt-4 h-1/2">
-            <VideoFeed roomId={params.id} />
+          <div className="flex space-x-4">
+            <Button
+              type="button"
+              disabled={isChatOpen}
+              text="Chat"
+              onClick={openChat}
+            />
+            <Button
+              type="button"
+              disabled={isVideoOpen}
+              text="Video"
+              onClick={openVideo}
+            />
+          </div>
+          <div className="flex-grow min-h-1/2">
+            <Chat isVisible={isChatOpen} />
+            <VideoFeed isVisible={isVideoOpen} />
           </div>
         </div>
 

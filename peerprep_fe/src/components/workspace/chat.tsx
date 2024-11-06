@@ -4,9 +4,11 @@ import { useChat } from "../../contexts/chat-context";
 import Textfield from "../common/text-field";
 import Button from "../common/button";
 
-type ChatProps = {};
+type ChatProps = {
+  isVisible: boolean;
+};
 
-const Chat: React.FC<ChatProps> = () => {
+const Chat: React.FC<ChatProps> = ({ isVisible }) => {
   const { username } = useAuth();
   const { messages, sendMessage } = useChat();
 
@@ -44,7 +46,9 @@ const Chat: React.FC<ChatProps> = () => {
   }
 
   return (
-    <div className="h-full bg-white dark:bg-slate-800 rounded-lg flex flex-col">
+    <div
+      className={`relative h-full bg-white dark:bg-slate-800 rounded-lg flex flex-col ${isVisible ? "z-0" : "hidden z-{-50}"}`}
+    >
       <div
         id="chat-container"
         className="max-h-full w-full overflow-y-scroll flex-grow"

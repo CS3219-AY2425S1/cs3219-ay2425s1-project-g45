@@ -4,10 +4,10 @@ import Button from "../common/button";
 import { CallStates } from "peerprep-shared-types";
 
 export interface VideoFeedProps {
-  roomId: string;
+  isVisible: boolean;
 }
 
-export const VideoFeed: React.FC<VideoFeedProps> = ({ roomId }) => {
+export const VideoFeed: React.FC<VideoFeedProps> = ({ isVisible }) => {
   const {
     callState,
     callPermissions,
@@ -81,7 +81,9 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ roomId }) => {
   };
 
   return (
-    <div className="h-full w-full flex-col">
+    <div
+      className={`relative h-full w-full flex-col bg-white dark:bg-slate-800 rounded-lg ${isVisible ? "z-0" : "hidden z-{50}"}`}
+    >
       <div className="flex">
         <video
           className="h-1/2 w-1/2"
@@ -97,7 +99,7 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ roomId }) => {
           ref={userVideoRef}
         />
       </div>
-      <div>
+      <div className="flex space-x-4 px-4">
         <ToggleVideoButton />
         <ToggleAudioButton />
         <CallButton />
@@ -106,3 +108,6 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ roomId }) => {
     </div>
   );
 };
+function useEffect(arg0: () => void, arg1: undefined[]) {
+  throw new Error("Function not implemented.");
+}
