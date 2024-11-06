@@ -47,7 +47,7 @@ const Chat: React.FC<ChatProps> = ({ isVisible }) => {
 
   return (
     <div
-      className={`relative h-full bg-white dark:bg-slate-800 rounded-lg flex flex-col ${isVisible ? "z-0" : "hidden z-{-50}"}`}
+      className={`relative h-full bg-white dark:bg-slate-800 rounded-lg flex flex-col ${isVisible ? "z-50" : "hidden"}`}
     >
       <div
         id="chat-container"

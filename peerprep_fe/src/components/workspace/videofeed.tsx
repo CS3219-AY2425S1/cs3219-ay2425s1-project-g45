@@ -7,7 +7,7 @@ export interface VideoFeedProps {
   isVisible: boolean;
 }
 
-export const VideoFeed: React.FC<VideoFeedProps> = ({ isVisible }) => {
+export const VideoFeed: React.FC<VideoFeedProps> = ({ isVisible, zIndex }) => {
   const {
     callState,
     callPermissions,
@@ -82,7 +82,7 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ isVisible }) => {
 
   return (
     <div
-      className={`relative h-full w-full flex-col bg-white dark:bg-slate-800 rounded-lg ${isVisible ? "z-0" : "hidden z-{50}"}`}
+      className={`relative h-full w-full flex-col bg-white dark:bg-slate-800 rounded-lg ${isVisible ? "z-50" : "hidden"} `}
     >
       <div className="flex">
         <video
@@ -108,6 +108,3 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ isVisible }) => {
     </div>
   );
 };
-function useEffect(arg0: () => void, arg1: undefined[]) {
-  throw new Error("Function not implemented.");
-}
