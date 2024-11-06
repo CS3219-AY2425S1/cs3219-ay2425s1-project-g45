@@ -20,6 +20,11 @@ router.post("/signup", requestHelper.sendPostRequest("signup", USER_SERVICE));
 
 router.post("/signin", requestHelper.sendPostRequest("signin", USER_SERVICE));
 
+router.post(
+  "/saveAttempt",
+  requestHelper.sendPostRequest("saveattempt", USER_SERVICE)
+);
+
 router.get("/validate", authenticateToken, (req, res) => {
   res.sendStatus(200);
 });

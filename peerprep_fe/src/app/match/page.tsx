@@ -25,6 +25,12 @@ const match: React.FC<MatchPageProps> = () => {
         <div className="w-fullz h-full flex items-center justify-center">
           Hi {username}
         </div>
+        <Button 
+          text="History"
+          onClick={() => {
+            router.push("/history");
+          }}
+          />
         <Button
           text="Logout"
           onClick={() => {

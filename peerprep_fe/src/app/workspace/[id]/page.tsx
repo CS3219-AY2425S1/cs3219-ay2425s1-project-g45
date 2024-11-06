@@ -237,7 +237,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
 
         {/* Right Pane */}
         <div className="w-3/5 px-4 inline-flex flex-col">
-          <CodeEditor />
+          <CodeEditor questionId={room.question}/>
           <Button text="Next Question" onClick={nextQuestion} />
         </div>
       </div>

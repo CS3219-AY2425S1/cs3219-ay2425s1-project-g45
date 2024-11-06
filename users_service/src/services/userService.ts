@@ -64,3 +64,42 @@ function generateUserJwt(user: IUser) {
   };
   return generateToken(payload);
 }
+
+export async function saveAttempt(
+  username: string,
+  question: string,
+  datetime: string,
+  code: string
+): Promise<string> {
+  try {
+    // Find the user by username
+    const user = await User.findOne({ username });
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Push the new attempt to the user's history
+    user.history.push({
+      question,
+      attemptDateTime: datetime,
+      attemptData: code,
+    });
+
+    // Save the user document with the new history entry
+    await user.save();
+
+    return "Attempt saved successfully";
+  } catch (error: any) {
+    console.error("Error saving attempt:", error);
+    throw new Error("Failed to save attempt");
+  }
+}
+
+export async function getHistory(username: string) {
+  const user = await User.findOne({ username: username }, "history");
+  if (!user) {
+    throw new Error("User not found");
+  }
+  return user.history;
+}
