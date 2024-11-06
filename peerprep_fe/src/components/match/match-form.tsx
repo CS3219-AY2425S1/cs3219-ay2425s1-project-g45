@@ -45,7 +45,7 @@ export function MatchForm() {
         setTopics(data?.message);
         setFormData({
           difficultyLevel: DifficultyLevel.Easy,
-          topic: topics[0],
+          topic: data?.message[0],
         });
       });
     }
