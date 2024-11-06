@@ -279,9 +279,6 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
           audio: true,
         });
         setVideoStream(stream);
-        if (ownVideoRef.current) {
-          ownVideoRef.current.srcObject = stream;
-        }
       } catch (error) {
         console.error("Error getting user media:", error);
       }
@@ -292,7 +289,13 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     return () => {
       stopStream();
     };
-  }, [ownVideoRef, stopStream]);
+  }, []);
+
+  useEffect(() => {
+    if (ownVideoRef.current && ownVideoRef.current.isConnected && videoStream) {
+      ownVideoRef.current.srcObject = videoStream;
+    }
+  }, [videoStream]);
 
   useEffect(() => {
     if (videoStream) {
