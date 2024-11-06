@@ -85,6 +85,9 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   const [isCallEndedModalOpen, setIsCallEndedModalOpen] = useState(false);
   const [isVideoAllowed, setIsVideoAllowed] = useState(false);
   const [isAudioAllowed, setIsAudioAllowed] = useState(false);
+  const [isMicPermissionGranted, setIsMicPermissionGranted] = useState(true);
+  const [isCameraPermissionGranted, setIsCameraPermissionGranted] =
+    useState(true);
 
   const setVideo = (on: boolean) => {
     setIsVideoAllowed(on);
@@ -252,6 +255,50 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     setPeer(null);
   }, [videoStream, peer]);
 
+  const getUserMedia = async () => {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    let stream: MediaStream | null = null;
+    try {
+      if (devices.some((device) => device.kind === "audioinput")) {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        setIsMicPermissionGranted(true);
+      } else {
+        console.error("No audio input device found");
+      }
+    } catch (error) {
+      console.error("Error getting user media:", error);
+      setIsMicPermissionGranted(false);
+    }
+
+    try {
+      if (devices.some((device) => device.kind === "videoinput")) {
+        const vidStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+        if (stream) {
+          stream.addTrack(vidStream.getVideoTracks()[0]);
+        } else {
+          stream = vidStream;
+        }
+        setIsCameraPermissionGranted(true);
+      } else {
+        console.error("No video input device found");
+      }
+      setVideoStream(stream);
+    } catch (error) {
+      console.error("Error getting user media:", error);
+      setIsCameraPermissionGranted(false);
+    }
+  };
+
+  const handleClosePermissionsModal = () => {
+    setIsMicPermissionGranted(true);
+    setIsCameraPermissionGranted(true);
+    getUserMedia();
+  };
+
   useOnPageLeave(stopStream);
 
   useEffect(() => {
@@ -272,18 +319,6 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   }, [socket, peer]);
 
   useEffect(() => {
-    const getUserMedia = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
-        setVideoStream(stream);
-      } catch (error) {
-        console.error("Error getting user media:", error);
-      }
-    };
-
     getUserMedia();
 
     return () => {
@@ -325,6 +360,31 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     );
   };
 
+  const PermissionsNotAllowedModal = () => {
+    return (
+      <Modal
+        title="Please grant the following permissions"
+        isOpen={!isMicPermissionGranted || !isCameraPermissionGranted}
+        isCloseable={false}
+      >
+        <div>
+          <h1>
+            {!isMicPermissionGranted && "- Microphone"}
+            <br />
+            {!isCameraPermissionGranted && "- Camera"}
+          </h1>
+          <div>
+            <Button
+              type="button"
+              onClick={handleClosePermissionsModal}
+              text="Ok"
+            />
+          </div>
+        </div>
+      </Modal>
+    );
+  };
+
   return (
     <CallContext.Provider
       value={{
@@ -342,6 +402,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     >
       {children}
       <CallEndedModal />
+      <PermissionsNotAllowedModal />
     </CallContext.Provider>
   );
 };
