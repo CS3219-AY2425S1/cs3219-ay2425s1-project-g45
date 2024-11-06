@@ -92,6 +92,12 @@ export default function Home() {
         <div className="w-full h-full flex items-center justify-center">
           Hi {username}
         </div>
+        <Button 
+          text="History"
+          onClick={() => {
+            router.push("/history");
+          }}
+          />
         <Button
           text="Match"
           onClick={() => {

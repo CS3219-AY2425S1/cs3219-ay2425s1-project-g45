@@ -194,3 +194,31 @@ function validateSignUpFormData(formData: FormData): FormValidation {
     success: true,
   };
 }
+
+export async function getHistory(username: string, token: string) {
+  const gatewayServiceURL =
+    process.env.NODE_ENV === "production"
+      ? process.env.GATEWAY_SERVICE_URL
+      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
+
+  const response = await fetch(`${gatewayServiceURL}/auth/history`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  try {
+    const responseData = await response.json();
+    if (response.ok) {
+      return { history: responseData.history };
+    } else {
+      return { error: responseData.message };
+    }
+  } catch (error) {
+    console.error(`error: ${error}`);
+    return { error: "An error occurred while fetching history" };
+  }
+}
+

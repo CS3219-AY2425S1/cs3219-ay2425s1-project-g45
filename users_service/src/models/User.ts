@@ -9,6 +9,17 @@ const UserSchema: Schema = new Schema(
     password: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     role: { type: String, enum: Object.values(Roles), default: Roles.user },
+    history: {
+      type: [
+        {
+          question: { type: String },
+          attemptDateTime: { type: String, default: () => new Date().toISOString() },
+          attemptData: { type: String, default: "" },
+        }
+      ],
+      default: null, // set default to null
+    },
+    
   },
   { timestamps: true }
 );

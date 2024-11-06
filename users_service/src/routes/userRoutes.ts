@@ -1,5 +1,5 @@
 import express from "express";
-import { signIn, signUp } from "../services/userService";
+import { getHistory, saveAttempt, signIn, signUp } from "../services/userService";
 
 const router = express.Router();
 
@@ -22,5 +22,26 @@ router.post("/signin", async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
+router.post("/saveAttempt", async (req, res) => {
+  try {
+    const { username, question, datetime, code } = req.body;
+    const result = await saveAttempt(username, question, datetime, code);
+    res.status(200).json({ message: result });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get("/history/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+    const history = await getHistory(username);
+    res.status(200).json({ history });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 
 export default router;

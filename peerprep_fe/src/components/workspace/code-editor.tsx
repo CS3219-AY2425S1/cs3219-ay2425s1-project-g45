@@ -1,8 +1,12 @@
+"use client";
 import { handleRunCode } from "../../app/actions/editor";
+import { getQuestion } from "../../app/actions/questions";
+import { handleSaveAttempt } from "../../app/actions/editor";
 import { useAuth } from "../../contexts/auth-context";
 import { Language, useEditor } from "../../contexts/editor-context";
 import { Editor } from "@monaco-editor/react";
-import React, { useRef, useState } from "react";
+import React, { useEffect,useRef, useState } from "react";
+import { QuestionDto } from "peerprep-shared-types";
 
 const CODE_SNIPPETS = {
   javascript: `\nfunction greet(name) {\n\tconsole.log("Hello, " + name + "!");\n}\n\ngreet("Alex");\n`,
@@ -11,14 +15,23 @@ const CODE_SNIPPETS = {
   java: `\npublic class HelloWorld {\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println("Hello World");\n\t}\n}\n`,
 };
 
-type CodeEditorProps = {};
+type CodeEditorProps = {questionId: string;};
 
-const CodeEditor: React.FC<CodeEditorProps> = ({}) => {
+const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef = useRef<any>();
   const [output, setOutput] = useState<string>("");
-  const { token } = useAuth();
+  const { token, username } = useAuth();
   const { code, setCode, language, setLanguage } = useEditor();
+  const [question, setQuestion] = useState<QuestionDto>();
+
+  useEffect(() => {
+    if (token) {
+      getQuestion(questionId, token).then((data) => {
+        setQuestion(data?.message);
+      });
+    }
+  }, [token, questionId]);
 
   const onMount = (editor: any) => {
     editorRef.current = editor;
@@ -43,6 +56,30 @@ const CodeEditor: React.FC<CodeEditorProps> = ({}) => {
       setOutput(`Error: ${error.message}`);
     }
   };
+
+  const saveAttempt = async () => {
+    const code = editorRef.current.getValue();
+    const title = question?.title;
+    const datetime = new Date().toISOString();
+    try {
+      const result = await handleSaveAttempt(username, title, datetime, code, token);
+      
+      // Ensure the result is a plain object
+      const plainResult = {
+        output: result.output || '',
+        error: result.error || null
+      };
+  
+      if (!plainResult.error) {
+        setOutput(plainResult.output);
+      } else {
+        setOutput(`Error: ${plainResult.error}`);
+      }
+    } catch (error) {
+      setOutput(`Error: ${error.message}`);
+    }
+  };
+  
 
   return (
     <div className="inline-flex flex-col p-2 bg-slate-800 rounded-lg shadow-sm h-full w-full">
@@ -77,6 +114,13 @@ const CodeEditor: React.FC<CodeEditorProps> = ({}) => {
         className="mt-2 bg-blue-500 text-white py-2 px-4 rounded"
       >
         Run Code
+      </button>
+      
+      <button
+        onClick={saveAttempt}
+        className="mt-2 bg-blue-500 text-white py-2 px-4 rounded"
+      >
+        Save Code
       </button>
 
       {output && (

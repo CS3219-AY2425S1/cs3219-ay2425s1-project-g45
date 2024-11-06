@@ -34,3 +34,35 @@ export async function handleRunCode(
     return { error: error };
   }
 }
+
+export async function handleSaveAttempt(
+  username: string,
+  question: string,
+  datetime: string,
+  code: string,
+  token?: string
+) {
+  const gatewayServiceURL =
+    process.env.NODE_ENV === "production"
+      ? process.env.GATEWAY_SERVICE_URL
+      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
+  try {
+    const response = await fetch(`${gatewayServiceURL}/saveAttempt`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `bearer ${token}`,
+      },
+      body: JSON.stringify({username, question, datetime, code}),
+    });
+
+    const result = await response.json();
+    if (response.ok) {
+      return result;
+    } else {
+      return { error: result.error };
+    }
+  } catch (error: any) {
+    return { error: error };
+  }
+}
