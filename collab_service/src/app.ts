@@ -39,18 +39,26 @@ mongoose
 
 app.use(express.json());
 
-const kafka = new Kafka({
-  clientId: ServiceNames.COLLABORATION_SERVICE,
-  brokers: [
-    `${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`,
-  ],
-  ssl: true,
-  sasl: {
-    mechanism: "plain",
-    username: kafkaUsername,
-    password: kafkaPassword,
-  },
-});
+const kafka =
+  process.env.NODE_ENV == "production"
+    ? new Kafka({
+        clientId: ServiceNames.COLLABORATION_SERVICE,
+        brokers: [
+          `${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`,
+        ],
+        ssl: true,
+        sasl: {
+          mechanism: "plain",
+          username: kafkaUsername,
+          password: kafkaPassword,
+        },
+      })
+    : new Kafka({
+        clientId: ServiceNames.COLLABORATION_SERVICE,
+        brokers: [
+          `${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`,
+        ],
+      });
 
 // Initialize Kafka handler
 const kafkaHandler = new KafkaHandler(kafka);

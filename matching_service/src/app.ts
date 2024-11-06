@@ -15,18 +15,26 @@ const kafkaUsername = process.env.KAFKA_KEY || "";
 const kafkaPassword = process.env.KAFKA_PASSWORD || "";
 
 // Initialize Kafka
-const kafka = new Kafka({
-  clientId: ServiceNames.MATCHING_SERVICE,
-  ssl: true,
-  sasl: {
-    mechanism: "plain",
-    username: kafkaUsername,
-    password: kafkaPassword,
-  },
-  brokers: [
-    `${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`,
-  ],
-});
+const kafka =
+  process.env.NODE_ENV == "production"
+    ? new Kafka({
+        clientId: ServiceNames.COLLABORATION_SERVICE,
+        brokers: [
+          `${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`,
+        ],
+        ssl: true,
+        sasl: {
+          mechanism: "plain",
+          username: kafkaUsername,
+          password: kafkaPassword,
+        },
+      })
+    : new Kafka({
+        clientId: ServiceNames.COLLABORATION_SERVICE,
+        brokers: [
+          `${process.env.KAFKA_BROKER_ROUTE}:${process.env.KAFKA_BROKER_PORT}`,
+        ],
+      });
 
 // Service state tracking
 let serviceHealth = {

@@ -13,7 +13,6 @@ import {
 export class Queue {
   private static instance: Queue;
   private redisClient: RedisClientType;
-  private userMap: Map<string, string>; // Map username to topicKey
   private TIMEOUT_THRESHOLD = 30 * 1000; // 30 seconds
   private kafkaHandler: KafkaHandler;
 
@@ -28,8 +27,6 @@ export class Queue {
     this.redisClient = createClient({
       url: redisUrl,
     });
-
-    this.userMap = new Map();
 
     this.redisClient.on("error", (err) =>
       console.error("Redis Client Error", err)
@@ -51,7 +48,11 @@ export class Queue {
     const topicKey = this.getTopicKey(request);
 
     // Check if user already exists in the queue
-    if (this.userMap.has(request.username)) {
+    const userExists = await this.redisClient.hExists(
+      "userMap",
+      request.username
+    );
+    if (userExists) {
       console.log(
         `User ${request.username} already exists in the queue. Removing old instance.`
       );
@@ -76,7 +77,7 @@ export class Queue {
     await this.redisClient.rPush(topicKey, JSON.stringify(requestData));
 
     // Update the userMap with the new topicKey
-    this.userMap.set(request.username, topicKey);
+    await this.redisClient.hSet("userMap", request.username, topicKey);
 
     console.log(`User: ${request.username} has been added to the queue.`);
 
@@ -88,7 +89,7 @@ export class Queue {
   ): Promise<MatchCancelResponse> {
     console.log("Cancelling request for user:", request.username);
 
-    const topicKey = this.userMap.get(request.username);
+    const topicKey = await this.redisClient.hGet("userMap", request.username);
 
     if (topicKey) {
       // Get all requests from the list
@@ -104,7 +105,7 @@ export class Queue {
       }
 
       // Remove user from userMap
-      this.userMap.delete(request.username);
+      await this.redisClient.hDel("userMap", request.username);
 
       console.log(`Request for user ${request.username} has been cancelled.`);
 
@@ -168,17 +169,13 @@ export class Queue {
       const user2: MatchRequest = JSON.parse(user2Data as string);
 
       // Remove users from userMap
-      this.userMap.delete(user1.username);
-      this.userMap.delete(user2.username);
+      await this.redisClient.hDel("userMap", user1.username);
+      await this.redisClient.hDel("userMap", user2.username);
 
       return [user1, user2];
     }
 
     return null;
-  }
-
-  private checkIfUserExists(username: string): boolean {
-    return this.userMap.has(username);
   }
 
   private getTopicKey(request: MatchRequest): string {
@@ -201,7 +198,7 @@ export class Queue {
           await this.redisClient.lRem(key, 1, requestData);
 
           // Remove user from userMap
-          this.userMap.delete(matchRequest.username);
+          await this.redisClient.hDel("userMap", matchRequest.username);
 
           console.log(
             `Request for user ${matchRequest.username} has expired and been removed.`

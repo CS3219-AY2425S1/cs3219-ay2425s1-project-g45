@@ -9,7 +9,7 @@ export const useSocket = () => {
   const gatewayServiceURL =
     process.env.NODE_ENV === "production"
       ? process.env.NEXT_PUBLIC_GATEWAY_SERVICE_URL
-      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
+      : `http://localhost:5003`;
 
   useEffect(() => {
     // Initialize the WebSocket connection to the API gateway
