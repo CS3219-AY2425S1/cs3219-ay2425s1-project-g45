@@ -9,7 +9,7 @@ import { Match, MatchRequest } from "../types/matcherTypes";
 
 export class Matcher {
   private static instance: Matcher;
-  private readonly interval: number = 1000; // In milliseconds
+  private readonly interval: number = 100; // In milliseconds
   private timeoutId: NodeJS.Timeout | null = null;
   private queue: Queue;
   private kafkaHandler: KafkaHandler;
