@@ -7,6 +7,7 @@ import React, {
   useRef,
   ReactNode,
   useEffect,
+  useCallback,
 } from "react";
 import { useSocket } from "./socket-context";
 import { useAuth } from "./auth-context";
@@ -235,6 +236,24 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     setIsCallEndedModalOpen(true);
   };
 
+  const stopStream = useCallback(() => {
+    if (videoStream) {
+      console.log("stopping stream");
+      console.log(videoStream.getTracks());
+      const tracks = videoStream.getTracks();
+      tracks.forEach((track) => {
+        track.stop();
+        videoStream.removeTrack(track);
+      });
+      console.log(videoStream.getTracks());
+      setVideoStream(undefined);
+    }
+    peer?.destroy();
+    setPeer(null);
+  }, [videoStream, peer]);
+
+  useOnPageLeave(stopStream);
+
   useEffect(() => {
     if (!socket) return;
     // For receiving calls
@@ -273,7 +292,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     return () => {
       stopStream();
     };
-  }, []);
+  }, [videoStream, ownVideoRef, stopStream]);
 
   useEffect(() => {
     if (videoStream) {
@@ -302,24 +321,6 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
       </Modal>
     );
   };
-
-  const stopStream = () => {
-    if (videoStream) {
-      console.log("stopping stream");
-      console.log(videoStream.getTracks());
-      const tracks = videoStream.getTracks();
-      tracks.forEach((track) => {
-        track.stop();
-        videoStream.removeTrack(track);
-      });
-      console.log(videoStream.getTracks());
-      setVideoStream(undefined);
-    }
-    peer?.destroy();
-    setPeer(null);
-  };
-
-  useOnPageLeave(stopStream);
 
   return (
     <CallContext.Provider
