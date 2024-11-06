@@ -28,4 +28,11 @@ router.post(
 router.get("/validate", authenticateToken, (req, res) => {
   res.sendStatus(200);
 });
+
+router.get(
+  "/history/:username",
+  requestHelper.sendGetRequest("history/:username", USER_SERVICE)
+);
+
+
 export default router;

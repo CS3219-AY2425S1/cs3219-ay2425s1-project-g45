@@ -46,23 +46,43 @@ export async function handleSaveAttempt(
     process.env.NODE_ENV === "production"
       ? process.env.GATEWAY_SERVICE_URL
       : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
+
   try {
-    const response = await fetch(`${gatewayServiceURL}/saveAttempt`, {
+    const response = await fetch(`${gatewayServiceURL}/auth/saveAttempt`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `bearer ${token}`,
       },
-      body: JSON.stringify({username, question, datetime, code}),
+      body: JSON.stringify({ username, question, datetime, code }),
     });
 
+    // Check if response is OK
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Try to parse JSON response
     const result = await response.json();
+    
     if (response.ok) {
-      return result;
+      // Ensure the result is a plain object
+      return {
+        output: result.output || '',
+        error: result.error || null,
+      };
     } else {
       return { error: result.error };
     }
   } catch (error: any) {
-    return { error: error };
+    // Log the error for debugging
+    console.error("Error during API call:", error);
+
+    // Check if the response was HTML (common error page)
+    if (error.message.includes("Unexpected token <")) {
+      return { error: "Server returned an error page (possibly HTML)." };
+    }
+
+    return { error: error.message || 'An unknown error occurred' };
   }
 }

@@ -9,7 +9,7 @@ import { useAuth } from "../../contexts/auth-context";
 import Header from "../../components/common/header";
 import Button from "../../components/common/button";
 import Modal from "../../components/common/modal";
-import { getHistory } from "../../app/actions/auth";
+import { getHistory } from "../actions/auth";
 
 export default function History() {
     const router = useRouter();
@@ -22,11 +22,14 @@ export default function History() {
         async function fetchHistory() {
             if (username) {
                 const userHistory = await getHistory(username, token);
-                setHistory(userHistory.history);
+                if (userHistory.error) {
+                    console.error("Failed to fetch history:", userHistory.error);
+                } 
             }
         }
         fetchHistory();
     }, [username]);
+    
 
     const openViewAttemptModal = (attemptData: string) => {
         setSelectedSolution(attemptData); // Set the solution to display

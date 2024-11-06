@@ -97,9 +97,18 @@ export async function saveAttempt(
 }
 
 export async function getHistory(username: string) {
-  const user = await User.findOne({ username: username }, "history");
-  if (!user) {
-    throw new Error("User not found");
+  try {
+    console.log("user service getHistory");
+    const user = await User.findOne({ username });
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    console.log("User found:", user); // Log the user data if found
+    return user.history;
+  } catch (error) {
+    console.error("Error in getHistory:"); // Log any errors
+    throw error;
   }
-  return user.history;
 }
+
