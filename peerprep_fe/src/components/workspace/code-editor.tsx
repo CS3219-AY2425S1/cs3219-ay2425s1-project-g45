@@ -5,8 +5,12 @@ import { handleSaveAttempt } from "../../app/actions/editor";
 import { useAuth } from "../../contexts/auth-context";
 import { Language, useEditor } from "../../contexts/editor-context";
 import { Editor } from "@monaco-editor/react";
-import React, { useEffect,useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { QuestionDto } from "peerprep-shared-types";
+import { useWorkspaceRoom } from "@/contexts/workspaceroom-context";
+import * as Y from "yjs";
+import { SocketIOProvider } from "y-socket.io";
+import { MonacoBinding } from "y-monaco";
 
 const CODE_SNIPPETS = {
   javascript: `\nfunction greet(name) {\n\tconsole.log("Hello, " + name + "!");\n}\n\ngreet("Alex");\n`,
@@ -15,27 +19,79 @@ const CODE_SNIPPETS = {
   java: `\npublic class HelloWorld {\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println("Hello World");\n\t}\n}\n`,
 };
 
-type CodeEditorProps = {questionId: string;};
+type CodeEditorProps = {
+  roomId: string;
+};
 
-const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
+const gatewayServiceURL =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_GATEWAY_SERVICE_URL
+    : "localhost:5003";
+
+const CodeEditor: React.FC<CodeEditorProps> = ({ roomId }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef = useRef<any>();
   const [output, setOutput] = useState<string>("");
   const { token, username } = useAuth();
   const { code, setCode, language, setLanguage } = useEditor();
   const [question, setQuestion] = useState<QuestionDto>();
+  const { room } = useWorkspaceRoom();
 
   useEffect(() => {
     if (token) {
-      getQuestion(questionId, token).then((data) => {
+      getQuestion(room.question, token).then((data) => {
         setQuestion(data?.message);
       });
     }
-  }, [token, questionId]);
+  }, [token, room.question]);
+  const ydoc = useMemo(() => new Y.Doc(), []);
+  const [editor, setEditor] = useState<any | null>(null);
+  const [binding, setBinding] = useState<MonacoBinding | null>(null);
+  const [provider, setProvider] = useState<SocketIOProvider | null>(null);
+
+  useEffect(() => {
+    if (!!ydoc && !provider) {
+      console.log("setting providers");
+      const socketIOProvider = new SocketIOProvider(
+        gatewayServiceURL,
+        roomId,
+        ydoc,
+        {
+          autoConnect: true,
+          // disableBc: true,
+          auth: { token: "valid-token" },
+        }
+      );
+      socketIOProvider.awareness.setLocalState({
+        id: Math.random(),
+        name: "Perico",
+      });
+      socketIOProvider.on("sync", (isSync: boolean) =>
+        console.log("websocket sync", isSync)
+      );
+      setProvider(socketIOProvider);
+    }
+  }, [ydoc, provider]);
+
+  useEffect(() => {
+    if (provider == null || editor == null) {
+      return;
+    }
+    console.log("reached", provider);
+    const binding = new MonacoBinding(
+      ydoc.getText(),
+      editor.getModel()!,
+      new Set([editor]),
+      provider?.awareness
+    );
+    setBinding(binding);
+    return () => {
+      binding.destroy();
+    };
+  }, [ydoc, provider, editor]);
 
   const onMount = (editor: any) => {
-    editorRef.current = editor;
-    editor.focus();
+    setEditor(editor);
   };
 
   const onSelect = (language: Language) => {
@@ -44,7 +100,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
   };
 
   const runCode = async () => {
-    const code = editorRef.current.getValue();
+    const code = editorRef?.current?.getValue();
     try {
       const result = await handleRunCode(code, language, token);
       if (!result.error) {
@@ -62,14 +118,20 @@ const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
     const title = question?.title;
     const datetime = new Date().toISOString();
     try {
-      const result = await handleSaveAttempt(username, title, datetime, code, token);
-      
+      const result = await handleSaveAttempt(
+        username,
+        title,
+        datetime,
+        code,
+        token
+      );
+
       // Ensure the result is a plain object
       const plainResult = {
-        output: result.output || '',
-        error: result.error || null
+        output: result.output || "",
+        error: result.error || null,
       };
-  
+
       if (!plainResult.error) {
         setOutput(plainResult.output);
       } else {
@@ -79,7 +141,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
       setOutput(`Error: ${error.message}`);
     }
   };
-  
 
   return (
     <div className="inline-flex flex-col p-2 bg-slate-800 rounded-lg shadow-sm h-full w-full">
@@ -102,11 +163,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
         language={language}
         value={code}
         onMount={onMount}
-        onChange={(value) => {
-          if (value !== undefined) {
-            setCode(value);
-          }
-        }}
       />
 
       <button
@@ -115,7 +171,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
       >
         Run Code
       </button>
-      
+
       <button
         onClick={saveAttempt}
         className="mt-2 bg-blue-500 text-white py-2 px-4 rounded"
