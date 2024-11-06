@@ -35,10 +35,12 @@ router.post("/saveAttempt", async (req, res) => {
 
 router.get("/history/:username", async (req, res) => {
   try {
-    const { username } = req.params;
-    const history = await getHistory(username);
+    console.log("Fetching history for user:", req.params.username);
+    const username = req.params.username;
+    const history = await getHistory(username); // Fetch history for the user
     res.status(200).json({ history });
   } catch (error: any) {
+    console.error("Error fetching history:", error);
     res.status(400).json({ error: error.message });
   }
 });

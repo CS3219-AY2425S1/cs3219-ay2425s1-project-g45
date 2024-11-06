@@ -60,18 +60,20 @@ const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
   const saveAttempt = async () => {
     const code = editorRef.current.getValue();
     const title = question?.title;
-    const datetime = new Date().toISOString();
+    const datetime = new Date().toISOString(); // Ensure proper string format
+  
     try {
       const result = await handleSaveAttempt(username, title, datetime, code, token);
-      
-      // Ensure the result is a plain object
+  
+      // Ensure the result is a plain object with serializable data
       const plainResult = {
         output: result.output || '',
-        error: result.error || null
+        error: result.error || null,
       };
   
       if (!plainResult.error) {
         setOutput(plainResult.output);
+        setOutput('Attempts saved successfully!'); // Show success toast
       } else {
         setOutput(`Error: ${plainResult.error}`);
       }
@@ -79,6 +81,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
       setOutput(`Error: ${error.message}`);
     }
   };
+  
   
 
   return (
