@@ -205,9 +205,9 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
           <div className="flex-grow h-1/2">
             <Problem questionId={room.question} />
           </div>
-          <div className="flex-grow pt-4 h-1/2">
+          {/* <div className="flex-grow pt-4 h-1/2">
             <Chat />
-          </div>
+          </div> */}
           <div className="flex-grow pt-4 h-1/2">
             <VideoFeed roomId={params.id} />
           </div>

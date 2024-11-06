@@ -82,9 +82,20 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ roomId }) => {
 
   return (
     <div className="h-full w-full flex-col">
-      <div>
-        <video playsInline autoPlay muted ref={ownVideoRef} />
-        <video playsInline autoPlay ref={userVideoRef} />
+      <div className="flex">
+        <video
+          className="h-1/2 w-1/2"
+          playsInline
+          autoPlay
+          muted
+          ref={ownVideoRef}
+        />
+        <video
+          className="h-1/2 w-1/2"
+          playsInline
+          autoPlay
+          ref={userVideoRef}
+        />
       </div>
       <div>
         <ToggleVideoButton />
