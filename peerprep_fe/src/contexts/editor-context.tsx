@@ -8,18 +8,20 @@ import React, {
 } from "react";
 import { useSocket } from "./socket-context";
 import { useAuth } from "./auth-context";
+import { useWorkspaceRoom } from "./workspaceroom-context";
 import {
-  useWorkspaceRoom,
-  WorkspaceRoomProvider,
-} from "./workspaceroom-context";
-import {
-  CodeChangedResponse,
-  CodeChangeRequest,
   EditorStateResponse,
   LanguageChangedResponse,
   LanguageChangeRequest,
 } from "peerprep-shared-types/dist/types/sockets/editor";
 import { ClientSocketEvents, ServerSocketEvents } from "peerprep-shared-types";
+import { SocketIOProvider } from "y-socket.io";
+import * as Y from "yjs";
+
+const gatewayServiceURL =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_GATEWAY_SERVICE_URL
+    : "localhost:5003";
 
 export enum Language {
   javascript = "javascript",
@@ -29,9 +31,9 @@ export enum Language {
 }
 
 interface EditorContextType {
-  code: string;
+  doc: Y.Doc;
+  yProvider: SocketIOProvider;
   language: Language;
-  setCode: (code: string) => void;
   setLanguage: (language: Language) => void;
 }
 
@@ -53,22 +55,10 @@ export const EditorProvider = ({ children }: EditorProviderProps) => {
   const { roomId } = useWorkspaceRoom();
   const { socket } = useSocket();
   const { username } = useAuth();
-  const [code, setCode] = useState<string>("");
+  const [ySocketProvider, setYSocketProvider] =
+    useState<SocketIOProvider | null>(null);
+  const [yDoc, setYDoc] = useState<Y.Doc | null>(null);
   const [language, setLanguage] = useState<Language>(Language.javascript);
-
-  const codeChange = (newCode: string) => {
-    if (!socket || !roomId) return;
-    console.log("Sending code change from", username, ":", newCode);
-    setCode(newCode);
-
-    const request: CodeChangeRequest = {
-      roomId: roomId,
-      username: username,
-      sharedcode: newCode,
-    };
-
-    socket.emit(ClientSocketEvents.CHANGE_CODE, request);
-  };
 
   const languageChange = (newLanguage: Language) => {
     if (!socket || !roomId) return;
@@ -90,15 +80,7 @@ export const EditorProvider = ({ children }: EditorProviderProps) => {
     } = response;
 
     console.log("Editor state received", content, language);
-    setCode(content);
     setLanguage(language as Language);
-  };
-
-  const handleCodeChange = (response: CodeChangedResponse) => {
-    if (response.username === username) return;
-    const { sharedcode } = response;
-    console.log("Editor change received", sharedcode);
-    setCode(sharedcode);
   };
 
   const handleLanguageChange = (response: LanguageChangedResponse) => {
@@ -108,25 +90,51 @@ export const EditorProvider = ({ children }: EditorProviderProps) => {
   };
 
   useEffect(() => {
-    if (!socket || !roomId) return;
+    if (!socket) return;
 
     socket.on(ServerSocketEvents.EDITOR_STATE, handleEditorState);
-    socket.on(ServerSocketEvents.CODE_CHANGED, handleCodeChange);
     socket.on(ServerSocketEvents.LANGUAGE_CHANGED, handleLanguageChange);
 
     return () => {
       socket.off(ServerSocketEvents.EDITOR_STATE, handleEditorState);
-      socket.off(ServerSocketEvents.CODE_CHANGED, handleCodeChange);
       socket.off(ServerSocketEvents.LANGUAGE_CHANGED, handleLanguageChange);
     };
   }, [socket, roomId]);
 
+  useEffect(() => {
+    if (!roomId) return;
+
+    console.log("Creating Y.Doc and SocketIOProvider");
+    const yDoc = new Y.Doc();
+    setYDoc(yDoc);
+    const newSocketProvider = new SocketIOProvider(
+      gatewayServiceURL,
+      roomId,
+      yDoc,
+      {
+        autoConnect: true,
+        auth: { token: "valid-token" },
+      }
+    );
+
+    setYSocketProvider(newSocketProvider);
+
+    return () => {
+      newSocketProvider.destroy();
+    };
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!yDoc) return;
+    console.log(yDoc.getText());
+  });
+
   return (
     <EditorContext.Provider
       value={{
-        code,
+        doc: yDoc,
+        yProvider: ySocketProvider,
         language,
-        setCode: codeChange,
         setLanguage: languageChange,
       }}
     >
