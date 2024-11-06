@@ -292,7 +292,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     return () => {
       stopStream();
     };
-  }, [videoStream, ownVideoRef, stopStream]);
+  }, [ownVideoRef, stopStream]);
 
   useEffect(() => {
     if (videoStream) {
