@@ -7,7 +7,7 @@ export interface VideoFeedProps {
   isVisible: boolean;
 }
 
-export const VideoFeed: React.FC<VideoFeedProps> = ({ isVisible, zIndex }) => {
+export const VideoFeed: React.FC<VideoFeedProps> = ({ isVisible }) => {
   const {
     callState,
     callPermissions,
