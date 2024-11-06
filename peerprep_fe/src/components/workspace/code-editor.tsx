@@ -5,8 +5,13 @@ import { handleSaveAttempt } from "../../app/actions/editor";
 import { useAuth } from "../../contexts/auth-context";
 import { Language, useEditor } from "../../contexts/editor-context";
 import { Editor } from "@monaco-editor/react";
-import React, { useEffect,useRef, useState } from "react";
+import { editor } from "monaco-editor";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { QuestionDto } from "peerprep-shared-types";
+import { useWorkspaceRoom } from "@/contexts/workspaceroom-context";
+import { MonacoBinding } from "y-monaco";
+
+type IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 
 const CODE_SNIPPETS = {
   javascript: `\nfunction greet(name) {\n\tconsole.log("Hello, " + name + "!");\n}\n\ngreet("Alex");\n`,
@@ -15,36 +20,54 @@ const CODE_SNIPPETS = {
   java: `\npublic class HelloWorld {\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println("Hello World");\n\t}\n}\n`,
 };
 
-type CodeEditorProps = {questionId: string;};
+type CodeEditorProps = {};
 
-const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
+const CodeEditor: React.FC<CodeEditorProps> = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const editorRef = useRef<any>();
+  const editorRef = useRef<IStandaloneCodeEditor>();
   const [output, setOutput] = useState<string>("");
   const { token, username } = useAuth();
-  const { code, setCode, language, setLanguage } = useEditor();
+  const { doc, yProvider, language, setLanguage } = useEditor();
   const [question, setQuestion] = useState<QuestionDto>();
+  const { room } = useWorkspaceRoom();
 
   useEffect(() => {
     if (token) {
-      getQuestion(questionId, token).then((data) => {
+      getQuestion(room.question, token).then((data) => {
         setQuestion(data?.message);
       });
     }
-  }, [token, questionId]);
+  }, [token, room.question]);
 
-  const onMount = (editor: any) => {
+  useEffect(() => {
+    if (!yProvider || !doc || !editorRef.current) {
+      return;
+    }
+    console.log("Creating MonacoBinding");
+    const binding = new MonacoBinding(
+      doc.getText(),
+      editorRef.current?.getModel(),
+      new Set([editorRef.current]),
+      yProvider.awareness
+    );
+
+    return () => {
+      binding.destroy();
+    };
+  }, [yProvider, doc, editorRef.current]);
+
+  const onMount = useCallback((editor: IStandaloneCodeEditor) => {
+    console.log("Editor mounted");
     editorRef.current = editor;
     editor.focus();
-  };
+  }, []);
 
   const onSelect = (language: Language) => {
     setLanguage(language);
-    setCode(CODE_SNIPPETS[language]);
   };
 
   const runCode = async () => {
-    const code = editorRef.current.getValue();
+    const code = editorRef?.current?.getValue();
     try {
       const result = await handleRunCode(code, language, token);
       if (!result.error) {
@@ -61,19 +84,25 @@ const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
     const code = editorRef.current.getValue();
     const title = question?.title;
     const datetime = new Date().toISOString(); // Ensure proper string format
-  
+
     try {
-      const result = await handleSaveAttempt(username, title, datetime, code, token);
-  
+      const result = await handleSaveAttempt(
+        username,
+        title,
+        datetime,
+        code,
+        token
+      );
+
       // Ensure the result is a plain object with serializable data
       const plainResult = {
-        output: result.output || '',
+        output: result.output || "",
         error: result.error || null,
       };
-  
+
       if (!plainResult.error) {
         setOutput(plainResult.output);
-        setOutput('Attempts saved successfully!'); // Show success toast
+        setOutput("Attempts saved successfully!"); // Show success toast
       } else {
         setOutput(`Error: ${plainResult.error}`);
       }
@@ -81,8 +110,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
       setOutput(`Error: ${error.message}`);
     }
   };
-  
-  
 
   return (
     <div className="inline-flex flex-col p-2 bg-slate-800 rounded-lg shadow-sm h-full w-full">
@@ -103,13 +130,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
         options={{ minimap: { enabled: false } }}
         theme="vs-dark"
         language={language}
-        value={code}
         onMount={onMount}
-        onChange={(value) => {
-          if (value !== undefined) {
-            setCode(value);
-          }
-        }}
       />
 
       <button
@@ -118,7 +139,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({questionId}) => {
       >
         Run Code
       </button>
-      
+
       <button
         onClick={saveAttempt}
         className="mt-2 bg-blue-500 text-white py-2 px-4 rounded"
