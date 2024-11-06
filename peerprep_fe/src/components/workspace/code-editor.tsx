@@ -5,12 +5,13 @@ import { handleSaveAttempt } from "../../app/actions/editor";
 import { useAuth } from "../../contexts/auth-context";
 import { Language, useEditor } from "../../contexts/editor-context";
 import { Editor } from "@monaco-editor/react";
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import { editor } from "monaco-editor";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import { QuestionDto } from "peerprep-shared-types";
 import { useWorkspaceRoom } from "@/contexts/workspaceroom-context";
-import * as Y from "yjs";
-import { SocketIOProvider } from "y-socket.io";
 import { MonacoBinding } from "y-monaco";
+
+type IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 
 const CODE_SNIPPETS = {
   javascript: `\nfunction greet(name) {\n\tconsole.log("Hello, " + name + "!");\n}\n\ngreet("Alex");\n`,
@@ -19,21 +20,14 @@ const CODE_SNIPPETS = {
   java: `\npublic class HelloWorld {\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println("Hello World");\n\t}\n}\n`,
 };
 
-type CodeEditorProps = {
-  roomId: string;
-};
+type CodeEditorProps = {};
 
-const gatewayServiceURL =
-  process.env.NODE_ENV === "production"
-    ? process.env.NEXT_PUBLIC_GATEWAY_SERVICE_URL
-    : "localhost:5003";
-
-const CodeEditor: React.FC<CodeEditorProps> = ({ roomId }) => {
+const CodeEditor: React.FC<CodeEditorProps> = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const editorRef = useRef<any>();
+  const editorRef = useRef<IStandaloneCodeEditor>();
   const [output, setOutput] = useState<string>("");
   const { token, username } = useAuth();
-  const { code, setCode, language, setLanguage } = useEditor();
+  const { doc, yProvider, language, setLanguage } = useEditor();
   const [question, setQuestion] = useState<QuestionDto>();
   const { room } = useWorkspaceRoom();
 
@@ -44,59 +38,32 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ roomId }) => {
       });
     }
   }, [token, room.question]);
-  const ydoc = useMemo(() => new Y.Doc(), []);
-  const [editor, setEditor] = useState<any | null>(null);
-  const [binding, setBinding] = useState<MonacoBinding | null>(null);
-  const [provider, setProvider] = useState<SocketIOProvider | null>(null);
 
   useEffect(() => {
-    if (!!ydoc && !provider) {
-      console.log("setting providers");
-      const socketIOProvider = new SocketIOProvider(
-        gatewayServiceURL,
-        roomId,
-        ydoc,
-        {
-          autoConnect: true,
-          // disableBc: true,
-          auth: { token: "valid-token" },
-        }
-      );
-      socketIOProvider.awareness.setLocalState({
-        id: Math.random(),
-        name: "Perico",
-      });
-      socketIOProvider.on("sync", (isSync: boolean) =>
-        console.log("websocket sync", isSync)
-      );
-      setProvider(socketIOProvider);
-    }
-  }, [ydoc, provider]);
-
-  useEffect(() => {
-    if (provider == null || editor == null) {
+    if (!yProvider || !doc || !editorRef.current) {
       return;
     }
-    console.log("reached", provider);
+    console.log("Creating MonacoBinding");
     const binding = new MonacoBinding(
-      ydoc.getText(),
-      editor.getModel()!,
-      new Set([editor]),
-      provider?.awareness
+      doc.getText(),
+      editorRef.current?.getModel(),
+      new Set([editorRef.current]),
+      yProvider.awareness
     );
-    setBinding(binding);
+
     return () => {
       binding.destroy();
     };
-  }, [ydoc, provider, editor]);
+  }, [yProvider, doc, editorRef.current]);
 
-  const onMount = (editor: any) => {
-    setEditor(editor);
-  };
+  const onMount = useCallback((editor: IStandaloneCodeEditor) => {
+    console.log("Editor mounted");
+    editorRef.current = editor;
+    editor.focus();
+  }, []);
 
   const onSelect = (language: Language) => {
     setLanguage(language);
-    setCode(CODE_SNIPPETS[language]);
   };
 
   const runCode = async () => {
@@ -114,8 +81,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ roomId }) => {
   };
 
   const saveAttempt = async () => {
-    const code = editorRef.current.getValue();
-    const title = question?.title;
+    const code = doc.getText().toJSON();
+    const title = question?.title ?? "";
     const datetime = new Date().toISOString();
     try {
       const result = await handleSaveAttempt(
@@ -161,7 +128,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ roomId }) => {
         options={{ minimap: { enabled: false } }}
         theme="vs-dark"
         language={language}
-        value={code}
         onMount={onMount}
       />
 
