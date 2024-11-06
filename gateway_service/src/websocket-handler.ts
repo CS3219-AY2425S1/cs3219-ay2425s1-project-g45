@@ -20,6 +20,7 @@ import RedisService from "./services/redisService";
 import { setUpChatHandler } from "./socketHandlers/chatHandler";
 import { setupRoomHandler } from "./socketHandlers/roomHandler";
 import { setUpCallHandler } from "./socketHandlers/callHandler";
+import { YSocketIO } from "y-socket.io/dist/server";
 
 type CollaborationEventKeys = Extract<keyof EventPayloads, CollaborationEvents>;
 
@@ -29,6 +30,7 @@ export class WebSocketHandler {
   private producer: Producer;
   private consumer: Consumer;
   private redis: RedisService;
+  private ySocket: YSocketIO;
 
   constructor(server: any, kafka: Kafka) {
     this.io = new Server(server, {
@@ -53,11 +55,13 @@ export class WebSocketHandler {
     this.consumer = kafka.consumer({ groupId: Groups.API_GATEWAY_GROUP });
 
     this.redis = RedisService.getInstance();
+    this.ySocket = new YSocketIO(this.io);
   }
 
   async initialize() {
     await this.setupKafka();
     await this.setupSocketHandlers();
+    this.ySocket.initialize();
   }
 
   private async setUsernameSocketId(username: string, socketId: string) {

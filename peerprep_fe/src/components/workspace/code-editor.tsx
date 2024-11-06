@@ -2,7 +2,10 @@ import { handleRunCode } from "../../app/actions/editor";
 import { useAuth } from "../../contexts/auth-context";
 import { Language, useEditor } from "../../contexts/editor-context";
 import { Editor } from "@monaco-editor/react";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import * as Y from "yjs";
+import { SocketIOProvider } from "y-socket.io";
+import { MonacoBinding } from "y-monaco";
 
 const CODE_SNIPPETS = {
   javascript: `\nfunction greet(name) {\n\tconsole.log("Hello, " + name + "!");\n}\n\ngreet("Alex");\n`,
@@ -11,18 +14,69 @@ const CODE_SNIPPETS = {
   java: `\npublic class HelloWorld {\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println("Hello World");\n\t}\n}\n`,
 };
 
-type CodeEditorProps = {};
+type CodeEditorProps = {
+  roomId: string;
+};
 
-const CodeEditor: React.FC<CodeEditorProps> = ({}) => {
+const gatewayServiceURL =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_GATEWAY_SERVICE_URL
+    : "localhost:5003";
+
+const CodeEditor: React.FC<CodeEditorProps> = ({ roomId }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editorRef = useRef<any>();
   const [output, setOutput] = useState<string>("");
   const { token } = useAuth();
   const { code, setCode, language, setLanguage } = useEditor();
+  const ydoc = useMemo(() => new Y.Doc(), []);
+  const [editor, setEditor] = useState<any | null>(null);
+  const [binding, setBinding] = useState<MonacoBinding | null>(null);
+  const [provider, setProvider] = useState<SocketIOProvider | null>(null);
+
+  useEffect(() => {
+    if (!!ydoc && !provider) {
+      console.log("setting providers");
+      const socketIOProvider = new SocketIOProvider(
+        gatewayServiceURL,
+        roomId,
+        ydoc,
+        {
+          autoConnect: true,
+          // disableBc: true,
+          auth: { token: "valid-token" },
+        }
+      );
+      socketIOProvider.awareness.setLocalState({
+        id: Math.random(),
+        name: "Perico",
+      });
+      socketIOProvider.on("sync", (isSync: boolean) =>
+        console.log("websocket sync", isSync)
+      );
+      setProvider(socketIOProvider);
+    }
+  }, [ydoc, provider]);
+
+  useEffect(() => {
+    if (provider == null || editor == null) {
+      return;
+    }
+    console.log("reached", provider);
+    const binding = new MonacoBinding(
+      ydoc.getText(),
+      editor.getModel()!,
+      new Set([editor]),
+      provider?.awareness
+    );
+    setBinding(binding);
+    return () => {
+      binding.destroy();
+    };
+  }, [ydoc, provider, editor]);
 
   const onMount = (editor: any) => {
-    editorRef.current = editor;
-    editor.focus();
+    setEditor(editor);
   };
 
   const onSelect = (language: Language) => {
@@ -31,7 +85,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({}) => {
   };
 
   const runCode = async () => {
-    const code = editorRef.current.getValue();
+    const code = editorRef?.current?.getValue();
     try {
       const result = await handleRunCode(code, language, token);
       if (!result.error) {
@@ -65,11 +119,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({}) => {
         language={language}
         value={code}
         onMount={onMount}
-        onChange={(value) => {
-          if (value !== undefined) {
-            setCode(value);
-          }
-        }}
       />
 
       <button
