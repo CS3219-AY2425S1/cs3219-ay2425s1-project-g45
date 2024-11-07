@@ -85,7 +85,7 @@ steps:
       - "--set-env-vars"
       - >-
         NODE_ENV=production,
-        CLIENT_URL: ${_CLIENT_URL}
+        CLIENT_URL=${_CLIENT_URL},
 
   ############################
   # end user service service
