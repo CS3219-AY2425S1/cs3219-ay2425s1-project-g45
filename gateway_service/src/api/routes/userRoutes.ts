@@ -49,4 +49,9 @@ router.post(
   requestHelper.sendPostRequest("resetpassword/token", USER_SERVICE)
 );
 
+router.post(
+  "/delete/:username",
+  requestHelper.sendPostRequest("delete/:username", USER_SERVICE)
+);
+
 export default router;

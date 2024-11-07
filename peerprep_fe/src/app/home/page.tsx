@@ -25,7 +25,7 @@ export default function Home() {
   const [currentEditQuestion, setCurrentEditQuestion] =
     useState<QuestionDto | null>(null);
 
-  const { token, username, logout } = useAuth();
+  const { token, username } = useAuth();
 
   useEffect(() => {
     if (token) {
@@ -104,7 +104,12 @@ export default function Home() {
             router.push("/match");
           }}
         />
-        <Button text="Logout" onClick={logout} />
+        <Button
+          text="Profile"
+          onClick={() => {
+            router.push("/profile");
+          }}
+        />
       </Header>
       <Button
         type="submit"

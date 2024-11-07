@@ -339,3 +339,41 @@ export async function resetPasswordWithToken(
     };
   }
 }
+
+export async function deleteUser(username: string) {
+  const gatewayServiceURL =
+    process.env.NODE_ENV === "production"
+      ? process.env.GATEWAY_SERVICE_URL
+      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
+
+  const data = {
+    username: username,
+  };
+
+  const response = await fetch(`${gatewayServiceURL}/auth/delete/${username}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  try {
+    const responseData = await response.json();
+    if (responseData.message) {
+      return {
+        message: responseData.message,
+      };
+    } else {
+      console.log(responseData.error);
+      return {
+        errors: { errorMessage: responseData.error },
+      };
+    }
+  } catch (error) {
+    console.error(`error: ${error}`);
+    return {
+      errors: {
+        errorMessage: "An error occured while attempting to reset password",
+      },
+    };
+  }
+}
