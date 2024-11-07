@@ -98,23 +98,18 @@ export async function saveAttempt(
 
     return "Attempt saved successfully";
   } catch (error: any) {
-    console.error("Error saving attempt:", error);
     throw new Error("Failed to save attempt");
   }
 }
 
 export async function getHistory(username: string) {
   try {
-    console.log("user service getHistory");
     const user = await User.findOne({ username });
     if (!user) {
       throw new Error("User not found");
     }
-
-    console.log("User found:", user); // Log the user data if found
     return user.history;
   } catch (error) {
-    console.error("Error in getHistory:"); // Log any errors
     throw error;
   }
 }

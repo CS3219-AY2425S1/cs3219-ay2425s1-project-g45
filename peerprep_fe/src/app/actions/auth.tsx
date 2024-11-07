@@ -221,7 +221,6 @@ export async function getHistory(username: string, token: string) {
     const responseData = await response.json();
     return { history: responseData.history };
   } catch (error) {
-    console.error("Error fetching history:", error);
     return { error: error.message || "Unable to fetch history." };
   }
 }
