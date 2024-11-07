@@ -69,17 +69,13 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   const { username } = useAuth();
   const { roomId } = useWorkspaceRoom();
 
-  const [videoStream, setVideoStream] = useState<MediaStream | undefined>(
-    undefined
-  );
+  const [videoStream, setVideoStream] = useState<MediaStream | null>(null);
   const [peer, setPeer] = useState<Peer.Instance | null>(null);
-
   const [callState, setCallState] = useState<CallState>({
     current_state: CallStates.CALL_ENDED,
     otherUser: "",
     signalData: null,
   });
-
   const ownVideoRef = useRef<HTMLVideoElement>(null);
   const userVideoRef = useRef<HTMLVideoElement>(null);
   const [isCallEndedModalOpen, setIsCallEndedModalOpen] = useState(false);
@@ -88,104 +84,157 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   const [isMicPermissionGranted, setIsMicPermissionGranted] = useState(true);
   const [isCameraPermissionGranted, setIsCameraPermissionGranted] =
     useState(true);
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
 
   const setVideo = (on: boolean) => {
+    if (callState.current_state === CallStates.CALL_ENDED) return;
     setIsVideoAllowed(on);
   };
 
   const setAudio = (on: boolean) => {
+    if (callState.current_state === CallStates.CALL_ENDED) return;
     setIsAudioAllowed(on);
+  };
+
+  const getMedia = async () => {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+
+    if (!devices.some((device) => device.kind === "audioinput")) {
+      throw new Error("No audio input device found");
+    }
+
+    const hasCamera = devices.some((device) => device.kind === "videoinput");
+    const stream: MediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: hasCamera,
+    });
+
+    return stream;
+  };
+
+  const removeUserMedia = () => {
+    if (videoStream) {
+      videoStream.getTracks().forEach((track) => {
+        track.stop();
+        videoStream.removeTrack(track);
+      });
+      setVideoStream(null);
+    }
+    if (ownVideoRef.current) {
+      ownVideoRef.current.srcObject = null;
+    }
+    if (userVideoRef.current) {
+      userVideoRef.current.srcObject = null;
+    }
   };
 
   const call = () => {
     if (callState.current_state !== CallStates.CALL_ENDED || !socket) return;
 
-    setCallState({
-      current_state: CallStates.CALL_INITIATED,
-      otherUser: "",
-      signalData: null,
-    });
+    getMedia()
+      .then((stream: MediaStream) => {
+        console.log("Initiating call...");
+        setVideoStream(stream);
 
-    const peer = new Peer({
-      initiator: true,
-      trickle: false,
-      stream: videoStream,
-    });
+        setCallState({
+          current_state: CallStates.CALL_INITIATED,
+          otherUser: "",
+          signalData: null,
+        });
 
-    peer.on("connect", () => {
-      console.log("Peer connection established");
-    });
+        const peer = new Peer({
+          initiator: true,
+          trickle: false,
+          stream: stream,
+        });
 
-    peer.on("error", (err) => {
-      console.error("Peer connection error:", err);
-    });
+        peer.on("connect", () => {
+          console.log("Peer connection established");
+        });
 
-    peer.on("signal", (signalData) => {
-      console.log("sending signal data", signalData);
-      socket.emit(ClientSocketEvents.INITIATE_CALL, {
-        roomId: roomId,
-        username: username,
-        signalData: signalData,
+        peer.on("error", (err) => {
+          console.error("Peer connection error:", err);
+        });
+
+        peer.on("signal", (signalData) => {
+          console.log("sending signal data", signalData);
+          socket.emit(ClientSocketEvents.INITIATE_CALL, {
+            roomId: roomId,
+            username: username,
+            signalData: signalData,
+          });
+        });
+
+        peer.on("stream", (peerStream) => {
+          console.log("received stream");
+          if (userVideoRef.current) {
+            userVideoRef.current.srcObject = peerStream;
+          }
+        });
+
+        setPeer(peer);
+      })
+      .catch((error) => {
+        console.error("Error getting user media:", error);
+        setIsPermissionModalOpen(true);
       });
-    });
-
-    peer.on("stream", (stream) => {
-      console.log("received stream");
-      if (userVideoRef.current) {
-        userVideoRef.current.srcObject = stream;
-      }
-    });
-
-    setPeer(peer);
   };
 
   const acceptCall = () => {
     if (!socket || !callState.signalData) return;
 
-    console.log("Accepting call...");
+    getMedia()
+      .then((stream: MediaStream) => {
+        console.log("Accepting call...");
+        setVideoStream(stream);
 
-    setCallState({
-      current_state: CallStates.CALL_ACCEPTED,
-      otherUser: callState.otherUser,
-      signalData: callState.signalData,
-    });
+        setCallState({
+          current_state: CallStates.CALL_ACCEPTED,
+          otherUser: callState.otherUser,
+          signalData: callState.signalData,
+        });
 
-    const peer = new Peer({
-      initiator: false,
-      trickle: false,
-      stream: videoStream,
-    });
+        const peer = new Peer({
+          initiator: false,
+          trickle: false,
+          stream: stream,
+        });
 
-    peer.on("connect", () => {
-      console.log("Peer connection established");
-    });
+        peer.on("connect", () => {
+          console.log("Peer connection established");
+        });
 
-    peer.on("error", (err) => {
-      console.error("Peer connection error:", err);
-    });
+        peer.on("error", (err) => {
+          console.error("Peer connection error:", err);
+        });
 
-    peer.on("signal", (signalData) => {
-      console.log("sending signal data", signalData);
-      socket.emit(ClientSocketEvents.ACCEPT_CALL, {
-        roomId: roomId,
-        username: username,
-        signalData,
+        peer.on("signal", (signalData) => {
+          console.log("sending signal data", signalData);
+          socket.emit(ClientSocketEvents.ACCEPT_CALL, {
+            roomId: roomId,
+            username: username,
+            signalData,
+          });
+        });
+
+        peer.on("stream", (peerStream) => {
+          console.log("received stream");
+          if (userVideoRef.current) {
+            userVideoRef.current.srcObject = peerStream;
+          }
+        });
+
+        peer.signal(callState.signalData);
+        setPeer(peer);
+      })
+      .catch((error) => {
+        console.error("Error getting user media:", error);
+        setIsPermissionModalOpen(true);
       });
-    });
-
-    peer.on("stream", (stream) => {
-      console.log("received stream");
-      if (userVideoRef.current) {
-        userVideoRef.current.srcObject = stream;
-      }
-    });
-
-    peer.signal(callState.signalData);
-    setPeer(peer);
   };
 
   const endCall = () => {
-    if (!socket) return;
+    if (!socket || callState.current_state == CallStates.CALL_ENDED) return;
 
     socket.emit(ClientSocketEvents.END_CALL, {
       roomId: roomId,
@@ -200,6 +249,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
 
     peer?.destroy();
     setPeer(null);
+    removeUserMedia();
   };
 
   const handleCallRequested = (response: CallRequestedResponse) => {
@@ -228,75 +278,18 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
 
   const handleCallEnded = () => {
     console.log("Call ended by other user");
-    setCallState({
-      current_state: CallStates.CALL_ENDED,
-      otherUser: "",
-      signalData: null,
-    });
-
-    peer?.destroy();
-    setPeer(null);
+    endCall();
     setIsCallEndedModalOpen(true);
   };
 
   const stopStream = useCallback(() => {
-    if (videoStream) {
-      console.log("stopping stream");
-      console.log(videoStream.getTracks());
-      const tracks = videoStream.getTracks();
-      tracks.forEach((track) => {
-        track.stop();
-        videoStream.removeTrack(track);
-      });
-      console.log(videoStream.getTracks());
-      setVideoStream(undefined);
-    }
+    removeUserMedia;
     peer?.destroy();
     setPeer(null);
   }, [videoStream, peer]);
 
-  const getUserMedia = async () => {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    let stream: MediaStream | null = null;
-    try {
-      if (devices.some((device) => device.kind === "audioinput")) {
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-        });
-        setIsMicPermissionGranted(true);
-      } else {
-        console.error("No audio input device found");
-      }
-    } catch (error) {
-      console.error("Error getting user media:", error);
-      setIsMicPermissionGranted(false);
-    }
-
-    try {
-      if (devices.some((device) => device.kind === "videoinput")) {
-        const vidStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-        if (stream) {
-          stream.addTrack(vidStream.getVideoTracks()[0]);
-        } else {
-          stream = vidStream;
-        }
-        setIsCameraPermissionGranted(true);
-      } else {
-        console.error("No video input device found");
-      }
-      setVideoStream(stream);
-    } catch (error) {
-      console.error("Error getting user media:", error);
-      setIsCameraPermissionGranted(false);
-    }
-  };
-
   const handleClosePermissionsModal = () => {
-    setIsMicPermissionGranted(true);
-    setIsCameraPermissionGranted(true);
-    getUserMedia();
+    setIsPermissionModalOpen(false);
   };
 
   useOnPageLeave(stopStream);
@@ -318,30 +311,36 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     };
   }, [socket, peer]);
 
+  // Update video stream when available
   useEffect(() => {
-    getUserMedia();
-
-    return () => {
-      stopStream();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (ownVideoRef.current && ownVideoRef.current.isConnected && videoStream) {
+    if (ownVideoRef.current && ownVideoRef.current.isConnected) {
       ownVideoRef.current.srcObject = videoStream;
     }
-  }, [videoStream]);
+  }, [ownVideoRef, videoStream]);
 
+  // Toggle mic
   useEffect(() => {
-    if (videoStream) {
-      videoStream.getAudioTracks().forEach((track) => {
+    if (!videoStream) return;
+    console.log("Toggling mic", isAudioAllowed);
+    videoStream.getTracks().forEach((track) => {
+      if (track.kind === "audio") {
+        console.log("Setting audio track enabled:", isAudioAllowed);
         track.enabled = isAudioAllowed;
-      });
-      videoStream.getVideoTracks().forEach((track) => {
+      }
+    });
+  }, [isAudioAllowed, videoStream]);
+
+  // Toggle camera
+  useEffect(() => {
+    if (!videoStream) return;
+    console.log("Toggling camera", isVideoAllowed);
+    videoStream.getTracks().forEach((track) => {
+      if (track.kind === "video") {
+        console.log("Setting video track enabled:", isVideoAllowed);
         track.enabled = isVideoAllowed;
-      });
-    }
-  }, [isAudioAllowed, isVideoAllowed, videoStream]);
+      }
+    });
+  }, [isVideoAllowed, videoStream]);
 
   const CallEndedModal = () => {
     return (
@@ -363,15 +362,14 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   const PermissionsNotAllowedModal = () => {
     return (
       <Modal
-        title="Please grant the following permissions"
-        isOpen={!isMicPermissionGranted || !isCameraPermissionGranted}
+        title="Please grant the following permissions to use the call feature"
+        isOpen={isPermissionModalOpen}
         isCloseable={false}
       >
         <div>
           <h1>
-            {!isMicPermissionGranted && "- Microphone"}
-            <br />
-            {!isCameraPermissionGranted && "- Camera"}
+            - Microphone
+            <br />- Camera
           </h1>
           <div>
             <Button
