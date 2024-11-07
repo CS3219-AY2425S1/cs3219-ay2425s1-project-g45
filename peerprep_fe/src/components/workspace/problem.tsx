@@ -49,7 +49,7 @@ const Problem: React.FC<ProblemProps> = ({ questionId }) => {
           {/* Examples */}
           {question?.examples && (
             <div className="mb-4">
-              <h3 className="title">Examples</h3>
+              <h3 className="title dark:text-white">Examples</h3>
               {question.examples.map((example, index) => (
                 <div
                   key={index}
@@ -74,7 +74,7 @@ const Problem: React.FC<ProblemProps> = ({ questionId }) => {
           {/* Constraints */}
           {question?.constraints && (
             <div className="mb4">
-              <h3 className="title">Constraints</h3>
+              <h3 className="title dark:text-white">Constraints</h3>
               <ul className="list-disc list-inside text-gray-700">
                 {question.constraints.map((constraint, index) => (
                   <li className="points" key={index}>
@@ -87,7 +87,7 @@ const Problem: React.FC<ProblemProps> = ({ questionId }) => {
 
           {/* Topic*/}
           <div className="mb-4">
-            <h3 className="title">Topics</h3>
+            <h3 className="title dark:text-white">Topics</h3>
             <p>
               {question?.topic?.map((topic, index) => (
                 <span key={index} className="topic">

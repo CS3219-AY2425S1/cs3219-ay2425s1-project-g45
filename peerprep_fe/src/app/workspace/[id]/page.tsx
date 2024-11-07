@@ -41,6 +41,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
   const [isVideoOpen, setIsVideoOpen] = useState<boolean>(true);
   const [leaveMessage, setLeaveMessage] = useState<string>("");
+  const [isNextBtnLoading, setIsNextBtnLoading] = useState<boolean>(false);
   const { stopStream } = useCall();
 
   function handleLeaveRoom() {
@@ -129,6 +130,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
       setError("User rejected the request to proceed to next question");
       setIsErrorModalOpen(true);
     }
+    setIsNextBtnLoading(false);
   };
   const openChat = () => {
     setIsChatOpen(true);
@@ -137,6 +139,10 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   const openVideo = () => {
     setIsChatOpen(false);
     setIsVideoOpen(true);
+  };
+  const onNextQuestion = () => {
+    nextQuestion();
+    setIsNextBtnLoading(true);
   };
 
   useEffect(() => {
@@ -238,7 +244,11 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
         {/* Right Pane */}
         <div className="w-3/5 px-4 inline-flex flex-col">
           <CodeEditor />
-          <Button text="Next Question" onClick={nextQuestion} />
+          <Button
+            loading={isNextBtnLoading}
+            text="Next Question"
+            onClick={onNextQuestion}
+          />
         </div>
       </div>
       <NextQuestionRequestModal />

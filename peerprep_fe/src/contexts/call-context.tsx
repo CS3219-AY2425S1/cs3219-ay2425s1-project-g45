@@ -103,9 +103,6 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     const hasCamera = devices.some(
       (device) =>
         device.kind === "videoinput" &&
-        device.label !== "" &&
-        device.deviceId !== "" &&
-        device.groupId !== "" &&
         // Handle edge case where user does not have a camera but a virtual camera is present
         // Need to add all the possible virtual camera names
         !device.label.includes("virtual") &&
