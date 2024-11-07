@@ -235,7 +235,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
 
   const endCall = () => {
     if (!socket || callState.current_state == CallStates.CALL_ENDED) return;
-
+    console.log("Ending call...");
     socket.emit(ClientSocketEvents.END_CALL, {
       roomId: roomId,
       username: username,
@@ -282,11 +282,12 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
     setIsCallEndedModalOpen(true);
   };
 
-  const stopStream = useCallback(() => {
-    removeUserMedia;
+  const stopStream = () => {
+    console.log("Cleaning up call resources");
+    endCall();
     peer?.destroy();
     setPeer(null);
-  }, [videoStream, peer]);
+  };
 
   const handleClosePermissionsModal = () => {
     setIsPermissionModalOpen(false);
