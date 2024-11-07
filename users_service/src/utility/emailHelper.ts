@@ -23,6 +23,7 @@ export async function sendPasswordResetEmail(
       path.join(__dirname, "../templates/requestResetPassword.handlebars"),
       "utf-8"
     );
+
     const compiledTemplate = Handlebars.compile(source);
 
     const passwordResetLink = `${process.env.CLIENT_URL}/passwordReset?token=${token}&username=${username}`;

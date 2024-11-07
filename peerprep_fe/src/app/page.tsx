@@ -9,31 +9,35 @@ import Modal from "../components/common/modal";
 
 import { LoginForm } from "../components/auth/login-form";
 import { SignupForm } from "../components/auth/signup-form";
+import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 
 export default function Home() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
+    useState(false);
 
-  const openLoginModal = () => {
-    setIsLoginModalOpen(true);
+  const toggleLoginModal = () => {
+    setIsLoginModalOpen((prev) => !prev);
   };
 
-  const closeLoginModal = () => {
-    setIsLoginModalOpen(false);
+  const toggleSignUpModal = () => {
+    setIsSignUpModalOpen((prev) => !prev);
   };
 
-  const openSignUpModal = () => {
-    setIsSignUpModalOpen(true);
+  const toggleResetPasswordModal = () => {
+    setIsResetPasswordModalOpen((prev) => !prev);
   };
 
-  const closeSignUpModal = () => {
-    setIsSignUpModalOpen(false);
+  const onForgotPassword = () => {
+    toggleLoginModal();
+    toggleResetPasswordModal();
   };
 
   const LoginModal = () => {
     return (
-      <Modal isOpen={isLoginModalOpen} title="Login" onClose={closeLoginModal}>
-        <LoginForm />
+      <Modal isOpen={isLoginModalOpen} title="Login" onClose={toggleLoginModal}>
+        <LoginForm onForgotPassword={onForgotPassword} />
       </Modal>
     );
   };
@@ -43,9 +47,21 @@ export default function Home() {
       <Modal
         isOpen={isSignUpModalOpen}
         title="Sign Up"
-        onClose={closeSignUpModal}
+        onClose={toggleSignUpModal}
       >
         <SignupForm />
+      </Modal>
+    );
+  };
+
+  const ResetPasswordModal = () => {
+    return (
+      <Modal
+        isOpen={isResetPasswordModalOpen}
+        title="Reset Password"
+        onClose={toggleResetPasswordModal}
+      >
+        <ResetPasswordForm />
       </Modal>
     );
   };
@@ -53,7 +69,7 @@ export default function Home() {
   return (
     <div className="h-screen flex flex-col max-w-6xl mx-auto py-10 ">
       <Header>
-        <Button text="Login" onClick={openLoginModal} />
+        <Button text="Login" onClick={toggleLoginModal} />
       </Header>
 
       <main className="relative mx-5 flex space-x-20 items-center flex-1">
@@ -63,7 +79,7 @@ export default function Home() {
           </h1>
           <p className="text-2xl font-hairline font-albert">easier than ever</p>
           <div className="mt-10 w-3/4">
-            <Button text="Sign Up" onClick={openSignUpModal} />
+            <Button text="Sign Up" onClick={toggleSignUpModal} />
           </div>
         </div>
 
@@ -79,6 +95,7 @@ export default function Home() {
 
       <LoginModal />
       <SignUpModal />
+      <ResetPasswordModal />
     </div>
   );
 }

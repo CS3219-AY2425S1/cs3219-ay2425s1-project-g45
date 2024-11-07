@@ -7,8 +7,14 @@ import { login } from "../../app/actions/auth";
 import { useEffect } from "react";
 import { useAuth } from "../../contexts/auth-context";
 import { FormState } from "../../app/types/AuthTypes";
+import TextButton from "../common/text-button";
 
-export function LoginForm() {
+interface LoginFormProps {
+  onForgotPassword: VoidFunction;
+}
+
+export function LoginForm(props: LoginFormProps) {
+  const { onForgotPassword } = props;
   const defaultState: FormState = {};
   const [state, action] = useFormState(login, defaultState);
   const { updateToken } = useAuth();
@@ -29,7 +35,7 @@ export function LoginForm() {
         <Textfield
           name="username"
           secure={false}
-          placeholder_text="Name"
+          placeholder_text="Username"
           required={true}
           minLength={2}
           maxLength={20}
@@ -46,6 +52,7 @@ export function LoginForm() {
         <p className="error">{state?.errors?.password}</p>
         <Button type="submit" text="Login" />
       </form>
+      <TextButton text="Forgot your password?" onClick={onForgotPassword} />
     </div>
   );
 }

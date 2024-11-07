@@ -1,7 +1,7 @@
 "use server";
 
 import dotenv from "dotenv";
-import { FormState } from "../types/AuthTypes";
+import { FormState, ResetFormState } from "../types/AuthTypes";
 
 dotenv.config();
 
@@ -226,13 +226,18 @@ export async function getHistory(username: string, token: string) {
   }
 }
 
-export async function requestResetPassword(username: string) {
+export async function requestResetPassword(
+  formState: ResetFormState,
+  formData: FormData
+) {
   const gatewayServiceURL =
     process.env.NODE_ENV === "production"
       ? process.env.GATEWAY_SERVICE_URL
       : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
-  const data = { username: username };
+  const data = {
+    username: formData.get("username"),
+  };
 
   const response = await fetch(`${gatewayServiceURL}/auth/requestreset`, {
     method: "POST",
@@ -248,7 +253,7 @@ export async function requestResetPassword(username: string) {
       };
     } else {
       return {
-        errors: { errorMessage: responseData },
+        errors: { errorMessage: responseData.error?.message },
       };
     }
   } catch (error) {
