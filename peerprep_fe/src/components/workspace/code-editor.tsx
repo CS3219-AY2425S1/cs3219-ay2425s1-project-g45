@@ -60,6 +60,8 @@ const CodeEditor: React.FC<CodeEditorProps> = () => {
     console.log("Editor mounted");
     editorRef.current = editor;
     editor.focus();
+    const monacoModel = editor.getModel();
+    monacoModel?.setEOL(monacoModel.getEndOfLineSequence());
   }, []);
 
   const onSelect = (language: Language) => {
