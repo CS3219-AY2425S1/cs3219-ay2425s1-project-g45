@@ -81,28 +81,30 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ isVisible }) => {
   };
 
   return (
-    <div
-      className={`relative h-full w-full flex-col bg-white dark:bg-slate-800 rounded-lg ${isVisible ? "z-50" : "hidden"} `}
-    >
-      <div className="flex">
-        <video
-          className="h-1/2 w-1/2"
-          playsInline
-          autoPlay
-          muted
-          ref={ownVideoRef}
-        />
-        <video
-          className="h-1/2 w-1/2"
-          playsInline
-          autoPlay
-          ref={userVideoRef}
-        />
-      </div>
-      <div className="flex space-x-4 px-4">
-        <ToggleVideoButton />
-        <ToggleAudioButton />
-        <CallButton />
+    <div className="relative h-full w-full">
+      <div
+        className={`h-full w-full flex-col bg-white dark:bg-slate-800 rounded-lg ${isVisible ? "z-50" : "hidden"}`}
+      >
+        <div className="flex">
+          <video
+            className="h-1/2 w-1/2"
+            playsInline
+            autoPlay
+            muted
+            ref={ownVideoRef}
+          />
+          <video
+            className="h-1/2 w-1/2"
+            playsInline
+            autoPlay
+            ref={userVideoRef}
+          />
+        </div>
+        <div className="flex space-x-4 px-4">
+          <ToggleVideoButton />
+          <ToggleAudioButton />
+          <CallButton />
+        </div>
       </div>
       <AcceptCallModal />
     </div>
