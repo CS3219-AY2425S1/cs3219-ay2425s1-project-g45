@@ -11,7 +11,7 @@ export async function sendPasswordResetEmail(
   try {
     // create reusable transporter object using the default SMTP transport
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
+      service: process.env.EMAIL_SERVICE,
       port: 465,
       auth: {
         user: process.env.EMAIL_USERNAME,
@@ -36,6 +36,7 @@ export async function sendPasswordResetEmail(
 
     console.log(`Message sent: ${info.messageId}`);
   } catch (error) {
+    console.log(error);
     throw new Error("Unable to send password reset email");
   }
 }
@@ -44,7 +45,7 @@ export async function sendResetSuccessEmail(email: string, username: string) {
   try {
     // create reusable transporter object using the default SMTP transport
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
+      service: process.env.EMAIL_SERVICE,
       port: 465,
       auth: {
         user: process.env.EMAIL_USERNAME,

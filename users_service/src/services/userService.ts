@@ -130,7 +130,7 @@ export async function getPasswordResetToken(username: string) {
     // if a token exists, delete it
     const token = Token.findOne({ username });
     if (token) {
-      token.deleteOne();
+      await token.deleteOne();
     }
 
     const { resetToken, hashedToken } = await getResetToken(username);
