@@ -1,20 +1,22 @@
 "use server";
 
 import dotenv from "dotenv";
-import { FormState } from "../types/AuthTypes";
-
 dotenv.config();
 
-export async function signup(state: FormState, formData: FormData) {
-  const result = validateSignUpFormData(formData);
+export async function signup(
+  username: string,
+  password: string,
+  email: string
+) {
+  const result = validateSignUpFormData(username, password, email);
   if (!result.success) {
-    return { errors: result.errors };
+    return result.error;
   }
 
   const data = {
-    username: `${formData.get("username")}`,
-    email: `${formData.get("email")}`,
-    password: `${formData.get("password")}`,
+    username: username,
+    email: email,
+    password: password,
   };
 
   const gatewayServiceURL =
@@ -30,29 +32,25 @@ export async function signup(state: FormState, formData: FormData) {
   try {
     const responseData = await response.json();
     if (responseData.token) {
-      return {
-        message: { token: responseData.token, username: data.username },
-      };
+      return { token: responseData.token };
     } else {
-      return { errors: { errorMessage: responseData } };
+      return responseData;
     }
   } catch (error) {
     console.error(`error: ${error}`);
-    return {
-      errors: { errorMessage: "An error occurred while signing up" },
-    };
+    return "An error occurred while signing up";
   }
 }
 
-export async function login(formState: FormState, formData: FormData) {
-  const result = validateLoginFormData(formData);
+export async function login(username: string, password: string) {
+  const result = validateLoginFormData(username, password);
   if (!result.success) {
-    return { errors: result.errors };
+    return result.error;
   }
 
   const data = {
-    username: `${formData.get("username")}`,
-    password: `${formData.get("password")}`,
+    username: username,
+    password: password,
   };
 
   const gatewayServiceURL =
@@ -69,19 +67,13 @@ export async function login(formState: FormState, formData: FormData) {
   try {
     const responseData = await response.json();
     if (responseData.token) {
-      return {
-        message: { token: responseData.token, username: responseData.username },
-      };
+      return { token: responseData.token };
     } else {
-      return {
-        errors: { errorMessage: responseData },
-      };
+      return responseData;
     }
   } catch (error) {
     console.error(`error: ${error}`);
-    return {
-      errors: { errorMessage: "An error occurred while logging in" },
-    };
+    return "An error occurred while logging in";
   }
 }
 
@@ -116,47 +108,38 @@ function validateName(name: string): boolean {
 
 interface FormValidation {
   success: boolean;
-  errors?: {
-    name?: string;
-    email?: string;
-    password?: string;
-  };
+  error?: string;
 }
 
-function validateLoginFormData(formData: FormData): FormValidation {
-  if (!formData.get("username")) {
+function validateLoginFormData(
+  username: string,
+  password: string
+): FormValidation {
+  if (!username || username.length === 0) {
     return {
       success: false,
-      errors: {
-        name: "Name is required",
-      },
+      error: "Name is required",
     };
   }
 
-  if (!formData.get("password")) {
+  if (!password || password.length === 0) {
     return {
       success: false,
-      errors: {
-        password: "Password is required",
-      },
+      error: "Password is required",
     };
   }
 
-  if (!validateName(`${formData.get("username")}`)) {
+  if (!validateName(username)) {
     return {
       success: false,
-      errors: {
-        name: "Name must be at least 2 characters",
-      },
+      error: "Name must be at least 2 characters",
     };
   }
 
-  if (!validatePassword(`${formData.get("password")}`)) {
+  if (!validatePassword(`password`)) {
     return {
       success: false,
-      errors: {
-        password: "Password must be at least 8 characters",
-      },
+      error: "Password must be at least 8 characters",
     };
   }
 
@@ -165,28 +148,28 @@ function validateLoginFormData(formData: FormData): FormValidation {
   };
 }
 
-function validateSignUpFormData(formData: FormData): FormValidation {
-  const result = validateLoginFormData(formData);
+function validateSignUpFormData(
+  username: string,
+  password: string,
+  email: string
+): FormValidation {
+  const result = validateLoginFormData(username, password);
 
   if (!result.success) {
     return result;
   }
 
-  if (!formData.get("email")) {
+  if (!email || email.length === 0) {
     return {
       success: false,
-      errors: {
-        email: "Email is required",
-      },
+      error: "Email is required",
     };
   }
 
-  if (!validateEmail(`${formData.get("email")}`)) {
+  if (!validateEmail(email)) {
     return {
       success: false,
-      errors: {
-        email: "Invalid email",
-      },
+      error: "Invalid email",
     };
   }
   return {
