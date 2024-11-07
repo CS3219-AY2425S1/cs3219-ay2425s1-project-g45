@@ -1,5 +1,5 @@
 export interface IToken {
-  username: String;
-  token: String;
+  username: string;
+  token: string;
   createdAt: Date;
 }

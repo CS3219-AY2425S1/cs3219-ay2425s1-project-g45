@@ -1,7 +1,14 @@
 import { User } from "../models/User";
 import { IUser } from "../interfaces/IUser";
-import { hashPassword, comparePassword } from "../utility/passwordHelper";
+import { Token } from "../models/Token";
+import { IToken } from "../interfaces/IToken";
+import { hashPassword, compareHash } from "../utility/passwordHelper";
 import { generateToken } from "../utility/jwtHelper";
+import { getResetToken } from "../utility/passwordHelper";
+import {
+  sendPasswordResetEmail,
+  sendResetSuccessEmail,
+} from "../utility/emailHelper";
 
 const MAX_LOGIN_ATTEMPTS = 5;
 
@@ -34,7 +41,7 @@ export async function signIn(username: string, password: string) {
   console.log("user service");
   if (user) {
     if (!user.is_locked) {
-      const isCorrectPassword = await comparePassword(password, user.password);
+      const isCorrectPassword = await compareHash(password, user.password);
       if (isCorrectPassword) {
         user.login_attempts = 0;
         await user.save();
@@ -74,7 +81,7 @@ export async function saveAttempt(
   try {
     // Find the user by username
     const user = await User.findOne({ username });
-    
+
     if (!user) {
       throw new Error("User not found");
     }
@@ -103,7 +110,7 @@ export async function getHistory(username: string) {
     if (!user) {
       throw new Error("User not found");
     }
-    
+
     console.log("User found:", user); // Log the user data if found
     return user.history;
   } catch (error) {
@@ -112,3 +119,98 @@ export async function getHistory(username: string) {
   }
 }
 
+export async function getPasswordResetToken(username: string) {
+  try {
+    // check if the user exists
+    const user = await User.findOne({ username });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // if a token exists, delete it
+    const token = Token.findOne({ username });
+    if (token) {
+      token.deleteOne();
+    }
+
+    const { resetToken, hashedToken } = await getResetToken(username);
+
+    await new Token({
+      username: username,
+      token: hashedToken,
+      createdAt: Date.now(),
+    }).save();
+
+    sendPasswordResetEmail(user.email, username, resetToken);
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function resetPassword(
+  username: string,
+  password: string,
+  newPassword: string
+) {
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (user.is_locked) {
+      throw new Error("User account is locked");
+    }
+
+    const isCorrectPassword = await compareHash(password, user.password);
+    if (isCorrectPassword) {
+      user.login_attempts = 0;
+      user.password = await hashPassword(newPassword);
+      await user.save();
+
+      return true;
+    } else {
+      user.login_attempts += 1;
+      if (user.login_attempts >= MAX_LOGIN_ATTEMPTS) {
+        user.is_locked = true;
+      }
+      await user.save();
+      throw new Error("Invalid Password");
+    }
+  } catch (error) {
+    throw new Error("Unable to reset password");
+  }
+}
+
+export async function resetPasswordWithToken(
+  username: string,
+  resetToken: string,
+  newPassword: string
+) {
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const token = await Token.findOne({ username });
+    if (!token) {
+      throw new Error("Expired password reset token");
+    }
+
+    const isTokenValid = await compareHash(resetToken, token.token);
+    if (!isTokenValid) {
+      throw new Error("Invalid password reset token");
+    }
+
+    const hashedPassword = await hashPassword(newPassword);
+    user.password = hashedPassword;
+    user.is_locked = false;
+    user.login_attempts = 0;
+    await user.save();
+
+    await sendResetSuccessEmail(user.email, username);
+  } catch (error) {
+    throw error;
+  }
+}
