@@ -154,6 +154,11 @@ export const AuthProvider = ({ children }: Props) => {
   const logout = () => {
     router.push("/");
     deleteToken();
+
+    setTimeout(() => {
+      setModalMessage("You have been logged out.");
+      setIsRedirectModalOpen(true);
+    }, 50);
   };
 
   // Loads token from cookies on mount
