@@ -89,7 +89,7 @@ router.post("/requestreset", async (req, res) => {
 
     res.status(200).json({ message: "Password reset token sent to email" });
   } catch (error: any) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ error: error });
   }
 });
 
