@@ -87,6 +87,9 @@ export const AuthProvider = ({ children }: Props) => {
   };
 
   const onAuthenticateTokenFailure = () => {
+    if (pathname.includes("/passwordReset")) {
+      return;
+    }
     if (pathname !== "/") {
       if (token) {
         setModalMessage("Session expired. Please log in again.");

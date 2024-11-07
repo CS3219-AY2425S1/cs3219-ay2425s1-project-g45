@@ -9,7 +9,7 @@ import Modal from "../components/common/modal";
 
 import { LoginForm } from "../components/auth/login-form";
 import { SignupForm } from "../components/auth/signup-form";
-import { ResetPasswordForm } from "@/components/auth/reset-password-form";
+import { ResetPasswordForm } from "../components/auth/reset-password-form";
 
 export default function Home() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -58,7 +58,7 @@ export default function Home() {
     return (
       <Modal
         isOpen={isResetPasswordModalOpen}
-        title="Reset Password"
+        title="Forgot Password?"
         onClose={toggleResetPasswordModal}
       >
         <ResetPasswordForm />
