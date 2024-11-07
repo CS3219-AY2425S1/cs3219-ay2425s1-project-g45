@@ -34,5 +34,19 @@ router.get(
   requestHelper.sendGetRequest("history/:username", USER_SERVICE)
 );
 
+router.post(
+  "/requestreset",
+  requestHelper.sendPostRequest("requestreset", USER_SERVICE)
+);
+
+router.post(
+  "/resetpassword/password",
+  requestHelper.sendPostRequest("resetpassword/password", USER_SERVICE)
+);
+
+router.post(
+  "/resetpassword/token",
+  requestHelper.sendPostRequest("resetpassword/token", USER_SERVICE)
+);
 
 export default router;

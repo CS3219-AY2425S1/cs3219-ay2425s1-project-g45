@@ -26,7 +26,7 @@ export function SignupForm() {
           <Textfield
             name="username"
             secure={false}
-            placeholder_text="Name"
+            placeholder_text="Username"
             required={true}
             minLength={2}
             maxLength={20}

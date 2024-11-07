@@ -1,7 +1,7 @@
 export interface IHistory {
-  question: string;        // ID or reference to the question attempted
-  attemptDateTime: string;     // Date-time of the attempt
-  attemptData: string;       // Data of the attempt, could be answer text, code, etc.
+  question: string; // ID or reference to the question attempted
+  attemptDateTime: string; // Date-time of the attempt
+  attemptData: string; // Data of the attempt, could be answer text, code, etc.
 }
 export interface IUser extends Document {
   username: string;
@@ -17,4 +17,3 @@ export enum Roles {
   admin = "admin",
   user = "user",
 }
-
