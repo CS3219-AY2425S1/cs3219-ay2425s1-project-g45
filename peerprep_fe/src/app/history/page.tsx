@@ -10,25 +10,29 @@ import Header from "../../components/common/header";
 import Button from "../../components/common/button";
 import Modal from "../../components/common/modal";
 import { getHistory } from "../actions/auth";
+import TextButton from "../../components/common/text-button";
 
 export default function History() {
     const router = useRouter();
-    const { token, deleteToken, username } = useAuth();
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [history, setHistory] = useState([]);
-    const [selectedSolution, setSelectedSolution] = useState(""); // State to store the solution to be shown
+const { token, deleteToken, username } = useAuth();
+const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+const [history, setHistory] = useState([]);
+const [selectedSolution, setSelectedSolution] = useState(""); // State to store the solution to be shown
 
-    useEffect(() => {
-        async function fetchHistory() {
-            if (username) {
-                const userHistory = await getHistory(username, token);
-                if (userHistory.error) {
-                    console.error("Failed to fetch history:", userHistory.error);
-                } 
+useEffect(() => {
+    async function fetchHistory() {
+        if (username) {
+            const userHistory = await getHistory(username, token);
+            if (userHistory.error) {
+                console.error("Failed to fetch history:", userHistory.error);
+            } else {
+                setHistory(userHistory.history); // Update the history state with the fetched data
             }
         }
+    }
         fetchHistory();
-    }, [username]);
+    }, [username, token]); // Include 'token' in the dependency array to refetch if it changes
+
     
 
     const openViewAttemptModal = (attemptData: string) => {
@@ -47,8 +51,9 @@ export default function History() {
                 isScrollable={true}
                 onClose={() => setIsAddModalOpen(false)} // Close the modal
             >
-                {/* Display the saved solution */}
-                <div>{selectedSolution}</div>
+                <div className="bg-gray-100 p-4 rounded-md shadow-md">
+                    <p className="text-gray-800 whitespace-pre-wrap">{selectedSolution}</p>
+                </div>
             </Modal>
         );
     };
@@ -96,13 +101,24 @@ export default function History() {
                                         {attempt.question}
                                     </td>
                                     <td className="py-3 px-6 text-left whitespace-nowrap">
-                                        {attempt.attemptDateTime}
+                                        {new Date(attempt.attemptDateTime).toLocaleString("en-US", {
+                                            year: "numeric",
+                                            month: "short", // "short" for abbreviated month name
+                                            day: "numeric",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            second: "2-digit",
+                                            hour12: true // Use 12-hour format (AM/PM)
+                                        })}
                                     </td>
                                     <td
-                                        className="py-3 px-6 text-left whitespace-nowrap cursor-pointer text-blue-500 hover:underline"
-                                        onClick={() => openViewAttemptModal(attempt.attemptData)} // Pass the solution data to modal
+                                        className="py-3 px-6 text-left whitespace-nowrap cursor-pointer text-blue-500"
                                     >
-                                        View Attempt
+                                        <Button
+                                        type="submit"
+                                        onClick={() => openViewAttemptModal(attempt.attemptData)}
+                                        text="View Attempt"
+                                    />
                                     </td>
                                 </tr>
                             ))
