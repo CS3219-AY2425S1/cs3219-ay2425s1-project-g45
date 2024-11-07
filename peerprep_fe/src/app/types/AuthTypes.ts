@@ -19,10 +19,3 @@ export type AuthUser = {
   token: string;
   user: TUser;
 };
-
-export type ResetFormState =
-  | {
-      error?: string;
-      message?: string;
-    }
-  | undefined;
