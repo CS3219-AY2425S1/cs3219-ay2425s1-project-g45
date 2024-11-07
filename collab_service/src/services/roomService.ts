@@ -108,7 +108,7 @@ export async function updateMessages(roomId: string, messages: ChatMessage[]) {
 }
 
 async function getRandomQuestion(topic: string, difficulty: DifficultyLevel) {
-  let url = `${QUESTION_SERVICE}/questions/random/?topic=${topic}&difficulty=${difficulty}`;
+  let url = `${QUESTION_SERVICE}/questions/random/?topic=${topic}&difficultyLevel=${difficulty}`;
   try {
     const response = await axios.get(url);
     return response.data;
