@@ -189,7 +189,6 @@ function validateSignUpFormData(formData: FormData): FormValidation {
       },
     };
   }
-
   return {
     success: true,
   };
@@ -197,29 +196,161 @@ function validateSignUpFormData(formData: FormData): FormValidation {
 
 export async function getHistory(username: string, token: string) {
   const gatewayServiceURL =
-      process.env.NODE_ENV === "production"
-          ? process.env.GATEWAY_SERVICE_URL
-          : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
+    process.env.NODE_ENV === "production"
+      ? process.env.GATEWAY_SERVICE_URL
+      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
   try {
-      const response = await fetch(`${gatewayServiceURL}/auth/history/${username}`, {
-          method: "GET",
-          headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-          },
-      });
-
-      if (!response.ok) {
-          throw new Error(`Server error: ${response.status} ${response.statusText}`);
+    const response = await fetch(
+      `${gatewayServiceURL}/auth/history/${username}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       }
+    );
 
-      const responseData = await response.json();
-      return { history: responseData.history };
+    if (!response.ok) {
+      throw new Error(
+        `Server error: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const responseData = await response.json();
+    return { history: responseData.history };
   } catch (error) {
-      console.error("Error fetching history:", error);
-      return { error: error.message || "Unable to fetch history." };
+    console.error("Error fetching history:", error);
+    return { error: error.message || "Unable to fetch history." };
   }
 }
 
+export async function requestResetPassword(username: string) {
+  const gatewayServiceURL =
+    process.env.NODE_ENV === "production"
+      ? process.env.GATEWAY_SERVICE_URL
+      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
+  const data = { username: username };
+
+  const response = await fetch(`${gatewayServiceURL}/auth/requestreset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  try {
+    const responseData = await response.json();
+    if (responseData.ok) {
+      return {
+        message: responseData.message,
+      };
+    } else {
+      return {
+        errors: { errorMessage: responseData },
+      };
+    }
+  } catch (error) {
+    console.error(`error: ${error}`);
+    return {
+      errors: {
+        errorMessage: "An error occured while requesting to reset password",
+      },
+    };
+  }
+}
+
+export async function resetPasswordWithPassword(
+  username: string,
+  password: string,
+  newPassword: string
+) {
+  const gatewayServiceURL =
+    process.env.NODE_ENV === "production"
+      ? process.env.GATEWAY_SERVICE_URL
+      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
+
+  const data = {
+    username: username,
+    password: password,
+    newPassword: newPassword,
+  };
+
+  const response = await fetch(
+    `${gatewayServiceURL}/auth/resetpassword/password`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  );
+
+  try {
+    const responseData = await response.json();
+    if (responseData.ok) {
+      console.log("Reset password with password");
+      return {
+        message: responseData.message,
+      };
+    } else {
+      return {
+        errors: { errorMessage: responseData },
+      };
+    }
+  } catch (error) {
+    console.error(`error: ${error}`);
+    return {
+      errors: {
+        errorMessage: "An error occured while attempting to reset password",
+      },
+    };
+  }
+}
+
+export async function resetPasswordWithToken(
+  username: string,
+  token: string,
+  newPassword: string
+) {
+  const gatewayServiceURL =
+    process.env.NODE_ENV === "production"
+      ? process.env.GATEWAY_SERVICE_URL
+      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
+
+  const data = {
+    username: username,
+    token: token,
+    newPassword: newPassword,
+  };
+
+  const response = await fetch(
+    `${gatewayServiceURL}/auth/resetpassword/token`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  );
+
+  try {
+    const responseData = await response.json();
+    if (responseData.ok) {
+      console.log("Reset password with token");
+      return {
+        message: responseData.message,
+      };
+    } else {
+      return {
+        errors: { errorMessage: responseData },
+      };
+    }
+  } catch (error) {
+    console.error(`error: ${error}`);
+    return {
+      errors: {
+        errorMessage: "An error occured while attempting to reset password",
+      },
+    };
+  }
+}
