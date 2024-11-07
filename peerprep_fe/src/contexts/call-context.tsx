@@ -81,9 +81,6 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
   const [isCallEndedModalOpen, setIsCallEndedModalOpen] = useState(false);
   const [isVideoAllowed, setIsVideoAllowed] = useState(false);
   const [isAudioAllowed, setIsAudioAllowed] = useState(false);
-  const [isMicPermissionGranted, setIsMicPermissionGranted] = useState(true);
-  const [isCameraPermissionGranted, setIsCameraPermissionGranted] =
-    useState(true);
   const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
 
   const setVideo = (on: boolean) => {
@@ -103,7 +100,17 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children }) => {
       throw new Error("No audio input device found");
     }
 
-    const hasCamera = devices.some((device) => device.kind === "videoinput");
+    const hasCamera = devices.some(
+      (device) =>
+        device.kind === "videoinput" &&
+        device.label !== "" &&
+        device.deviceId !== "" &&
+        device.groupId !== "" &&
+        // Handle edge case where user does not have a camera but a virtual camera is present
+        // Need to add all the possible virtual camera names
+        !device.label.includes("virtual") &&
+        !device.label.includes("NVIDIA")
+    );
     const stream: MediaStream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: hasCamera,
