@@ -1,13 +1,10 @@
 "use client";
 
-import { useFormState } from "react-dom";
 import Textfield from "../../components/common/text-field";
 import Button from "../../components/common/button";
-import { login } from "../../app/actions/auth";
-import { useEffect } from "react";
-import { useAuth } from "../../contexts/auth-context";
-import { FormState } from "../../app/types/AuthTypes";
 import TextButton from "../common/text-button";
+import { useState } from "react";
+import { useAuth } from "../../contexts/auth-context";
 
 interface LoginFormProps {
   onForgotPassword: VoidFunction;
@@ -15,43 +12,50 @@ interface LoginFormProps {
 
 export function LoginForm(props: LoginFormProps) {
   const { onForgotPassword } = props;
-  const defaultState: FormState = {};
-  const [state, action] = useFormState(login, defaultState);
-  const { updateToken } = useAuth();
+  const { login } = useAuth();
 
-  useEffect(() => {
-    if (state?.message) {
-      updateToken(state.message.token);
-      console.log(state.message);
-    } else if (state?.errors?.errorMessage) {
-      alert(state.errors.errorMessage);
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const handleLogin = async () => {
+    setIsLoading(true);
+    const response = await login(username, password);
+    setIsLoading(false);
+    if (response.success) {
+      console.log("Login successful");
+    } else {
+      console.log(`Login failed: ${response.error}`);
+      alert(response.error);
     }
-  }, [state]);
+  };
 
-  // TODO: Make errors look better
   return (
     <div>
-      <form action={action}>
-        <Textfield
-          name="username"
-          secure={false}
-          placeholder_text="Username"
-          required={true}
-          minLength={2}
-          maxLength={20}
-        />
-        <p className="error">{state?.errors?.name}</p>
-        <Textfield
-          name="password"
-          secure={true}
-          placeholder_text="Password"
-          required={true}
-          minLength={8}
-          maxLength={20}
-        />
-        <p className="error">{state?.errors?.password}</p>
-        <Button type="submit" text="Login" />
-      </form>
+      <Textfield
+        name="username"
+        secure={false}
+        placeholder_text="Username"
+        required={true}
+        minLength={2}
+        maxLength={20}
+        onChange={(e) => setUsername(e.target.value)}
+      />
+      <Textfield
+        name="password"
+        secure={true}
+        placeholder_text="Password"
+        required={true}
+        minLength={8}
+        maxLength={20}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <Button
+        loading={isLoading}
+        type="submit"
+        text="Login"
+        onClick={handleLogin}
+      />
       <TextButton text="Forgot your password?" onClick={onForgotPassword} />
     </div>
   );

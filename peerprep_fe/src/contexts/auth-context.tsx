@@ -8,23 +8,34 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCookies } from "next-client-cookies";
-import { validateToken } from "../app/actions/auth";
+import { login, signup, validateToken } from "../app/actions/auth";
 
 import Modal from "../components/common/modal";
 import Button from "../components/common/button";
 
+interface AuthResponse {
+  success: boolean;
+  error?: string;
+}
+
 interface TAuthContext {
   token: string | null;
   username: string | null;
-  updateToken: (token: string) => void;
-  deleteToken: () => void;
+  login: (username: string, password: string) => Promise<AuthResponse>;
+  signup: (
+    username: string,
+    password: string,
+    email: string
+  ) => Promise<AuthResponse>;
+  logout: () => void;
 }
 
 export const AuthContext = createContext<TAuthContext>({
   token: null,
-  updateToken: () => {},
-  deleteToken: () => {},
   username: null,
+  login: async () => ({ success: false, error: "An error occurred" }),
+  signup: async () => ({ success: false, error: "An error occurred" }),
+  logout: () => {},
 });
 
 interface Props {
@@ -42,12 +53,7 @@ export const AuthProvider = ({ children }: Props) => {
 
   const RedirectModal = () => {
     return (
-      <Modal
-        isOpen={isRedirectModalOpen}
-        title=""
-        isCloseable={false}
-        onClose={() => setIsRedirectModalOpen(false)}
-      >
+      <Modal isOpen={isRedirectModalOpen} title="" isCloseable={false}>
         <div className="flex flex-col items-center">
           <h1 className="text-2xl font-semibold mb-4">{modalMessage}</h1>
           <Button
@@ -90,7 +96,7 @@ export const AuthProvider = ({ children }: Props) => {
     if (pathname.includes("/passwordReset")) {
       return;
     }
-    if (pathname !== "/") {
+    if (pathname != "/") {
       if (token) {
         setModalMessage("Session expired. Please log in again.");
       } else {
@@ -98,8 +104,61 @@ export const AuthProvider = ({ children }: Props) => {
       }
       setIsRedirectModalOpen(true);
       return;
+    } else {
+      setIsRedirectModalOpen(false);
     }
     deleteToken();
+  };
+
+  const handleLogin = async (username: string, password: string) => {
+    const result = await login(username, password);
+
+    if (typeof result === "string") {
+      return { success: false, error: result };
+    }
+
+    if (result.token) {
+      updateToken(result.token);
+      router.push("/home");
+      return { success: true };
+    }
+
+    return {
+      success: false,
+      error: "An error occurred while attempting to log in",
+    };
+  };
+
+  const handleSignup = async (
+    username: string,
+    password: string,
+    email: string
+  ) => {
+    const result = await signup(username, password, email);
+    if (typeof result === "string") {
+      return { success: false, error: result };
+    }
+
+    if (result.token) {
+      updateToken(result.token);
+      router.push("/home");
+      return { success: true };
+    }
+
+    return {
+      success: false,
+      error: "An error occurred while attempting to log in",
+    };
+  };
+
+  const logout = () => {
+    router.push("/");
+    deleteToken();
+
+    setTimeout(() => {
+      setModalMessage("You have been logged out.");
+      setIsRedirectModalOpen(true);
+    }, 50);
   };
 
   // Loads token from cookies on mount
@@ -154,8 +213,9 @@ export const AuthProvider = ({ children }: Props) => {
       value={{
         token,
         username,
-        updateToken,
-        deleteToken,
+        login: handleLogin,
+        signup: handleSignup,
+        logout,
       }}
     >
       {!isRedirectModalOpen && children}

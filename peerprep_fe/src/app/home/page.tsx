@@ -25,7 +25,7 @@ export default function Home() {
   const [currentEditQuestion, setCurrentEditQuestion] =
     useState<QuestionDto | null>(null);
 
-  const { token, deleteToken, username } = useAuth();
+  const { token, username, logout } = useAuth();
 
   useEffect(() => {
     if (token) {
@@ -92,25 +92,19 @@ export default function Home() {
         <div className="w-full h-full flex items-center justify-center">
           Hi {username}
         </div>
-        <Button 
+        <Button
           text="History"
           onClick={() => {
             router.push("/history");
           }}
-          />
+        />
         <Button
           text="Match"
           onClick={() => {
             router.push("/match");
           }}
         />
-        <Button
-          text="Logout"
-          onClick={() => {
-            deleteToken();
-            router.push("/");
-          }}
-        />
+        <Button text="Logout" onClick={logout} />
       </Header>
       <Button
         type="submit"

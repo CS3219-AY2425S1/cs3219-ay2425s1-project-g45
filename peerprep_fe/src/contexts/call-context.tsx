@@ -7,7 +7,6 @@ import React, {
   useRef,
   ReactNode,
   useEffect,
-  useCallback,
 } from "react";
 import { useSocket } from "./socket-context";
 import { useAuth } from "./auth-context";
