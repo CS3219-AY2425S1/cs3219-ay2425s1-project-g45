@@ -41,11 +41,11 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
   const [isVideoOpen, setIsVideoOpen] = useState<boolean>(true);
   const [leaveMessage, setLeaveMessage] = useState<string>("");
-  const { endCall } = useCall();
+  const { stopStream } = useCall();
 
   function handleLeaveRoom() {
     leaveRoom();
-    if (room) endCall();
+    stopStream();
     router.back();
   }
 
