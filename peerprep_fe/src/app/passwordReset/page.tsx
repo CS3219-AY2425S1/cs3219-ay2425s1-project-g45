@@ -1,17 +1,43 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import React from "react";
 import { useSearchParams } from "next/navigation";
 import Header from "../../components/common/header";
 import Textfield from "../../components/common/text-field";
 import Button from "../../components/common/button";
+import Modal from "../../components/common/modal";
 import { resetPasswordWithToken } from "../actions/auth";
+import { useRouter } from "next/navigation";
 
 const PasswordReset: React.FC = () => {
   const searchParams = useSearchParams();
   const username = searchParams.get("username");
   const token = searchParams.get("token");
+  const router = useRouter();
+  const [isResetSuccessModalOpen, setIsResetSuccessModalOpen] = useState(false);
+
+  const toggleResetSuccessModal = () => {
+    setIsResetSuccessModalOpen((prev) => !prev);
+  };
+
+  const redirectToLanding = () => {
+    router.push("/");
+  };
+
+  const ResetSuccessModal = () => {
+    return (
+      <Modal
+        isOpen={isResetSuccessModalOpen}
+        title="Successfully reset password"
+      >
+        <h3 className="py-5 font-bold">
+          You may now login with your new password
+        </h3>
+        <Button text="Back to home" onClick={redirectToLanding} />
+      </Modal>
+    );
+  };
 
   const action = async (formData: FormData) => {
     const newPassword: string = formData.get("password") as string;
@@ -19,7 +45,10 @@ const PasswordReset: React.FC = () => {
     const response = await resetPasswordWithToken(username, token, newPassword);
     console.log(response);
     if (response.message) {
-      console.log(response.message);
+      toggleResetSuccessModal();
+    }
+    if (response.errors) {
+      alert(response.errors.errorMessage);
     }
   };
 
@@ -42,6 +71,7 @@ const PasswordReset: React.FC = () => {
           </form>
         </div>
       </main>
+      <ResetSuccessModal />
     </div>
   );
 };

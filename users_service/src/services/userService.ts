@@ -190,6 +190,7 @@ export async function resetPasswordWithToken(
   try {
     const user = await User.findOne({ username });
     if (!user) {
+      console.log("User not found");
       throw new Error("User not found");
     }
 
@@ -208,6 +209,7 @@ export async function resetPasswordWithToken(
     user.is_locked = false;
     user.login_attempts = 0;
     await user.save();
+    await token.deleteOne();
 
     await sendResetSuccessEmail(user.email, username);
   } catch (error) {

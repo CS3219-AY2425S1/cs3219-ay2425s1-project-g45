@@ -338,14 +338,14 @@ export async function resetPasswordWithToken(
 
   try {
     const responseData = await response.json();
-    if (responseData.ok) {
-      console.log("Reset password with token");
+    if (responseData.message) {
       return {
         message: responseData.message,
       };
     } else {
+      console.log(responseData.error);
       return {
-        errors: { errorMessage: responseData },
+        errors: { errorMessage: responseData.error },
       };
     }
   } catch (error) {
