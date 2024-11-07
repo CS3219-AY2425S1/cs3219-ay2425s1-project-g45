@@ -26,7 +26,7 @@ export async function sendPasswordResetEmail(
 
     const compiledTemplate = Handlebars.compile(source);
 
-    const passwordResetLink = `${process.env.NODE_ENV}/passwordReset?token=${token}&username=${username}`;
+    const passwordResetLink = `${process.env.CLIENT_URL}/passwordReset?token=${token}&username=${username}`;
 
     const info = await transporter.sendMail({
       from: process.env.EMAIL_USERNAME,
