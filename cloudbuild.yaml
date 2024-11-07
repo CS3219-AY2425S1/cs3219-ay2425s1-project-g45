@@ -78,7 +78,13 @@ steps:
       - "--set-secrets"
       - >-
         MONGODB_URI=MONGODB_URI:latest,
-        JWT_SECRET=JWT_SECRET:latest
+        JWT_SECRET=JWT_SECRET:latest, 
+        EMAIL_SERVICE=EMAIL_SERVICE:latest, 
+        EMAIL_USERNAME=EMAIL_USERNAME:latest,
+        EMAIL_PASSWORD=EMAIL_PASSWORD:latest,
+      - "--set-env-vars"
+      - >-
+        NODE_ENV=production,
 
   ############################
   # end user service service

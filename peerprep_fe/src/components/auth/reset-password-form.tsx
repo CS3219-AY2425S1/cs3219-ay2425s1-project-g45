@@ -11,21 +11,17 @@ export function ResetPasswordForm() {
   const resetPassword = async (formData: FormData) => {
     const username: string = formData.get("username") as string;
     const response = await requestResetPassword(username);
-    alert(response?.message);
     if (response?.message) {
       console.log(response.message);
       setIsEmailSent(true);
     }
   };
 
-  useEffect(() => {}, [isEmailSent]);
-
-  // TODO: Make errors look better
   return (
     <div>
       {isEmailSent ? (
         <div className="flex flex-col items-center">
-          <h1 className="text-2xl font-semibold mb-4 px-4">
+          <h1 className="text-2xl font-semibold mx-4 py-4">
             Email has been sent to your inbox
           </h1>
         </div>
