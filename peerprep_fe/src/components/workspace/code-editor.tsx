@@ -74,6 +74,8 @@ const CodeEditor: React.FC<CodeEditorProps> = () => {
       const result = await handleRunCode(code, language, token);
       if (!result.error) {
         setOutput(result.output);
+        const newCode = "Saved Code:" + "\n" + code + "\n" + "Compiler Output:" + "\n" + result.output;
+        saveAttempt(newCode);
       } else {
         setOutput(`Error: ${result.error}`);
       }
@@ -82,8 +84,8 @@ const CodeEditor: React.FC<CodeEditorProps> = () => {
     }
   };
 
-  const saveAttempt = async () => {
-    const code = editorRef.current.getValue();
+  const saveAttempt = async (newCode) => {
+    const code = newCode;
     const title = question?.title;
     const datetime = new Date().toISOString(); // Ensure proper string format
 
@@ -95,21 +97,8 @@ const CodeEditor: React.FC<CodeEditorProps> = () => {
         code,
         token
       );
-
-      // Ensure the result is a plain object with serializable data
-      const plainResult = {
-        output: result.output || "",
-        error: result.error || null,
-      };
-
-      if (!plainResult.error) {
-        setOutput(plainResult.output);
-        setOutput("Attempts saved successfully!"); // Show success toast
-      } else {
-        setOutput(`Error: ${plainResult.error}`);
-      }
     } catch (error) {
-      setOutput(`Error: ${error.message}`);
+      console.log(`Error: ${error.message}`);
     }
   };
 
@@ -142,12 +131,12 @@ const CodeEditor: React.FC<CodeEditorProps> = () => {
         Run Code
       </button>
 
-      <button
+      {/* <button
         onClick={saveAttempt}
         className="mt-2 bg-blue-500 text-white py-2 px-4 rounded"
       >
         Save Code
-      </button>
+      </button> */}
 
       {output && (
         <div className="mt-2 bg-gray-900 text-white p-2 rounded">

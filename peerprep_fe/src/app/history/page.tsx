@@ -92,7 +92,7 @@ useEffect(() => {
                     </thead>
                     <tbody className="text-gray-600 text-sm font-light overflow-y-scroll">
                         {history?.length > 0 ? (
-                            history.map((attempt, index) => (
+                            history.slice().reverse().map((attempt, index) => (
                                 <tr
                                     key={index}
                                     className="border-b border-gray-200 hover:bg-gray-100"
