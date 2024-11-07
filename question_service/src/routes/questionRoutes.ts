@@ -42,14 +42,14 @@ router.get("/questions/topics", async (req, res) => {
 
 interface QueryParams {
   topic?: string | string[];
-  difficultyLevel?: string;
+  difficulty?: string;
 }
 
 router.get(
   "/questions/random",
   async (req: Request<{}, {}, {}, QueryParams>, res: Response) => {
     try {
-      const { topic, difficultyLevel } = req.query;
+      const { topic, difficulty } = req.query;
       console.log(req.query);
 
       // Build the query object
@@ -63,16 +63,18 @@ router.get(
         query.topic = { $in: topicArray };
       }
 
-      if (difficultyLevel) {
+      if (difficulty) {
         if (
-          Object.values(DifficultyLevel).includes(
-            difficultyLevel as DifficultyLevel
-          )
+          Object.values(DifficultyLevel).includes(difficulty as DifficultyLevel)
         ) {
-          query.difficultyLevel = difficultyLevel as DifficultyLevel;
+          query.difficultyLevel = difficulty as DifficultyLevel;
         } else {
           return res.status(400).json({ message: "Invalid difficulty level" });
         }
+      } else {
+        return res
+          .status(400)
+          .json({ message: "Difficulty level is required" });
       }
 
       // Count the number of matching documents
