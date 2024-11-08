@@ -11,7 +11,7 @@ interface MatchPageProps {}
 
 const match: React.FC<MatchPageProps> = () => {
   const router = useRouter();
-  const { username, logout } = useAuth();
+  const { username } = useAuth();
 
   return (
     <div className="h-screen w-screen flex flex-col max-w-6xl mx-auto py-10 overscroll-contain">
@@ -31,7 +31,7 @@ const match: React.FC<MatchPageProps> = () => {
             router.push("/history");
           }}
         />
-        <Button text="Logout" onClick={logout} />
+        <Button text="Profile" onClick={() => router.push("/profile")} />
       </Header>
       <MatchForm />
     </div>

@@ -273,7 +273,7 @@ export async function resetPasswordWithPassword(
 
   try {
     const responseData = await response.json();
-    if (responseData.ok) {
+    if (responseData.message) {
       console.log("Reset password with password");
       return {
         message: responseData.message,
