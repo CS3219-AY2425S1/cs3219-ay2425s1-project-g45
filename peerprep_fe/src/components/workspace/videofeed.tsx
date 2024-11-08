@@ -81,9 +81,11 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({ isVisible }) => {
   };
 
   return (
-    <div className="relative h-full w-full">
+    <div className={`relative h-full w-full ${isVisible ? "z-50" : "hidden"}`}>
       <div
-        className={`h-full w-full flex-col bg-white dark:bg-slate-800 rounded-lg ${isVisible ? "z-50" : "hidden"}`}
+        className={
+          "h-full w-full flex-col bg-white dark:bg-slate-800 rounded-lg "
+        }
       >
         <div className="flex h-[80%]">
           <video

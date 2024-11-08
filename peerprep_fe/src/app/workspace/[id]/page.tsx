@@ -234,8 +234,8 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
             />
           </div>
           <div className=" h-[40%]">
-            {isChatOpen && <Chat isVisible={isChatOpen} />}
-            {isVideoOpen && <VideoFeed isVisible={isVideoOpen} />}
+            <Chat isVisible={isChatOpen} />
+            <VideoFeed isVisible={isVideoOpen} />
           </div>
         </div>
 
