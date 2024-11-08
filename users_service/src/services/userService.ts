@@ -185,7 +185,6 @@ export async function resetPasswordWithToken(
   try {
     const user = await User.findOne({ username });
     if (!user) {
-      console.log("User not found");
       throw new Error("User not found");
     }
 
@@ -209,5 +208,19 @@ export async function resetPasswordWithToken(
     await sendResetSuccessEmail(user.email, username);
   } catch (error) {
     throw error;
+  }
+}
+
+export async function deleteAccount(username: string) {
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await user.deleteOne();
+  } catch (error) {
+    console.log(error);
+    throw new Error("Unable to delete account");
   }
 }

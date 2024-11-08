@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  deleteAccount,
   getHistory,
   getPasswordResetToken,
   resetPassword,
@@ -89,6 +90,18 @@ router.post("/requestreset", async (req, res) => {
 
     res.status(200).json({ message: "Password reset token sent to email" });
   } catch (error: any) {
+    res.status(400).json({ error: error });
+  }
+});
+
+router.delete("/delete/:id", async (req, res) => {
+  try {
+    const username = req.params["id"];
+    console.log(username);
+
+    await deleteAccount(username);
+    res.status(200).json({ message: "Account deleted" });
+  } catch (error) {
     res.status(400).json({ error: error });
   }
 });

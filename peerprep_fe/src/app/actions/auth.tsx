@@ -273,7 +273,7 @@ export async function resetPasswordWithPassword(
 
   try {
     const responseData = await response.json();
-    if (responseData.ok) {
+    if (responseData.message) {
       console.log("Reset password with password");
       return {
         message: responseData.message,
@@ -317,6 +317,42 @@ export async function resetPasswordWithToken(
       body: JSON.stringify(data),
     }
   );
+
+  try {
+    const responseData = await response.json();
+    if (responseData.message) {
+      return {
+        message: responseData.message,
+      };
+    } else {
+      console.log(responseData.error);
+      return {
+        errors: { errorMessage: responseData.error },
+      };
+    }
+  } catch (error) {
+    console.error(`error: ${error}`);
+    return {
+      errors: {
+        errorMessage: "An error occured while attempting to reset password",
+      },
+    };
+  }
+}
+
+export async function deleteUser(username: string, token: string | null) {
+  const gatewayServiceURL =
+    process.env.NODE_ENV === "production"
+      ? process.env.GATEWAY_SERVICE_URL
+      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
+
+  const response = await fetch(`${gatewayServiceURL}/auth/delete/${username}`, {
+    method: "delete",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `bearer ${token}`,
+    },
+  });
 
   try {
     const responseData = await response.json();

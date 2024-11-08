@@ -13,7 +13,7 @@ import { getHistory } from "../actions/auth";
 
 export default function History() {
   const router = useRouter();
-  const { token, username, logout } = useAuth();
+  const { token, username } = useAuth();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [history, setHistory] = useState([]);
   const [selectedSolution, setSelectedSolution] = useState(""); // State to store the solution to be shown
@@ -69,7 +69,7 @@ export default function History() {
             router.push("/match");
           }}
         />
-        <Button text="Logout" onClick={logout} />
+        <Button text="Profile" onClick={() => router.push("/profile")} />
       </Header>
       <h1 className="text-4xl font-semibold text-center text-gray-800 my-6">
         History
