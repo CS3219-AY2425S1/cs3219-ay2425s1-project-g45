@@ -51,7 +51,7 @@ const Chat: React.FC<ChatProps> = ({ isVisible }) => {
     >
       <div
         id="chat-container"
-        className="max-h-full w-full overflow-y-scroll flex-grow"
+        className=" w-full overflow-y-scroll h-[70%]"
         onScroll={(e) => handleScroll(e)}
       >
         {notification && (
