@@ -340,20 +340,18 @@ export async function resetPasswordWithToken(
   }
 }
 
-export async function deleteUser(username: string) {
+export async function deleteUser(username: string, token: string | null) {
   const gatewayServiceURL =
     process.env.NODE_ENV === "production"
       ? process.env.GATEWAY_SERVICE_URL
       : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
-  const data = {
-    username: username,
-  };
-
   const response = await fetch(`${gatewayServiceURL}/auth/delete/${username}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    method: "delete",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `bearer ${token}`,
+    },
   });
 
   try {

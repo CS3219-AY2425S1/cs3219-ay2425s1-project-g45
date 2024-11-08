@@ -49,9 +49,9 @@ router.post(
   requestHelper.sendPostRequest("resetpassword/token", USER_SERVICE)
 );
 
-router.post(
-  "/delete/:username",
-  requestHelper.sendPostRequest("delete/:username", USER_SERVICE)
-);
+router.delete("/delete/:id", async (req, res) => {
+  const id = req.params["id"];
+  return requestHelper.sendDeleteRequest("/delete", USER_SERVICE, id)(req, res);
+});
 
 export default router;

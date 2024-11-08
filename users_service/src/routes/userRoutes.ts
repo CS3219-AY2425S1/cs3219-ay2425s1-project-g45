@@ -94,12 +94,11 @@ router.post("/requestreset", async (req, res) => {
   }
 });
 
-router.post("/delete/:username", async (req, res) => {
+router.delete("/delete/:id", async (req, res) => {
   try {
-    const username = req.params.username;
+    const username = req.params["id"];
     console.log(username);
 
-    console.log("here");
     await deleteAccount(username);
     res.status(200).json({ message: "Account deleted" });
   } catch (error) {
