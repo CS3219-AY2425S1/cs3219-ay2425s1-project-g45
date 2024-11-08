@@ -186,7 +186,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
   }
 
   return (
-    <div className="flex flex-col max-h-screen">
+    <div className="flex flex-col h-screen">
       <Header>
         <div className="w-full flex items-start justify-start bg-gray-800 py-2 px-4 rounded-lg shadow-lg ">
           <div className="w-max flex items-center justify-start mr-5">
@@ -213,10 +213,10 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
           }}
         />
       </Header>
-      <div className="flex h-full">
+      <div className="flex h-screen">
         {/* Left Pane */}
-        <div className="flex flex-col w-2/5 min-h-full px-4">
-          <div className="min-h-1/2">
+        <div className="flex flex-col w-2/5 h-full px-4">
+          <div className="h-[60%]">
             <Problem questionId={room.question} />
           </div>
           <div className="flex space-x-4">
@@ -233,7 +233,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
               onClick={openVideo}
             />
           </div>
-          <div className="flex-grow min-h-1/2">
+          <div className=" h-[40%]">
             <Chat isVisible={isChatOpen} />
             <VideoFeed isVisible={isVideoOpen} />
           </div>
@@ -242,7 +242,7 @@ const Workspace: React.FC<WorkspaceProps> = ({ params }) => {
         <div className="border border-gray-300" />
 
         {/* Right Pane */}
-        <div className="w-3/5 px-4 inline-flex flex-col">
+        <div className="w-3/5 px-4 inline-flex flex-col h-full">
           <CodeEditor />
           <Button
             loading={isNextBtnLoading}
