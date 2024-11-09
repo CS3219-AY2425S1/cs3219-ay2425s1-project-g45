@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import LargeTextfield from "../../components/common/large-text-field";
-import Button from "../../components/common/button";
+import LargeTextfield from "../common/large-text-field";
+import Button from "../common/button";
 import { useAuth } from "../../contexts/auth-context";
 import { QuestionDto, DifficultyLevel } from "peerprep-shared-types";
 import { addQuestion, editQuestion } from "../../app/actions/questions";

@@ -1,5 +1,5 @@
-import TextButton from "../../components/common/text-button";
-import Button from "../../components/common/button";
+import TextButton from "../common/text-button";
+import Button from "../common/button";
 import { deleteQuestion } from "../../app/actions/questions";
 import { useAuth } from "../../contexts/auth-context";
 
