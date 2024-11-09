@@ -3,6 +3,7 @@ import { useAuth } from "../../contexts/auth-context";
 import { useChat } from "../../contexts/chat-context";
 import Textfield from "../common/text-field";
 import Button from "../common/button";
+import ChatMessage from "./chatMessage";
 
 type ChatProps = {
   isVisible: boolean;
@@ -64,18 +65,13 @@ const Chat: React.FC<ChatProps> = ({ isVisible }) => {
             messages.toReversed().map((message, index) => {
               // console.log(message);
               return (
-                <div
+                <ChatMessage
                   key={index}
-                  className={`w-fit mb-4 bg-green-800 rounded-lg p-2
-                    ${username === message.username ? "self-end place-items-end" : ""}`}
-                >
-                  <div className="text-sm font-medium text-gray-900 dark:text-slate-300">
-                    {message.username}
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-zinc-400 text-wrap">
-                    {message.message}
-                  </div>
-                </div>
+                  username={message.username}
+                  message={message.message}
+                  index={index}
+                  isSender={message.username === username}
+                />
               );
             })}
         </div>
