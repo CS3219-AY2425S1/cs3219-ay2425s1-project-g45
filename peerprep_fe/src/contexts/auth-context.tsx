@@ -174,9 +174,13 @@ export const AuthProvider = ({ children }: Props) => {
     const authenticateToken = async () => {
       let success = false;
       if (token) {
-        const response = await validateToken(token);
-        if (response) {
-          success = true;
+        try {
+          const response = await validateToken(token);
+          if (response) {
+            success = true;
+          }
+        } catch (error) {
+          console.error("Error validating token:", error);
         }
       }
       return success;
