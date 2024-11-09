@@ -10,7 +10,6 @@ import {
   EventPayloads,
   createEvent,
   validateKafkaEvent,
-  ServiceNames,
   ServerSocketEvents,
 } from "peerprep-shared-types";
 import { CollaborationEvents } from "peerprep-shared-types/dist/types/kafka/collaboration-events";
@@ -179,6 +178,24 @@ export class WebSocketHandler {
             .emit(ServerSocketEvents.CHAT_STATE, {
               messages: chatStatePayload.chatState.messages,
             });
+          break;
+        case GatewayEvents.MATCH_REQUESTED:
+          const matchRequestedPayload =
+            event.payload as EventPayloads[GatewayEvents.MATCH_REQUESTED];
+          console.log(
+            "Sending match added to user:",
+            matchRequestedPayload.username
+          );
+          const socketId = await this.getUsernameSocketId(
+            matchRequestedPayload.username
+          );
+          if (socketId) {
+            this.io.to(socketId).emit(ServerSocketEvents.MATCH_REQUESTED, {
+              success: matchRequestedPayload.success,
+            });
+          } else {
+            throw Error("No socket found for user");
+          }
           break;
         case GatewayEvents.MATCH_FOUND:
           const matchFoundPayload =

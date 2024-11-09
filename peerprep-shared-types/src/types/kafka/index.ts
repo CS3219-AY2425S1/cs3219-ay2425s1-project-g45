@@ -19,6 +19,12 @@ export interface EventPayloads {
     roomId: string;
     error: string;
   };
+  [GatewayEvents.MATCH_REQUESTED]: {
+    success: boolean;
+    username: string;
+    difficulty: string;
+    topic: string;
+  };
   [GatewayEvents.MATCH_FOUND]: {
     usernames: string[];
     topic: string;

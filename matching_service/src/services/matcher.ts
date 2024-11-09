@@ -60,9 +60,21 @@ export class Matcher {
       console.log(`Match request added for user: ${username}`);
       // Start the matcher if not already running
       this.start();
+      this.kafkaHandler.sendGatewayEvent(GatewayEvents.MATCH_REQUESTED, {
+        success: true,
+        username,
+        difficulty,
+        topic,
+      });
     } else {
       console.error(`Failed to add match request for user: ${username}`);
       // Optionally notify the user of the failure
+      this.kafkaHandler.sendGatewayEvent(GatewayEvents.MATCH_REQUESTED, {
+        success: false,
+        username,
+        difficulty,
+        topic,
+      });
     }
   }
 

@@ -38,7 +38,6 @@ export function MatchForm() {
   const { username, token } = useAuth();
 
   const [topics, setTopics] = useState<string[]>();
-  const [isOpen, setIsOpen] = useState(false);
   useEffect(() => {
     if (token) {
       getQuestionTopics(token).then((data) => {
@@ -53,6 +52,9 @@ export function MatchForm() {
 
   // Usage in form submission
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(
+    null
+  );
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [isMatchFoundModalOpen, setIsMatchFoundModalOpen] = useState(false);
   const [isTimeoutModalOpen, setIsTimeoutModalOpen] = useState(false);
@@ -97,7 +99,12 @@ export function MatchForm() {
   const onMatchAdded = (match: MatchAddedResponse) => {
     console.log("Match Request Response", match);
     if (match.success) {
+      setLoading(false);
       setIsTimerModalOpen(true);
+    }
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+      setLoadingTimeout(null);
     }
   };
 
@@ -109,9 +116,8 @@ export function MatchForm() {
     setRoomId(match.roomId);
   };
 
-  const onTimeOut = (response: MatchTimeoutResponse) => {
+  const onTimeOut = () => {
     unregisterListeners();
-    console.log("Time out response", response);
     setIsTimerModalOpen(false);
     setIsTimeoutModalOpen(true);
   };
@@ -126,7 +132,15 @@ export function MatchForm() {
   };
 
   const sendMatch = () => {
+    setLoading(true);
     sendMatchRequest(formData.difficultyLevel, formData.topic);
+
+    setLoadingTimeout(
+      setTimeout(() => {
+        setLoading(false);
+        alert("An error occurred. Please try again later.");
+      }, 10000)
+    );
   };
 
   const cancelMatch = () => {
@@ -200,7 +214,7 @@ export function MatchForm() {
     return (
       <Modal isOpen={isTimerModalOpen} isCloseable={false} width="md">
         <div>
-          <Timer onClose={() => setIsTimerModalOpen(false)} />
+          <Timer onClose={onTimeOut} />
           <Button
             type="reset"
             onClick={() => {
@@ -217,13 +231,11 @@ export function MatchForm() {
   const registerListeners = () => {
     socket?.on(ServerSocketEvents.MATCH_FOUND, onMatchFound);
     socket?.on(ServerSocketEvents.MATCH_REQUESTED, onMatchAdded);
-    socket?.on(ServerSocketEvents.MATCH_TIMEOUT, onTimeOut);
   };
 
   const unregisterListeners = () => {
     socket?.off(ServerSocketEvents.MATCH_FOUND, onMatchFound);
     socket?.off(ServerSocketEvents.MATCH_REQUESTED, onMatchAdded);
-    socket?.off(ServerSocketEvents.MATCH_TIMEOUT, onTimeOut);
   };
 
   return (
@@ -266,7 +278,6 @@ export function MatchForm() {
             disabled={!(formData.topic && formData.difficultyLevel)}
             onClick={() => {
               sendMatch();
-              setIsTimerModalOpen(true);
             }}
           />
         }
