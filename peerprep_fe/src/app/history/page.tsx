@@ -9,7 +9,7 @@ import { useAuth } from "../../contexts/auth-context";
 import Header from "../../components/common/header";
 import Button from "../../components/common/button";
 import Modal from "../../components/common/modal";
-import { getHistory } from "../actions/auth";
+import { getHistory } from "../actions/editor";
 
 export default function History() {
   const router = useRouter();

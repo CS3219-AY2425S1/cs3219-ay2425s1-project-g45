@@ -48,7 +48,7 @@ export async function handleSaveAttempt(
       : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
 
   try {
-    const response = await fetch(`${gatewayServiceURL}/auth/saveAttempt`, {
+    const response = await fetch(`${gatewayServiceURL}/collab/editor/saveAttempt`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -84,5 +84,36 @@ export async function handleSaveAttempt(
     }
 
     return { error: error.message || 'An unknown error occurred' };
+  }
+}
+
+export async function getHistory(username: string, token: string) {
+  const gatewayServiceURL =
+    process.env.NODE_ENV === "production"
+      ? process.env.GATEWAY_SERVICE_URL
+      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
+
+  try {
+    const response = await fetch(
+      `${gatewayServiceURL}/collab/editor/history/${username}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Server error: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const responseData = await response.json();
+    return { history: responseData.history };
+  } catch (error) {
+    return { error: error.message || "Unable to fetch history." };
   }
 }

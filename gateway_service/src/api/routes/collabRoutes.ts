@@ -14,4 +14,14 @@ router.post(
   requestHelper.sendPostRequest("editor/runCode", COLLAB_SERVICE)
 );
 
+router.post(
+  "/editor/saveAttempt",
+  requestHelper.sendPostRequest("editor/saveattempt", COLLAB_SERVICE)
+);
+
+router.get(
+  "/editor/history/:username",
+  requestHelper.sendGetRequest("editor/history/:username", COLLAB_SERVICE)
+);
+
 export default router;

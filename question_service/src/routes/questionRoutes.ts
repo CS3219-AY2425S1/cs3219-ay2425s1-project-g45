@@ -105,7 +105,6 @@ router.get(
 // Get a question by ID
 router.get("/questions/:id", async (req, res) => {
   try {
-    console.log("here here here");
     const question = await Question.findById(req.params.id);
     if (!question) {
       return res.status(404).json({ message: "Question not found" });
