@@ -11,11 +11,12 @@ import { getQuestions } from "../../app/actions/questions";
 import { useAuth } from "../../contexts/auth-context";
 
 import Header from "../../components/common/header";
-import { QuestionForm } from "../../components/questions/question-form";
+import { QuestionForm } from "../../components/home/question-form";
 import Button from "../../components/common/button";
-import TableRow from "../../components/questions/table-row";
-import { FormType } from "../../components/questions/question-form";
+import TableRow from "../../components/home/table-row";
+import { FormType } from "../../components/home/question-form";
 import Modal from "../../components/common/modal";
+import QuestionsTable from "@/components/home/questions-table";
 
 export default function Home() {
   const router = useRouter();
@@ -118,33 +119,11 @@ export default function Home() {
         }}
         text="Add Question"
       />
-      <div className="overflow-x-auto">
-        <table className="min-w-full table-auto bg-white shadow-md scroll-smooth">
-          <thead className="sticky top-0">
-            <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-              <th className="py-3 px-6 text-left">Questions</th>
-              <th className="py-3 px-6 text-left">Difficulty</th>
-              <th className="py-3 px-6 text-left">Topics</th>
-              <th className="py-3 px-6 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="text-gray-600 text-sm font-light overflow-y-scroll">
-            {questions?.map((question, index) => {
-              return (
-                <TableRow
-                  id={question._id}
-                  title={question.title}
-                  difficulty={question.difficultyLevel}
-                  topics={question.topic}
-                  key={index}
-                  onClickEdit={() => setCurrentEditQuestion(question)}
-                  handleDelete={handleDelete}
-                />
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <QuestionsTable
+        questions={questions}
+        onClickDelete={handleDelete}
+        onClickEdit={setCurrentEditQuestion}
+      />
       <AddQuestionModal />
       <EditQuestionModel />
     </div>

@@ -1,6 +1,6 @@
 "use server";
 
-import { QuestionForm } from "../../components/questions/question-form";
+import { QuestionForm } from "../../components/home/question-form";
 import dotenv from "dotenv";
 import { QuestionDto } from "peerprep-shared-types";
 import prepareFormDataForSubmission from "../utility/questionsHelper";
