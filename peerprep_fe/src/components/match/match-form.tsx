@@ -38,7 +38,6 @@ export function MatchForm() {
   const { username, token } = useAuth();
 
   const [topics, setTopics] = useState<string[]>();
-  const [isOpen, setIsOpen] = useState(false);
   useEffect(() => {
     if (token) {
       getQuestionTopics(token).then((data) => {
@@ -53,6 +52,9 @@ export function MatchForm() {
 
   // Usage in form submission
   const [loading, setLoading] = useState<boolean>(false);
+  const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(
+    null
+  );
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [isMatchFoundModalOpen, setIsMatchFoundModalOpen] = useState(false);
   const [isTimeoutModalOpen, setIsTimeoutModalOpen] = useState(false);
@@ -97,7 +99,12 @@ export function MatchForm() {
   const onMatchAdded = (match: MatchAddedResponse) => {
     console.log("Match Request Response", match);
     if (match.success) {
+      setLoading(false);
       setIsTimerModalOpen(true);
+    }
+    if (loadingTimeout) {
+      clearTimeout(loadingTimeout);
+      setLoadingTimeout(null);
     }
   };
 
@@ -125,7 +132,15 @@ export function MatchForm() {
   };
 
   const sendMatch = () => {
+    setLoading(true);
     sendMatchRequest(formData.difficultyLevel, formData.topic);
+
+    setLoadingTimeout(
+      setTimeout(() => {
+        setLoading(false);
+        alert("An error occurred. Please try again later.");
+      }, 10000)
+    );
   };
 
   const cancelMatch = () => {

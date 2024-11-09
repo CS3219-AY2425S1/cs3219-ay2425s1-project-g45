@@ -7,7 +7,6 @@ import {
   KafkaEvent,
   EventPayloads,
   validateKafkaEvent,
-  GatewayEvents,
   createEvent,
   Groups,
 } from "peerprep-shared-types";
