@@ -177,37 +177,6 @@ function validateSignUpFormData(
   };
 }
 
-export async function getHistory(username: string, token: string) {
-  const gatewayServiceURL =
-    process.env.NODE_ENV === "production"
-      ? process.env.GATEWAY_SERVICE_URL
-      : `http://${process.env.GATEWAY_SERVICE_ROUTE}:${process.env.API_GATEWAY_PORT}`;
-
-  try {
-    const response = await fetch(
-      `${gatewayServiceURL}/auth/history/${username}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        `Server error: ${response.status} ${response.statusText}`
-      );
-    }
-
-    const responseData = await response.json();
-    return { history: responseData.history };
-  } catch (error) {
-    return { error: error.message || "Unable to fetch history." };
-  }
-}
-
 export async function requestResetPassword(username: string) {
   const gatewayServiceURL =
     process.env.NODE_ENV === "production"
