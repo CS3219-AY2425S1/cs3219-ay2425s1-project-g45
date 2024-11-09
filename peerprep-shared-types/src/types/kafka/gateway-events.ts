@@ -3,6 +3,7 @@ export enum GatewayEvents {
   NEW_CHAT = "new_chat",
   REFRESH_CHAT_STATE = "chat_state",
   ERROR = "error",
+  MATCH_REQUESTED = "match_requested",
   MATCH_FOUND = "match_found",
   MATCH_TIMEOUT = "match_timeout",
   CHANGE_QUESTION = "change_question",
