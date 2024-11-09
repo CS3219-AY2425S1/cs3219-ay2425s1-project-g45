@@ -111,7 +111,16 @@ export const AuthProvider = ({ children }: Props) => {
   };
 
   const handleLogin = async (username: string, password: string) => {
-    const result = await login(username, password);
+    let result = null;
+    try {
+      result = await login(username, password);
+    } catch (error) {
+      console.error("Error logging in:", error);
+      return {
+        success: false,
+        error: "An error occurred. Please try again later.",
+      };
+    }
 
     if (typeof result === "string") {
       return { success: false, error: result };
@@ -134,7 +143,17 @@ export const AuthProvider = ({ children }: Props) => {
     password: string,
     email: string
   ) => {
-    const result = await signup(username, password, email);
+    let result = null;
+    try {
+      result = await signup(username, password, email);
+    } catch (error) {
+      console.error("Error signing up:", error);
+      return {
+        success: false,
+        error: "An error occurred. Please try again later.",
+      };
+    }
+
     if (typeof result === "string") {
       return { success: false, error: result };
     }
@@ -147,7 +166,7 @@ export const AuthProvider = ({ children }: Props) => {
 
     return {
       success: false,
-      error: "An error occurred while attempting to log in",
+      error: "An error occurred while attempting to sign up",
     };
   };
 
