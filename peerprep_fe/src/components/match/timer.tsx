@@ -6,7 +6,7 @@ type TimerProps = {
 
 const Timer: React.FC<TimerProps> = ({ onClose }) => {
   const [time, setTime] = useState<number>(0);
-  const duration = 30; // Set total duration in seconds (for testing)
+  const duration = 30; // Set total duration in seconds
 
   // Format time as MM:SS
   const formatTime = (time: number): string => {

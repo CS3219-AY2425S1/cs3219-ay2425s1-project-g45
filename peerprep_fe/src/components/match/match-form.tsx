@@ -109,9 +109,8 @@ export function MatchForm() {
     setRoomId(match.roomId);
   };
 
-  const onTimeOut = (response: MatchTimeoutResponse) => {
+  const onTimeOut = () => {
     unregisterListeners();
-    console.log("Time out response", response);
     setIsTimerModalOpen(false);
     setIsTimeoutModalOpen(true);
   };
@@ -200,7 +199,7 @@ export function MatchForm() {
     return (
       <Modal isOpen={isTimerModalOpen} isCloseable={false} width="md">
         <div>
-          <Timer onClose={() => setIsTimerModalOpen(false)} />
+          <Timer onClose={onTimeOut} />
           <Button
             type="reset"
             onClick={() => {
@@ -217,13 +216,11 @@ export function MatchForm() {
   const registerListeners = () => {
     socket?.on(ServerSocketEvents.MATCH_FOUND, onMatchFound);
     socket?.on(ServerSocketEvents.MATCH_REQUESTED, onMatchAdded);
-    socket?.on(ServerSocketEvents.MATCH_TIMEOUT, onTimeOut);
   };
 
   const unregisterListeners = () => {
     socket?.off(ServerSocketEvents.MATCH_FOUND, onMatchFound);
     socket?.off(ServerSocketEvents.MATCH_REQUESTED, onMatchAdded);
-    socket?.off(ServerSocketEvents.MATCH_TIMEOUT, onTimeOut);
   };
 
   return (
@@ -266,7 +263,6 @@ export function MatchForm() {
             disabled={!(formData.topic && formData.difficultyLevel)}
             onClick={() => {
               sendMatch();
-              setIsTimerModalOpen(true);
             }}
           />
         }
