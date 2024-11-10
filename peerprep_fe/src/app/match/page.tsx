@@ -1,11 +1,11 @@
 "use client";
 
-import Header from "../../components/common/header";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../../contexts/auth-context";
 import Button from "../../components/common/button";
-import { MatchForm } from "../../components/match/match-form";
 import Head from "next/head"; // Import Head from next/head
+import Header from "../../components/common/header";
+import { MatchForm } from "../../components/match/match-form";
+import { useAuth } from "../../contexts/auth-context";
+import { useRouter } from "next/navigation";
 
 interface MatchPageProps {}
 
@@ -22,7 +22,7 @@ const match: React.FC<MatchPageProps> = () => {
         />
       </Head>
       <Header>
-        <div className="w-fullz h-full flex items-center justify-center">
+        <div className="w-full h-full flex items-center justify-center">
           Hi {username}
         </div>
         <Button
