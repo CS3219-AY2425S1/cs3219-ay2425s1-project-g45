@@ -1,27 +1,26 @@
-import React, { useEffect, useState } from "react";
-import Button from "../../components/common/button";
+import "../../styles/modal.css";
+
 import {
   ClientSocketEvents,
   DifficultyLevel,
   ServerSocketEvents,
 } from "peerprep-shared-types";
-
 import {
   MatchAddedResponse,
   MatchCancelRequest,
   MatchCancelResponse,
   MatchFoundResponse,
   MatchRequest,
-  MatchTimeoutResponse,
 } from "peerprep-shared-types/dist/types/sockets/match";
+import React, { useEffect, useRef, useState } from "react";
 
+import Button from "../../components/common/button";
+import Modal from "../common/modal";
 import Timer from "../../components/match/timer";
-import "../../styles/modal.css";
-import { useSocket } from "../../contexts/socket-context";
+import { getQuestionTopics } from "../../app/actions/questions";
 import { useAuth } from "../../contexts/auth-context";
 import { useRouter } from "next/navigation";
-import Modal from "../common/modal";
-import { getQuestionTopics } from "../../app/actions/questions";
+import { useSocket } from "../../contexts/socket-context";
 
 export interface MatchFormQuestions {
   difficultyLevel: DifficultyLevel;
@@ -52,9 +51,7 @@ export function MatchForm() {
 
   // Usage in form submission
   const [loading, setLoading] = useState<boolean>(false);
-  const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(
-    null
-  );
+  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [isMatchFoundModalOpen, setIsMatchFoundModalOpen] = useState(false);
   const [isTimeoutModalOpen, setIsTimeoutModalOpen] = useState(false);
@@ -96,15 +93,15 @@ export function MatchForm() {
     }
   };
 
-  const onMatchAdded = (match: MatchAddedResponse) => {
-    console.log("Match Request Response", match);
-    if (match.success) {
+  const onMatchAdded = (response: MatchAddedResponse) => {
+    console.log("Match Request Response", response);
+    if (response.success) {
       setLoading(false);
       setIsTimerModalOpen(true);
     }
-    if (loadingTimeout) {
-      clearTimeout(loadingTimeout);
-      setLoadingTimeout(null);
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = undefined;
     }
   };
 
@@ -133,14 +130,13 @@ export function MatchForm() {
 
   const sendMatch = () => {
     setLoading(true);
-    sendMatchRequest(formData.difficultyLevel, formData.topic);
+    const timeout = setTimeout(() => {
+      setLoading(false);
+      alert("An error occurred. Please try again later.");
+    }, 10000);
 
-    setLoadingTimeout(
-      setTimeout(() => {
-        setLoading(false);
-        alert("An error occurred. Please try again later.");
-      }, 10000)
-    );
+    loadingTimeoutRef.current = timeout;
+    sendMatchRequest(formData.difficultyLevel, formData.topic);
   };
 
   const cancelMatch = () => {
