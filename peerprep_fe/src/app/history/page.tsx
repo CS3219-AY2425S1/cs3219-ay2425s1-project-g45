@@ -9,12 +9,12 @@ import { useAuth } from "../../contexts/auth-context";
 import Header from "../../components/common/header";
 import Button from "../../components/common/button";
 import Modal from "../../components/common/modal";
-import HistoryTable from "../../components/history/history-table"; 
+import HistoryTable from "../../components/history/history-table";
 import { getHistory } from "../actions/editor";
 
 export default function History() {
   const router = useRouter();
-  const { token, username } = useAuth();
+  const { token, username, isAdmin } = useAuth();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [history, setHistory] = useState([]);
   const [selectedSolution, setSelectedSolution] = useState(""); // State to store the solution to be shown
@@ -64,18 +64,23 @@ export default function History() {
         <div className="w-full h-full flex items-center justify-center">
           Hi {username}
         </div>
-        <Button
-          text="Match"
-          onClick={() => {
-            router.push("/match");
-          }}
-        />
+        {isAdmin && (
+          <Button
+            text="Questions"
+            onClick={() => {
+              router.push("/questions");
+            }}
+          />
+        )}
         <Button text="Profile" onClick={() => router.push("/profile")} />
       </Header>
       <h1 className="text-4xl font-semibold text-center text-gray-800 my-6">
         History
       </h1>
-      <HistoryTable history={history} openViewAttemptModal={openViewAttemptModal} />
+      <HistoryTable
+        history={history}
+        openViewAttemptModal={openViewAttemptModal}
+      />
       <ViewAttemptModal />
     </div>
   );

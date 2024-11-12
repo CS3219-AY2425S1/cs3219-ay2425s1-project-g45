@@ -11,7 +11,7 @@ import Textfield from "../../components/common/text-field";
 
 const Profile: React.FC = () => {
   const router = useRouter();
-  const { username, logout, token } = useAuth();
+  const { username, logout, token, isAdmin } = useAuth();
   const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isPasswordChanging, setIsPasswordChanging] = useState(false);
@@ -82,16 +82,18 @@ const Profile: React.FC = () => {
   return (
     <div className="h-screen w-screen flex flex-col max-w-6xl mx-auto py-10 overscroll-contain">
       <Header>
+        {isAdmin && (
+          <Button
+            text="Questions"
+            onClick={() => {
+              router.push("/questions");
+            }}
+          />
+        )}
         <Button
           text="History"
           onClick={() => {
             router.push("/history");
-          }}
-        />
-        <Button
-          text="Match"
-          onClick={() => {
-            router.push("/match");
           }}
         />
       </Header>
