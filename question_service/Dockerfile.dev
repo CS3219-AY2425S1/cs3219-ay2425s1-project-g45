@@ -1,0 +1,22 @@
+# Use the same base image as in production
+FROM node:18.16.0-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json and yarn.lock (if you have it)
+COPY package.json ./
+
+# Install dependencies
+RUN npm install
+
+# We don't copy the source files here, as they will be mounted as a volume
+
+# Install development dependencies, if any
+RUN npm install --production=false
+
+# Expose the port your app runs on
+EXPOSE ${QUESTION_SERVICE_PORT}
+
+# Command to run the app using nodemon
+CMD ["npm", "run", "dev"]

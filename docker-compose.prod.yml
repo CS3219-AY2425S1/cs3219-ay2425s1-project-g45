@@ -1,0 +1,187 @@
+version: "3"
+
+services:
+  frontend:
+    build:
+      context: ./peerprep_fe
+      dockerfile: Dockerfile.prod
+    environment:
+      - CHOKIDAR_USEPOLLING=false
+      - NEXT_POLLING_INTERVAL=1000
+      - FRONTEND_PORT=3000
+      - API_GATEWAY_PORT=5003
+      - GATEWAY_SERVICE_ROUTE=gateway-service
+    ports:
+      - "3000:3000"
+    depends_on:
+      - gateway-service
+
+  gateway-service:
+    build:
+      context: ./gateway_service
+      dockerfile: Dockerfile.prod
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - KAFKA_BROKER_PORT=9092
+      - KAFKA_CONTROLLER_PORT=9093
+      - JWT_SECRET=${JWT_SECRET}
+      - GATEWAY_SERVICE_ROUTE=gateway-service
+      - API_GATEWAY_PORT=5003
+      - KAFKA_BROKER_ROUTE=kafka-service
+      - KAFKA_CONTROLLER_ROUTE=kafka-service
+      - MATCHING_SERVICE_ROUTE=matching-service
+      - MATCHING_SERVICE_PORT=5004
+      - COLLAB_SERVICE_ROUTE=collab-service
+      - COLLAB_SERVICE_PORT=5005
+      - USER_SERVICE_ROUTE=user-service
+      - USER_SERVICE_PORT=5001
+      - QUESTION_SERVICE_ROUTE=question-service
+      - QUESTION_SERVICE_PORT=5002
+      - REDIS_ROUTE=redis://redis
+      - REDIS_PORT=6379
+    ports:
+      - "5003:5003"
+    depends_on:
+      - kafka-service
+      - kafka-init
+
+  user-service:
+    build:
+      context: ./users_service
+      dockerfile: Dockerfile.prod
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - USER_SERVICE_PORT=5001
+      - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - "5001:5001"
+    depends_on:
+      - matching-service
+
+  question-service:
+    build:
+      context: ./question_service
+      dockerfile: Dockerfile.prod
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - QUESTION_SERVICE_PORT=5002
+    ports:
+      - "5002:5002"
+
+  collab-service:
+    build:
+      context: ./collab_service
+      dockerfile: Dockerfile.prod
+    environment:
+      - COLLAB_SERVICE_PORT=5005
+      - MONGODB_URI=${MONGODB_URI}
+      - MATCHING_SERVICE_PORT=5004
+      - API_GATEWAY_PORT=5003
+      - USER_SERVICE_PORT=5001
+      - QUESTION_SERVICE_PORT=5002
+      - KAFKA_BROKER_PORT=9092
+      - KAFKA_CONTROLLER_PORT=9093
+      - JWT_SECRET=${JWT_SECRET}
+      - GATEWAY_SERVICE_ROUTE=gateway-service
+      - USER_SERVICE_ROUTE=user-service
+      - QUESTION_SERVICE_ROUTE=question-service
+      - KAFKA_BROKER_ROUTE=kafka-service
+      - KAFKA_CONTROLLER_ROUTE=kafka-service
+    ports:
+      - "5005:5005"
+    depends_on:
+      - kafka-service
+      - kafka-init
+
+  matching-service:
+    build:
+      context: ./matching_service
+      dockerfile: Dockerfile.prod
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+      - MATCHING_SERVICE_PORT=5004
+      - API_GATEWAY_PORT=5003
+      - USER_SERVICE_PORT=5001
+      - QUESTION_SERVICE_PORT=5002
+      - KAFKA_BROKER_PORT=9092
+      - KAFKA_CONTROLLER_PORT=9093
+      - JWT_SECRET=${JWT_SECRET}
+      - GATEWAY_SERVICE_ROUTE=gateway-service
+      - USER_SERVICE_ROUTE=user-service
+      - QUESTION_SERVICE_ROUTE=question-service
+      - KAFKA_BROKER_ROUTE=kafka-service
+      - KAFKA_CONTROLLER_ROUTE=kafka-service
+      - REDIS_ROUTE=redis://redis
+      - REDIS_PORT=6379
+    ports:
+      - "5004:5004"
+    depends_on:
+      - kafka-service
+      - kafka-init
+
+  kafka-service:
+    image: apache/kafka:latest
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker, controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-service:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-service:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: ${KAFKA_NUM_PARTITIONS}
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "kafka-service", "9092"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 30s
+
+  kafka-init:
+    image: apache/kafka:latest
+    depends_on:
+      - kafka-service
+    command: >
+      bash -c '
+        sleep 10 &&
+        /opt/kafka/bin/kafka-topics.sh \
+          --create \
+          --if-not-exists \
+          --bootstrap-server kafka-service:9092 \
+          --topic collaboration-events \
+          --partitions ${KAFKA_NUM_PARTITIONS:-1} \
+          --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh \
+          --create \
+          --if-not-exists \
+          --bootstrap-server kafka-service:9092 \
+          --topic gateway-events \
+          --partitions ${KAFKA_NUM_PARTITIONS:-1} \
+          --replication-factor 1 &&
+        /opt/kafka/bin/kafka-topics.sh \
+          --create \
+          --if-not-exists \
+          --bootstrap-server kafka-service:9092 \
+          --topic matching-events \
+          --partitions ${KAFKA_NUM_PARTITIONS:-1} \
+          --replication-factor 1
+      '
+    environment:
+      KAFKA_BROKER_PORT: 9092
+      KAFKA_NUM_PARTITIONS: ${KAFKA_NUM_PARTITIONS:-1}
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

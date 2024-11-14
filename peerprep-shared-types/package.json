@@ -1,0 +1,26 @@
+{
+  "name": "peerprep-shared-types",
+  "version": "1.0.73",
+  "description": "Shared TypeScript types for PeerPrep frontend and backend",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "increment-version": "node -e \"const fs=require('fs');const package=JSON.parse(fs.readFileSync('package.json'));const [major,minor,patch]=package.version.split('.');package.version=\\`\\${major}.\\${minor}.\\${parseInt(patch)+1}\\`;fs.writeFileSync('package.json',JSON.stringify(package,null,2));console.log('Version incremented to ' + package.version);\"",
+    "publish-package": "npm publish",
+    "update-package": "npm run build && npm run increment-version && npm run publish-package",
+    "commit-changes": "git add . && read -p 'Enter commit message: ' msg && git commit -m \"$msg\"",
+    "update-and-commit": "npm run update-package && npm run commit-changes"
+  },
+  "keywords": [
+    "typescript",
+    "types",
+    "peerprep"
+  ],
+  "author": "TJun-Jie",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^14.14.31",
+    "typescript": "^4.2.2"
+  }
+}

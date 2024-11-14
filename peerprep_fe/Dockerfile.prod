@@ -1,0 +1,31 @@
+# Use the same base image as in development
+FROM node:18.17.0-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json and other necessary files to install dependencies
+COPY package.json tsconfig.json postcss.config.mjs tailwind.config.ts ./
+
+# Install dependencies (including devDependencies required for building)
+RUN npm install
+
+# Copy the source code into the container
+COPY . .
+
+# Accept build arguments and set them as environment variables
+ARG NEXT_PUBLIC_GATEWAY_SERVICE_URL
+ENV NEXT_PUBLIC_GATEWAY_SERVICE_URL=${NEXT_PUBLIC_GATEWAY_SERVICE_URL}
+ENV NODE_ENV=production
+
+# Build the application (environment variables are available during this step)
+RUN npm run build
+
+# Remove development dependencies to keep the image lean
+RUN npm prune --production
+
+# Expose the application port
+EXPOSE 3000
+
+# Command to start the app in production mode
+CMD ["npm", "start"]
