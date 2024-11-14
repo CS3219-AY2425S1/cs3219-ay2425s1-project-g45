@@ -8,7 +8,7 @@ async function getUniqueTopics(): Promise<string[]> {
       // Group by topic and count occurrences
       { $group: { _id: "$topic", count: { $sum: 1 } } },
       // Sort by count in descending order (optional)
-      { $sort: { count: -1 } },
+      { $sort: { _id: 1 } },
       // Project only the topic name
       { $project: { _id: 0, topic: "$_id" } },
     ]);
