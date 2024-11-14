@@ -1,131 +1,48 @@
 "use client";
 
-import { useEffect, useReducer, useState } from "react";
-import { useRouter } from "next/navigation";
-import { QuestionDto } from "peerprep-shared-types";
-
-import "../../styles/modal.css";
-
-import { getQuestions } from "../../app/actions/questions";
-
-import { useAuth } from "../../contexts/auth-context";
-
-import Header from "../../components/common/header";
-import { QuestionForm } from "../../components/home/question-form";
 import Button from "../../components/common/button";
-import TableRow from "../../components/home/table-row";
-import { FormType } from "../../components/home/question-form";
-import Modal from "../../components/common/modal";
-import QuestionsTable from "@/components/home/questions-table";
+import Head from "next/head"; // Import Head from next/head
+import Header from "../../components/common/header";
+import { MatchForm } from "../../components/match/match-form";
+import { useAuth } from "../../contexts/auth-context";
+import { useRouter } from "next/navigation";
 
-export default function Home() {
+interface MatchPageProps {}
+
+const match: React.FC<MatchPageProps> = () => {
   const router = useRouter();
-  const [questions, setQuestions] = useState<QuestionDto[]>([]);
-
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [currentEditQuestion, setCurrentEditQuestion] =
-    useState<QuestionDto | null>(null);
-
-  const { token, username } = useAuth();
-
-  useEffect(() => {
-    if (token) {
-      getQuestions(token).then((data) => {
-        setQuestions(data?.message);
-      });
-    }
-  }, [token]);
-
-  const handleDelete = (id: string) => {
-    setQuestions(questions.filter((question) => question._id != id));
-  };
-
-  const AddQuestionModal = () => {
-    if (!isAddModalOpen) return null;
-    return (
-      <Modal
-        isOpen={isAddModalOpen}
-        title="Add Question"
-        width="4xl"
-        height="3xl"
-        isScrollable={true}
-        onClose={() => setIsAddModalOpen(false)}
-      >
-        <QuestionForm
-          type={FormType.ADD}
-          afterSubmit={() => {
-            setIsAddModalOpen(false);
-          }}
-          setQuestions={setQuestions}
-          questions={questions}
-        />
-      </Modal>
-    );
-  };
-
-  const EditQuestionModel = () => {
-    if (!currentEditQuestion) return null;
-    return (
-      <Modal
-        isOpen={currentEditQuestion ? true : false}
-        title="Edit Question"
-        width="4xl"
-        height="3xl"
-        isScrollable={true}
-        onClose={() => setCurrentEditQuestion(null)}
-      >
-        <QuestionForm
-          type={FormType.EDIT}
-          afterSubmit={() => {
-            setCurrentEditQuestion(null);
-          }}
-          initialQuestion={currentEditQuestion}
-          setQuestions={setQuestions}
-          questions={questions}
-        />
-      </Modal>
-    );
-  };
+  const { username, isAdmin } = useAuth();
 
   return (
     <div className="h-screen w-screen flex flex-col max-w-6xl mx-auto py-10 overscroll-contain">
+      <Head>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        />
+      </Head>
       <Header>
         <div className="w-full h-full flex items-center justify-center">
           Hi {username}
         </div>
+        {isAdmin && (
+          <Button
+            text="Questions"
+            onClick={() => {
+              router.push("/questions");
+            }}
+          />
+        )}
         <Button
           text="History"
           onClick={() => {
             router.push("/history");
           }}
         />
-        <Button
-          text="Match"
-          onClick={() => {
-            router.push("/match");
-          }}
-        />
-        <Button
-          text="Profile"
-          onClick={() => {
-            router.push("/profile");
-          }}
-        />
+        <Button text="Profile" onClick={() => router.push("/profile")} />
       </Header>
-      <Button
-        type="submit"
-        onClick={() => {
-          setIsAddModalOpen(true);
-        }}
-        text="Add Question"
-      />
-      <QuestionsTable
-        questions={questions}
-        onClickDelete={handleDelete}
-        onClickEdit={setCurrentEditQuestion}
-      />
-      <AddQuestionModal />
-      <EditQuestionModel />
+      <MatchForm />
     </div>
   );
-}
+};
+export default match;

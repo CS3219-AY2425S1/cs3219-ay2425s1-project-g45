@@ -21,6 +21,7 @@ interface AuthResponse {
 interface TAuthContext {
   token: string | null;
   username: string | null;
+  isAdmin: boolean;
   login: (username: string, password: string) => Promise<AuthResponse>;
   signup: (
     username: string,
@@ -33,6 +34,7 @@ interface TAuthContext {
 export const AuthContext = createContext<TAuthContext>({
   token: null,
   username: null,
+  isAdmin: false,
   login: async () => ({ success: false, error: "An error occurred" }),
   signup: async () => ({ success: false, error: "An error occurred" }),
   logout: () => {},
@@ -45,6 +47,7 @@ interface Props {
 export const AuthProvider = ({ children }: Props) => {
   const [token, setToken] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isRedirectModalOpen, setIsRedirectModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const router = useRouter();
@@ -82,6 +85,10 @@ export const AuthProvider = ({ children }: Props) => {
   const deleteToken = () => {
     cookies.remove("token");
     setToken(null);
+  };
+
+  const checkIsAdmin = (role: string) => {
+    return role == "admin";
   };
 
   const onAuthenticateTokenSuccess = () => {
@@ -220,6 +227,8 @@ export const AuthProvider = ({ children }: Props) => {
       try {
         const decodedToken = JSON.parse(atob(token.split(".")[1]));
         const decodedUsername = decodedToken.username;
+        const isAdmin = checkIsAdmin(decodedToken.role);
+        setIsAdmin(isAdmin);
         setUsername(decodedUsername);
         cookies.set("username", decodedUsername);
       } catch (error) {
@@ -236,6 +245,7 @@ export const AuthProvider = ({ children }: Props) => {
       value={{
         token,
         username,
+        isAdmin,
         login: handleLogin,
         signup: handleSignup,
         logout,
